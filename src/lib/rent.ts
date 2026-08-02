@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type PaymentStatus = "unpaid" | "paid" | "overdue";
+export type PaymentStatus = "unpaid" | "partially_paid" | "paid" | "overdue";
 
 export type RentRecord = {
   id: string;
@@ -13,6 +13,8 @@ export type RentRecord = {
   base_rent: number;
   due_date: string;
   payment_status: PaymentStatus;
+  total_paid: number;
+  remaining_due: number;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -26,6 +28,7 @@ export type RentRow = RentRecord & {
 
 export const paymentStatusLabel: Record<PaymentStatus, string> = {
   unpaid: "Unpaid",
+  partially_paid: "Partially paid",
   paid: "Paid",
   overdue: "Overdue",
 };

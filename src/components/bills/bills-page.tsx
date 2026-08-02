@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+import { AdjustmentsSection } from "@/components/bills/adjustments-section";
 import { SharedChargeDialog } from "@/components/bills/shared-charge-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -378,6 +379,8 @@ export function BillsPage({ role }: { role: AppRole }) {
           </ul>
         )}
       </section>
+
+      <AdjustmentsSection buildingId={buildingId} month={month} />
 
       <SharedChargeDialog
         open={sharedOpen}

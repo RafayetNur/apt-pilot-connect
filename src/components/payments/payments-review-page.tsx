@@ -4,7 +4,10 @@ import { toast } from "sonner";
 
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
 import { RecordCashDialog, type CashPaymentValues } from "@/components/payments/record-cash-dialog";
-import { ReviewPaymentDialog } from "@/components/payments/review-payment-dialog";
+import {
+  ReviewPaymentDialog,
+  type PaymentDialogAction,
+} from "@/components/payments/review-payment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,6 +28,7 @@ import {
   reviewPayment,
   reviewPaymentsQueryOptions,
   verificationStatusLabel,
+  withdrawPayment,
   type PaymentFilters,
   type PaymentRow,
   type ReviewAction,
@@ -38,6 +42,8 @@ const statusVariant: Record<VerificationStatus, "default" | "secondary" | "destr
     pending: "secondary",
     rejected: "destructive",
     correction_requested: "outline",
+    withdrawn: "outline",
+    cancelled: "outline",
   };
 
 export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
@@ -45,7 +51,7 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
   const [filters, setFilters] = useState<PaymentFilters>({ buildingId: "all", status: "pending" });
   const [reviewTarget, setReviewTarget] = useState<{
     payment: PaymentRow;
-    action: ReviewAction;
+    action: PaymentDialogAction;
   } | null>(null);
   const [receipt, setReceipt] = useState<PaymentRow | null>(null);
   const [cashOpen, setCashOpen] = useState(false);
@@ -69,13 +75,18 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
       note,
     }: {
       paymentId: string;
-      action: ReviewAction;
+      action: PaymentDialogAction;
       note: string;
-    }) => reviewPayment(paymentId, action, note),
+    }) =>
+      action === "cancel"
+        ? withdrawPayment(paymentId, note)
+        : reviewPayment(paymentId, action as ReviewAction, note),
     onSuccess: async (_result, variables) => {
       setReviewTarget(null);
       toast.success(
-        variables.action === "verify"
+        variables.action === "cancel"
+          ? "Submission cancelled. The tenant can submit a new payment."
+          : variables.action === "verify"
           ? "Payment verified and applied to the rent record."
           : variables.action === "reject"
             ? "Payment rejected."
@@ -163,6 +174,8 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
                 <SelectItem value="verified">Verified</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="correction_requested">Correction requested</SelectItem>
+                <SelectItem value="withdrawn">Withdrawn by tenant</SelectItem>
+                <SelectItem value="cancelled">Cancelled by reviewer</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -237,6 +250,11 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
                   <Button variant="outline" size="sm" onClick={() => setReceipt(row)}>
                     View receipt
                   </Button>
+                ) : row.verification_status === "withdrawn" ||
+                  row.verification_status === "cancelled" ? (
+                  <p className="text-sm text-muted-foreground">
+                    This submission is closed and was never applied to the rent record.
+                  </p>
                 ) : (
                   <>
                     <Button
@@ -261,6 +279,15 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
                     >
                       Reject
                     </Button>
+                    {row.verification_status === "pending" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setReviewTarget({ payment: row, action: "cancel" })}
+                      >
+                        Cancel submission
+                      </Button>
+                    ) : null}
                   </>
                 )}
               </div>

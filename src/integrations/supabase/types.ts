@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      bill_adjustments: {
+        Row: {
+          adjustment_type: Database["public"]["Enums"]["adjustment_type"]
+          amount: number
+          approval_status: Database["public"]["Enums"]["approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["adjustment_category"]
+          created_at: string
+          created_by: string
+          flat_id: string
+          id: string
+          original_billing_month: string
+          posted_billing_month: string
+          reason: string
+          rent_record_id: string
+          reviewer_note: string | null
+          source_credit_created: boolean
+          supporting_document_url: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          adjustment_type: Database["public"]["Enums"]["adjustment_type"]
+          amount: number
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["adjustment_category"]
+          created_at?: string
+          created_by: string
+          flat_id: string
+          id?: string
+          original_billing_month: string
+          posted_billing_month: string
+          reason: string
+          rent_record_id: string
+          reviewer_note?: string | null
+          source_credit_created?: boolean
+          supporting_document_url?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          adjustment_type?: Database["public"]["Enums"]["adjustment_type"]
+          amount?: number
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id?: string
+          category?: Database["public"]["Enums"]["adjustment_category"]
+          created_at?: string
+          created_by?: string
+          flat_id?: string
+          id?: string
+          original_billing_month?: string
+          posted_billing_month?: string
+          reason?: string
+          rent_record_id?: string
+          reviewer_note?: string | null
+          source_credit_created?: boolean
+          supporting_document_url?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_adjustments_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_adjustments_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_adjustments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_adjustments_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_adjustments_rent_record_id_fkey"
+            columns: ["rent_record_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_adjustments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           address: string
@@ -333,6 +445,7 @@ export type Database = {
       }
       rent_records: {
         Row: {
+          adjustment_total: number
           base_rent: number
           billing_month: string
           building_id: string
@@ -351,6 +464,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adjustment_total?: number
           base_rent?: number
           billing_month: string
           building_id: string
@@ -369,6 +483,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adjustment_total?: number
           base_rent?: number
           billing_month?: string
           building_id?: string
@@ -538,6 +653,7 @@ export type Database = {
           flat_id: string
           id: string
           remaining_amount: number
+          source_adjustment_id: string | null
           source_payment_id: string | null
           tenant_id: string
           updated_at: string
@@ -549,6 +665,7 @@ export type Database = {
           flat_id: string
           id?: string
           remaining_amount?: number
+          source_adjustment_id?: string | null
           source_payment_id?: string | null
           tenant_id: string
           updated_at?: string
@@ -560,6 +677,7 @@ export type Database = {
           flat_id?: string
           id?: string
           remaining_amount?: number
+          source_adjustment_id?: string | null
           source_payment_id?: string | null
           tenant_id?: string
           updated_at?: string
@@ -627,6 +745,37 @@ export type Database = {
         Args: { _rent_record_id: string }
         Returns: undefined
       }
+      review_bill_adjustment: {
+        Args: { _action: string; _adjustment_id: string; _note?: string }
+        Returns: {
+          adjustment_type: Database["public"]["Enums"]["adjustment_type"]
+          amount: number
+          approval_status: Database["public"]["Enums"]["approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["adjustment_category"]
+          created_at: string
+          created_by: string
+          flat_id: string
+          id: string
+          original_billing_month: string
+          posted_billing_month: string
+          reason: string
+          rent_record_id: string
+          reviewer_note: string | null
+          source_credit_created: boolean
+          supporting_document_url: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bill_adjustments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_rent_payment: {
         Args: { _action: string; _note?: string; _payment_id: string }
         Returns: {
@@ -658,9 +807,51 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      withdraw_rent_payment: {
+        Args: { _payment_id: string; _reason?: string }
+        Returns: {
+          amount_paid: number
+          applied_amount: number
+          building_id: string
+          created_at: string
+          credit_amount: number
+          flat_id: string
+          id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_proof_url: string | null
+          provider_name: string | null
+          receipt_number: string | null
+          rent_record_id: string
+          reviewer_note: string | null
+          submitted_at: string
+          tenant_id: string
+          transaction_reference: string | null
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          verified_at: string | null
+          verified_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rent_payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
+      adjustment_category:
+        | "electricity"
+        | "gas"
+        | "water"
+        | "internet"
+        | "shared_charge"
+        | "flat_repair"
+        | "correction"
+        | "other"
+      adjustment_type: "debit" | "credit"
       app_role: "owner" | "manager" | "tenant"
+      approval_status: "pending" | "approved" | "rejected"
       building_status: "active" | "inactive"
       flat_charge_type:
         | "electricity"
@@ -687,6 +878,8 @@ export type Database = {
         | "verified"
         | "rejected"
         | "correction_requested"
+        | "withdrawn"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -814,7 +1007,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      adjustment_category: [
+        "electricity",
+        "gas",
+        "water",
+        "internet",
+        "shared_charge",
+        "flat_repair",
+        "correction",
+        "other",
+      ],
+      adjustment_type: ["debit", "credit"],
       app_role: ["owner", "manager", "tenant"],
+      approval_status: ["pending", "approved", "rejected"],
       building_status: ["active", "inactive"],
       flat_charge_type: [
         "electricity",
@@ -843,6 +1048,8 @@ export const Constants = {
         "verified",
         "rejected",
         "correction_requested",
+        "withdrawn",
+        "cancelled",
       ],
     },
   },

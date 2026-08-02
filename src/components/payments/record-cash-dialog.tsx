@@ -131,7 +131,9 @@ export function RecordCashDialog({
               <SelectTrigger id="cash-record">
                 <SelectValue
                   placeholder={
-                    buildingId ? "Select a rent record with a due amount" : "Select a building first"
+                    buildingId
+                      ? "Select a rent record with a due amount"
+                      : "Select a building first"
                   }
                 />
               </SelectTrigger>

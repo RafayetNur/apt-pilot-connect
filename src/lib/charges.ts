@@ -3,13 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { monthToDate } from "@/lib/rent";
 
-export type FlatChargeType =
-  | "electricity"
-  | "gas"
-  | "water"
-  | "internet"
-  | "flat_repair"
-  | "other";
+export type FlatChargeType = "electricity" | "gas" | "water" | "internet" | "flat_repair" | "other";
 
 export const flatChargeLabel: Record<FlatChargeType, string> = {
   electricity: "Electricity",
@@ -96,7 +90,7 @@ function num(value: unknown) {
 export function friendlyChargeError(message: string): Error {
   if (message.includes("charges_locked_by_payment")) {
     return new Error(
-      "These charges are locked because a payment for this month is already pending or verified."
+      "These charges are locked because a payment for this month is already pending or verified.",
     );
   }
   if (message.includes("flat_bill_charges_unique_type_per_record")) {
@@ -120,7 +114,7 @@ export const billEntryRowsQueryOptions = (buildingId: string, month: string) =>
       const { data, error } = await supabase
         .from("rent_records")
         .select(
-          "id, building_id, flat_id, tenant_id, billing_month, base_rent, individual_charges_total, shared_charges_total, total_payable, flats(flat_number), profiles(full_name), flat_bill_charges(id, charge_type, amount, description), rent_payments(verification_status)"
+          "id, building_id, flat_id, tenant_id, billing_month, base_rent, individual_charges_total, shared_charges_total, total_payable, flats(flat_number), profiles(full_name), flat_bill_charges(id, charge_type, amount, description), rent_payments(verification_status)",
         )
         .eq("building_id", buildingId)
         .eq("billing_month", monthToDate(month));
@@ -139,7 +133,7 @@ export const billEntryRowsQueryOptions = (buildingId: string, month: string) =>
         }
         const payments = row.rent_payments ?? [];
         const locked = payments.some(
-          (p) => p.verification_status === "pending" || p.verification_status === "verified"
+          (p) => p.verification_status === "pending" || p.verification_status === "verified",
         );
         return {
           rentRecordId: row["id"] as string,
@@ -163,7 +157,7 @@ export const billEntryRowsQueryOptions = (buildingId: string, month: string) =>
       });
 
       return rows.sort((a, b) =>
-        a.flatNumber.localeCompare(b.flatNumber, undefined, { numeric: true })
+        a.flatNumber.localeCompare(b.flatNumber, undefined, { numeric: true }),
       );
     },
   });
@@ -268,7 +262,7 @@ export const sharedChargesQueryOptions = (buildingId: string, month: string) =>
       const { data, error } = await supabase
         .from("shared_building_charges")
         .select(
-          "*, shared_charge_allocations(id, allocated_amount, flat_id, rent_record_id, flats(flat_number))"
+          "*, shared_charge_allocations(id, allocated_amount, flat_id, rent_record_id, flats(flat_number))",
         )
         .eq("building_id", buildingId)
         .eq("billing_month", monthToDate(month))
@@ -298,7 +292,7 @@ export const sharedChargesQueryOptions = (buildingId: string, month: string) =>
               flat_number: allocation.flats?.flat_number ?? "—",
             }))
             .sort((a, b) =>
-              a.flat_number.localeCompare(b.flat_number, undefined, { numeric: true })
+              a.flat_number.localeCompare(b.flat_number, undefined, { numeric: true }),
             ),
         } satisfies SharedCharge;
       });
@@ -352,7 +346,7 @@ export function computeEqualSplit(total: number, count: number): number[] {
   const base = Math.floor(cents / count);
   const remainder = cents - base * count;
   return Array.from({ length: count }, (_, index) =>
-    Number(((base + (index < remainder ? 1 : 0)) / 100).toFixed(2))
+    Number(((base + (index < remainder ? 1 : 0)) / 100).toFixed(2)),
   );
 }
 
@@ -386,10 +380,9 @@ export async function createSharedCharge(input: SharedChargeInput) {
   if (error) throw friendlyChargeError(error.message);
 
   const chargeId = (data as { id: string }).id;
-  const { data: allocated, error: allocationError } = await supabase.rpc(
-    "allocate_shared_charge",
-    { _shared_charge_id: chargeId }
-  );
+  const { data: allocated, error: allocationError } = await supabase.rpc("allocate_shared_charge", {
+    _shared_charge_id: chargeId,
+  });
 
   if (allocationError) {
     // Nothing was split, so do not leave an unallocated charge behind.
@@ -447,7 +440,7 @@ export const myMonthlyBillsQueryOptions = (userId: string | undefined) =>
       const { data, error } = await supabase
         .from("rent_records")
         .select(
-          "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), flat_bill_charges(id, charge_type, amount, description), shared_charge_allocations(id, allocated_amount, shared_building_charges(category, description))"
+          "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), flat_bill_charges(id, charge_type, amount, description), shared_charge_allocations(id, allocated_amount, shared_building_charges(category, description))",
         )
         .eq("tenant_id", userId!)
         .order("billing_month", { ascending: false });

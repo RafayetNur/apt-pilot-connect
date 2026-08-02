@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 export const PROOF_BUCKET = "payment-proofs";
 
 export type PaymentMethod = "bkash" | "nagad" | "bank_transfer" | "cash";
-export type VerificationStatus = "pending" | "verified" | "rejected" | "correction_requested";
+export type VerificationStatus =
+  "pending" | "verified" | "rejected" | "correction_requested" | "withdrawn" | "cancelled";
 
 export const paymentMethodLabel: Record<PaymentMethod, string> = {
   bkash: "bKash",
@@ -19,6 +20,8 @@ export const verificationStatusLabel: Record<VerificationStatus, string> = {
   verified: "Verified",
   rejected: "Rejected",
   correction_requested: "Correction requested",
+  withdrawn: "Withdrawn by tenant",
+  cancelled: "Cancelled by reviewer",
 };
 
 export function isDigitalMethod(method: PaymentMethod) {
@@ -278,10 +281,21 @@ export async function reviewPayment(paymentId: string, action: ReviewAction, not
   if (error) throw friendlyError(error.message);
 }
 
+/**
+ * A pending submission can be withdrawn by its own tenant, or cancelled by the
+ * owner / assigned manager with a reason. The row and its proof are kept.
+ */
+export async function withdrawPayment(paymentId: string, reason: string) {
+  const trimmed = reason.trim();
+  const { error } = await supabase.rpc("withdraw_rent_payment", {
+    _payment_id: paymentId,
+    ...(trimmed ? { _reason: trimmed } : {}),
+  });
+  if (error) throw friendlyError(error.message);
+}
+
 export async function createProofSignedUrl(path: string) {
-  const { data, error } = await supabase.storage
-    .from(PROOF_BUCKET)
-    .createSignedUrl(path, 60 * 10);
+  const { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 60 * 10);
   if (error) throw new Error(`Could not open the payment proof: ${error.message}`);
   return data.signedUrl;
 }

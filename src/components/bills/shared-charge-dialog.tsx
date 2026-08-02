@@ -68,7 +68,7 @@ export function SharedChargeDialog({
   const validTotal = Number.isFinite(total) && total > 0;
   const shares = useMemo(
     () => (validTotal ? computeEqualSplit(total, flats.length) : []),
-    [validTotal, total, flats.length]
+    [validTotal, total, flats.length],
   );
   const allocatedSum = shares.reduce((sum, value) => sum + value, 0);
 
@@ -100,7 +100,7 @@ export function SharedChargeDialog({
     }
     if (flats.length === 0) {
       setError(
-        "No occupied flats have a rent record for this month, so this charge cannot be split."
+        "No occupied flats have a rent record for this month, so this charge cannot be split.",
       );
       return;
     }
@@ -202,7 +202,11 @@ export function SharedChargeDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={mutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={mutation.isPending}
+          >
             Cancel
           </Button>
           <Button

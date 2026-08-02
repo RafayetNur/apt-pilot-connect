@@ -98,6 +98,14 @@ export function ProfileMenu({ profile, email }: { profile: Profile | null; email
 export function AppHeader({ profile, email }: { profile: Profile | null; email: string }) {
   const [open, setOpen] = useState(false);
   const links = profile ? navByRole[profile.role] : [];
+  const currentPath = useRouterState({
+    select: (router) => router.location.pathname,
+  });
+
+  const isActive = (path: string) => {
+    if (path === "/") return currentPath === "/";
+    return currentPath === path || currentPath.startsWith(`${path}/`);
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
@@ -109,8 +117,12 @@ export function AppHeader({ profile, email }: { profile: Profile | null; email: 
               <Link
                 key={link.to}
                 to={link.to}
-                activeProps={{ className: "bg-accent text-accent-foreground" }}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+                className={cn(
+                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+                  isActive(link.to)
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground"
+                )}
               >
                 {link.label}
               </Link>
@@ -139,7 +151,12 @@ export function AppHeader({ profile, email }: { profile: Profile | null; email: 
               key={link.to}
               to={link.to}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+              className={cn(
+                "block rounded-lg px-3 py-2 text-sm font-medium",
+                isActive(link.to)
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              )}
             >
               {link.label}
             </Link>

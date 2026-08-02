@@ -139,6 +139,111 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_payments: {
+        Row: {
+          amount_paid: number
+          applied_amount: number
+          building_id: string
+          created_at: string
+          credit_amount: number
+          flat_id: string
+          id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_proof_url: string | null
+          provider_name: string | null
+          receipt_number: string | null
+          rent_record_id: string
+          reviewer_note: string | null
+          submitted_at: string
+          tenant_id: string
+          transaction_reference: string | null
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount_paid: number
+          applied_amount?: number
+          building_id: string
+          created_at?: string
+          credit_amount?: number
+          flat_id: string
+          id?: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_proof_url?: string | null
+          provider_name?: string | null
+          receipt_number?: string | null
+          rent_record_id: string
+          reviewer_note?: string | null
+          submitted_at?: string
+          tenant_id: string
+          transaction_reference?: string | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          applied_amount?: number
+          building_id?: string
+          created_at?: string
+          credit_amount?: number
+          flat_id?: string
+          id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_proof_url?: string | null
+          provider_name?: string | null
+          receipt_number?: string | null
+          rent_record_id?: string
+          reviewer_note?: string | null
+          submitted_at?: string
+          tenant_id?: string
+          transaction_reference?: string | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_payments_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_rent_record_id_fkey"
+            columns: ["rent_record_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_payments_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rent_records: {
         Row: {
           base_rent: number
@@ -150,7 +255,9 @@ export type Database = {
           flat_id: string
           id: string
           payment_status: Database["public"]["Enums"]["payment_status"]
+          remaining_due: number
           tenant_id: string
+          total_paid: number
           updated_at: string
         }
         Insert: {
@@ -163,7 +270,9 @@ export type Database = {
           flat_id: string
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          remaining_due?: number
           tenant_id: string
+          total_paid?: number
           updated_at?: string
         }
         Update: {
@@ -176,7 +285,9 @@ export type Database = {
           flat_id?: string
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
+          remaining_due?: number
           tenant_id?: string
+          total_paid?: number
           updated_at?: string
         }
         Relationships: [
@@ -203,11 +314,84 @@ export type Database = {
           },
         ]
       }
+      tenant_credits: {
+        Row: {
+          amount: number
+          building_id: string
+          created_at: string
+          flat_id: string
+          id: string
+          remaining_amount: number
+          source_payment_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          building_id: string
+          created_at?: string
+          flat_id: string
+          id?: string
+          remaining_amount?: number
+          source_payment_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          building_id?: string
+          created_at?: string
+          flat_id?: string
+          id?: string
+          remaining_amount?: number
+          source_payment_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_credits_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_credits_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_credits_source_payment_id_fkey"
+            columns: ["source_payment_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_credits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_review_building: {
+        Args: { building_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      can_review_tenant: {
+        Args: { tenant_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       can_view_building: {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
@@ -219,12 +403,49 @@ export type Database = {
         }
         Returns: boolean
       }
+      review_rent_payment: {
+        Args: { _action: string; _note?: string; _payment_id: string }
+        Returns: {
+          amount_paid: number
+          applied_amount: number
+          building_id: string
+          created_at: string
+          credit_amount: number
+          flat_id: string
+          id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_proof_url: string | null
+          provider_name: string | null
+          receipt_number: string | null
+          rent_record_id: string
+          reviewer_note: string | null
+          submitted_at: string
+          tenant_id: string
+          transaction_reference: string | null
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          verified_at: string | null
+          verified_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rent_payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "owner" | "manager" | "tenant"
       building_status: "active" | "inactive"
       occupancy_status: "vacant" | "occupied"
-      payment_status: "unpaid" | "paid" | "overdue"
+      payment_method: "bkash" | "nagad" | "bank_transfer" | "cash"
+      payment_status: "unpaid" | "paid" | "overdue" | "partially_paid"
+      verification_status:
+        | "pending"
+        | "verified"
+        | "rejected"
+        | "correction_requested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -355,7 +576,14 @@ export const Constants = {
       app_role: ["owner", "manager", "tenant"],
       building_status: ["active", "inactive"],
       occupancy_status: ["vacant", "occupied"],
-      payment_status: ["unpaid", "paid", "overdue"],
+      payment_method: ["bkash", "nagad", "bank_transfer", "cash"],
+      payment_status: ["unpaid", "paid", "overdue", "partially_paid"],
+      verification_status: [
+        "pending",
+        "verified",
+        "rejected",
+        "correction_requested",
+      ],
     },
   },
 } as const

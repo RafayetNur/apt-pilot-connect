@@ -404,3 +404,98 @@ export async function deleteSharedCharge(id: string) {
   const { error } = await supabase.from("shared_building_charges").delete().eq("id", id);
   if (error) throw friendlyChargeError(error.message);
 }
+
+export type TenantBillCharge = {
+  id: string;
+  charge_type: FlatChargeType;
+  amount: number;
+  description: string | null;
+};
+
+export type TenantSharedShare = {
+  id: string;
+  allocated_amount: number;
+  category: SharedChargeCategory;
+  description: string | null;
+};
+
+export type TenantMonthlyBill = {
+  id: string;
+  building_id: string;
+  building_name: string;
+  flat_id: string;
+  flat_number: string;
+  tenant_id: string;
+  billing_month: string;
+  due_date: string;
+  base_rent: number;
+  individual_charges_total: number;
+  shared_charges_total: number;
+  total_payable: number;
+  total_paid: number;
+  remaining_due: number;
+  payment_status: string;
+  charges: TenantBillCharge[];
+  sharedShares: TenantSharedShare[];
+};
+
+export const myMonthlyBillsQueryOptions = (userId: string | undefined) =>
+  queryOptions({
+    queryKey: ["my-monthly-bills", userId ?? "none"],
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<TenantMonthlyBill[]> => {
+      const { data, error } = await supabase
+        .from("rent_records")
+        .select(
+          "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), flat_bill_charges(id, charge_type, amount, description), shared_charge_allocations(id, allocated_amount, shared_building_charges(category, description))"
+        )
+        .eq("tenant_id", userId!)
+        .order("billing_month", { ascending: false });
+      if (error) throw error;
+
+      return (data ?? []).map((raw) => {
+        const row = raw as Record<string, unknown> & {
+          buildings?: { name: string } | null;
+          flats?: { flat_number: string } | null;
+          flat_bill_charges?: Array<Record<string, unknown>> | null;
+          shared_charge_allocations?: Array<
+            Record<string, unknown> & {
+              shared_building_charges?: {
+                category: SharedChargeCategory;
+                description: string | null;
+              } | null;
+            }
+          > | null;
+        };
+        return {
+          id: row["id"] as string,
+          building_id: row["building_id"] as string,
+          building_name: row.buildings?.name ?? "—",
+          flat_id: row["flat_id"] as string,
+          flat_number: row.flats?.flat_number ?? "—",
+          tenant_id: row["tenant_id"] as string,
+          billing_month: row["billing_month"] as string,
+          due_date: row["due_date"] as string,
+          base_rent: num(row["base_rent"]),
+          individual_charges_total: num(row["individual_charges_total"]),
+          shared_charges_total: num(row["shared_charges_total"]),
+          total_payable: num(row["total_payable"]),
+          total_paid: num(row["total_paid"]),
+          remaining_due: num(row["remaining_due"]),
+          payment_status: row["payment_status"] as string,
+          charges: (row.flat_bill_charges ?? []).map((charge) => ({
+            id: charge["id"] as string,
+            charge_type: charge["charge_type"] as FlatChargeType,
+            amount: num(charge["amount"]),
+            description: (charge["description"] as string | null) ?? null,
+          })),
+          sharedShares: (row.shared_charge_allocations ?? []).map((allocation) => ({
+            id: allocation["id"] as string,
+            allocated_amount: num(allocation["allocated_amount"]),
+            category: allocation.shared_building_charges?.category ?? "other",
+            description: allocation.shared_building_charges?.description ?? null,
+          })),
+        } satisfies TenantMonthlyBill;
+      });
+    },
+  });

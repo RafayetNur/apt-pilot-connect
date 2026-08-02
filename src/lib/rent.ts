@@ -15,6 +15,9 @@ export type RentRecord = {
   payment_status: PaymentStatus;
   total_paid: number;
   remaining_due: number;
+  individual_charges_total: number;
+  shared_charges_total: number;
+  total_payable: number;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -71,6 +74,9 @@ function normalizeRow(row: RawRentRow): RentRow {
     base_rent: Number(row["base_rent"] ?? 0),
     total_paid: Number(row["total_paid"] ?? 0),
     remaining_due: Number(row["remaining_due"] ?? 0),
+    individual_charges_total: Number(row["individual_charges_total"] ?? 0),
+    shared_charges_total: Number(row["shared_charges_total"] ?? 0),
+    total_payable: Number(row["total_payable"] ?? 0),
     building_name: row.buildings?.name ?? "—",
     flat_number: row.flats?.flat_number ?? "—",
     tenant_name: row.profiles?.full_name ?? "—",
@@ -120,6 +126,13 @@ export const myRentRecordsQueryOptions = (userId: string | undefined) =>
         base_rent: Number((row as Record<string, unknown>)["base_rent"] ?? 0),
         total_paid: Number((row as Record<string, unknown>)["total_paid"] ?? 0),
         remaining_due: Number((row as Record<string, unknown>)["remaining_due"] ?? 0),
+        individual_charges_total: Number(
+          (row as Record<string, unknown>)["individual_charges_total"] ?? 0
+        ),
+        shared_charges_total: Number(
+          (row as Record<string, unknown>)["shared_charges_total"] ?? 0
+        ),
+        total_payable: Number((row as Record<string, unknown>)["total_payable"] ?? 0),
       }));
     },
   });

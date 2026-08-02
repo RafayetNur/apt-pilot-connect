@@ -32,10 +32,12 @@ const navByRole = {
     { label: "Dashboard", to: "/owner/dashboard" },
     { label: "Buildings", to: "/owner/buildings" },
     { label: "Rent", to: "/owner/rent" },
+    { label: "Bills", to: "/owner/bills" },
     { label: "Payments", to: "/owner/payments" },
   ],
   manager: [
     { label: "Dashboard", to: "/manager/dashboard" },
+    { label: "Bills", to: "/manager/bills" },
     { label: "Payments", to: "/manager/payments" },
   ],
   tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],
@@ -80,9 +82,12 @@ export function ProfileMenu({ profile, email }: { profile: Profile | null; email
           <p className="truncate text-sm font-semibold">{profile?.full_name || "Your account"}</p>
           <p className="truncate text-xs font-normal text-muted-foreground">{email}</p>
           {profile ? (
-            <p className="text-xs font-normal text-muted-foreground">
+          <p className="text-xs font-normal text-muted-foreground">
               Role: {roleLabel[profile.role]}
             </p>
+          ) : null}
+          {profile?.phone ? (
+            <p className="text-xs font-normal text-muted-foreground">Phone: {profile.phone}</p>
           ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

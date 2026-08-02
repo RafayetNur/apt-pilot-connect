@@ -118,6 +118,8 @@ export const myRentRecordsQueryOptions = (userId: string | undefined) =>
       return (data ?? []).map((row) => ({
         ...(row as unknown as RentRecord),
         base_rent: Number((row as Record<string, unknown>)["base_rent"] ?? 0),
+        total_paid: Number((row as Record<string, unknown>)["total_paid"] ?? 0),
+        remaining_due: Number((row as Record<string, unknown>)["remaining_due"] ?? 0),
       }));
     },
   });

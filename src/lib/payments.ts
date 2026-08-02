@@ -270,11 +270,11 @@ export async function reviewPayment(paymentId: string, action: ReviewAction, not
   if (action !== "verify" && !note.trim()) {
     throw new Error("A reviewer note is required for this action.");
   }
-  const { error } = await supabase.rpc("review_rent_payment", {
-    _payment_id: paymentId,
-    _action: action,
-    _note: note.trim() ? note.trim() : undefined,
-  });
+  const trimmed = note.trim();
+  const args = trimmed
+    ? { _payment_id: paymentId, _action: action, _note: trimmed }
+    : { _payment_id: paymentId, _action: action };
+  const { error } = await supabase.rpc("review_rent_payment", args);
   if (error) throw friendlyError(error.message);
 }
 

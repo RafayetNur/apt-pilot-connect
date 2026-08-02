@@ -184,7 +184,17 @@ export async function saveFlatBills(inputs: SaveBillRowInput[]) {
   const enteredBy = auth.user?.id;
   if (!enteredBy) throw new Error("You must be signed in to enter bills.");
 
-  const upserts: Array<Record<string, unknown>> = [];
+  const upserts: Array<{
+    rent_record_id: string;
+    building_id: string;
+    flat_id: string;
+    tenant_id: string;
+    billing_month: string;
+    charge_type: FlatChargeType;
+    amount: number;
+    description: string | null;
+    entered_by: string;
+  }> = [];
   const clears: Array<{ rentRecordId: string; chargeType: FlatChargeType }> = [];
 
   for (const input of inputs) {

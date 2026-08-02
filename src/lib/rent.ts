@@ -174,3 +174,11 @@ export async function generateMonthlyRent(params: {
   const created = (inserted ?? []).length;
   return { created, skipped: eligible.length - created, eligible: eligible.length };
 }
+
+export async function updateRentStatus(id: string, status: PaymentStatus) {
+  const { error } = await supabase
+    .from("rent_records")
+    .update({ payment_status: status })
+    .eq("id", id);
+  if (error) throw error;
+}

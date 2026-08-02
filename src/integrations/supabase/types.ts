@@ -139,6 +139,70 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_records: {
+        Row: {
+          base_rent: number
+          billing_month: string
+          building_id: string
+          created_at: string
+          created_by: string
+          due_date: string
+          flat_id: string
+          id: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_rent?: number
+          billing_month: string
+          building_id: string
+          created_at?: string
+          created_by: string
+          due_date: string
+          flat_id: string
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_rent?: number
+          billing_month?: string
+          building_id?: string
+          created_at?: string
+          created_by?: string
+          due_date?: string
+          flat_id?: string
+          id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rent_records_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_records_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_records_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -160,6 +224,7 @@ export type Database = {
       app_role: "owner" | "manager" | "tenant"
       building_status: "active" | "inactive"
       occupancy_status: "vacant" | "occupied"
+      payment_status: "unpaid" | "paid" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -290,6 +355,7 @@ export const Constants = {
       app_role: ["owner", "manager", "tenant"],
       building_status: ["active", "inactive"],
       occupancy_status: ["vacant", "occupied"],
+      payment_status: ["unpaid", "paid", "overdue"],
     },
   },
 } as const

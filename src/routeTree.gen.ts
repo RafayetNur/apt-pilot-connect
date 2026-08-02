@@ -18,6 +18,7 @@ import { Route as AuthenticatedOwnerDashboardRouteImport } from './routes/_authe
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
+import { Route as AuthenticatedOwnerFlatsBuildingIdRouteImport } from './routes/_authenticated/owner/flats/$buildingId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -68,6 +69,12 @@ const AuthenticatedOwnerBuildingsBuildingIdRoute =
     path: '/owner/buildings/$buildingId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOwnerFlatsBuildingIdRoute =
+  AuthenticatedOwnerFlatsBuildingIdRouteImport.update({
+    id: '/owner/flats/$buildingId',
+    path: '/owner/flats/$buildingId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
+  '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
+  '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRoutesById {
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
+  '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/owner/dashboard'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
+    | '/owner/flats/$buildingId'
     | '/owner/buildings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/owner/dashboard'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
+    | '/owner/flats/$buildingId'
     | '/owner/buildings'
   id:
     | '__root__'
@@ -132,6 +144,7 @@ export interface FileRouteTypes {
     | '/_authenticated/owner/dashboard'
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/owner/buildings/$buildingId'
+    | '/_authenticated/owner/flats/$buildingId'
     | '/_authenticated/owner/buildings/'
   fileRoutesById: FileRoutesById
 }
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOwnerBuildingsBuildingIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/flats/$buildingId': {
+      id: '/_authenticated/owner/flats/$buildingId'
+      path: '/owner/flats/$buildingId'
+      fullPath: '/owner/flats/$buildingId'
+      preLoaderRoute: typeof AuthenticatedOwnerFlatsBuildingIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -215,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOwnerDashboardRoute: typeof AuthenticatedOwnerDashboardRoute
   AuthenticatedTenantDashboardRoute: typeof AuthenticatedTenantDashboardRoute
   AuthenticatedOwnerBuildingsBuildingIdRoute: typeof AuthenticatedOwnerBuildingsBuildingIdRoute
+  AuthenticatedOwnerFlatsBuildingIdRoute: typeof AuthenticatedOwnerFlatsBuildingIdRoute
   AuthenticatedOwnerBuildingsIndexRoute: typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 
@@ -224,6 +245,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTenantDashboardRoute: AuthenticatedTenantDashboardRoute,
   AuthenticatedOwnerBuildingsBuildingIdRoute:
     AuthenticatedOwnerBuildingsBuildingIdRoute,
+  AuthenticatedOwnerFlatsBuildingIdRoute:
+    AuthenticatedOwnerFlatsBuildingIdRoute,
   AuthenticatedOwnerBuildingsIndexRoute: AuthenticatedOwnerBuildingsIndexRoute,
 }
 
@@ -239,13 +262,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

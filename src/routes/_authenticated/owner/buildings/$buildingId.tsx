@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, DoorOpen, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -102,7 +102,13 @@ function BuildingDetailPage() {
               <h1 className="font-display text-3xl font-semibold">{building.name}</h1>
               <p className="mt-2 text-sm text-muted-foreground">{building.address}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button asChild>
+                <Link to="/owner/flats/$buildingId" params={{ buildingId }}>
+                  <DoorOpen className="mr-2 h-4 w-4" />
+                  Manage Flats
+                </Link>
+              </Button>
               <Button variant="outline" onClick={() => setFormOpen(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit

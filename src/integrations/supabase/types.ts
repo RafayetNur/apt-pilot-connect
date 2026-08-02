@@ -56,6 +56,62 @@ export type Database = {
         }
         Relationships: []
       }
+      flats: {
+        Row: {
+          bathroom_count: number
+          bedroom_count: number
+          building_id: string
+          created_at: string
+          flat_number: string
+          floor_number: number
+          id: string
+          monthly_rent: number
+          notes: string
+          occupancy_status: Database["public"]["Enums"]["occupancy_status"]
+          size_sqft: number
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bathroom_count?: number
+          bedroom_count?: number
+          building_id: string
+          created_at?: string
+          flat_number: string
+          floor_number?: number
+          id?: string
+          monthly_rent?: number
+          notes?: string
+          occupancy_status?: Database["public"]["Enums"]["occupancy_status"]
+          size_sqft?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bathroom_count?: number
+          bedroom_count?: number
+          building_id?: string
+          created_at?: string
+          flat_number?: string
+          floor_number?: number
+          id?: string
+          monthly_rent?: number
+          notes?: string
+          occupancy_status?: Database["public"]["Enums"]["occupancy_status"]
+          size_sqft?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flats_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -99,6 +155,7 @@ export type Database = {
     Enums: {
       app_role: "owner" | "manager" | "tenant"
       building_status: "active" | "inactive"
+      occupancy_status: "vacant" | "occupied"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -228,6 +285,7 @@ export const Constants = {
     Enums: {
       app_role: ["owner", "manager", "tenant"],
       building_status: ["active", "inactive"],
+      occupancy_status: ["vacant", "occupied"],
     },
   },
 } as const

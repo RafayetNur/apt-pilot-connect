@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Building2, DoorOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -158,7 +158,16 @@ function BuildingsPage() {
                     {building.floors} floors · {building.total_flats} flats ·{" "}
                     {building.assigned_manager || "No manager"}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link
+                        to="/owner/flats/$buildingId"
+                        params={{ buildingId: building.id }}
+                      >
+                        <DoorOpen className="mr-2 h-3.5 w-3.5" />
+                        Manage Flats
+                      </Link>
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -222,6 +231,14 @@ function BuildingsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button asChild variant="ghost" size="icon" aria-label={`Manage flats for ${building.name}`}>
+                            <Link
+                              to="/owner/flats/$buildingId"
+                              params={{ buildingId: building.id }}
+                            >
+                              <DoorOpen className="h-4 w-4" />
+                            </Link>
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

@@ -144,6 +144,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_building: {
+        Args: { building_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

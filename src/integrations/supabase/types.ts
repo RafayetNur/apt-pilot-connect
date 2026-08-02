@@ -56,6 +56,93 @@ export type Database = {
         }
         Relationships: []
       }
+      flat_bill_charges: {
+        Row: {
+          amount: number
+          bill_reference: string | null
+          billing_month: string
+          building_id: string
+          charge_type: Database["public"]["Enums"]["flat_charge_type"]
+          created_at: string
+          description: string | null
+          entered_by: string
+          flat_id: string
+          id: string
+          provider_name: string | null
+          rent_record_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          bill_reference?: string | null
+          billing_month: string
+          building_id: string
+          charge_type: Database["public"]["Enums"]["flat_charge_type"]
+          created_at?: string
+          description?: string | null
+          entered_by: string
+          flat_id: string
+          id?: string
+          provider_name?: string | null
+          rent_record_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bill_reference?: string | null
+          billing_month?: string
+          building_id?: string
+          charge_type?: Database["public"]["Enums"]["flat_charge_type"]
+          created_at?: string
+          description?: string | null
+          entered_by?: string
+          flat_id?: string
+          id?: string
+          provider_name?: string | null
+          rent_record_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flat_bill_charges_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flat_bill_charges_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flat_bill_charges_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flat_bill_charges_rent_record_id_fkey"
+            columns: ["rent_record_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flat_bill_charges_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flats: {
         Row: {
           bathroom_count: number
@@ -254,10 +341,13 @@ export type Database = {
           due_date: string
           flat_id: string
           id: string
+          individual_charges_total: number
           payment_status: Database["public"]["Enums"]["payment_status"]
           remaining_due: number
+          shared_charges_total: number
           tenant_id: string
           total_paid: number
+          total_payable: number
           updated_at: string
         }
         Insert: {
@@ -269,10 +359,13 @@ export type Database = {
           due_date: string
           flat_id: string
           id?: string
+          individual_charges_total?: number
           payment_status?: Database["public"]["Enums"]["payment_status"]
           remaining_due?: number
+          shared_charges_total?: number
           tenant_id: string
           total_paid?: number
+          total_payable?: number
           updated_at?: string
         }
         Update: {
@@ -284,10 +377,13 @@ export type Database = {
           due_date?: string
           flat_id?: string
           id?: string
+          individual_charges_total?: number
           payment_status?: Database["public"]["Enums"]["payment_status"]
           remaining_due?: number
+          shared_charges_total?: number
           tenant_id?: string
           total_paid?: number
+          total_payable?: number
           updated_at?: string
         }
         Relationships: [
@@ -307,6 +403,126 @@ export type Database = {
           },
           {
             foreignKeyName: "rent_records_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_building_charges: {
+        Row: {
+          billing_month: string
+          building_id: string
+          category: Database["public"]["Enums"]["shared_charge_category"]
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          billing_month: string
+          building_id: string
+          category: Database["public"]["Enums"]["shared_charge_category"]
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          billing_month?: string
+          building_id?: string
+          category?: Database["public"]["Enums"]["shared_charge_category"]
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_building_charges_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_building_charges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_charge_allocations: {
+        Row: {
+          allocated_amount: number
+          building_id: string
+          created_at: string
+          flat_id: string
+          id: string
+          rent_record_id: string
+          shared_charge_id: string
+          tenant_id: string
+        }
+        Insert: {
+          allocated_amount: number
+          building_id: string
+          created_at?: string
+          flat_id: string
+          id?: string
+          rent_record_id: string
+          shared_charge_id: string
+          tenant_id: string
+        }
+        Update: {
+          allocated_amount?: number
+          building_id?: string
+          created_at?: string
+          flat_id?: string
+          id?: string
+          rent_record_id?: string
+          shared_charge_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_charge_allocations_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_charge_allocations_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_charge_allocations_rent_record_id_fkey"
+            columns: ["rent_record_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_charge_allocations_shared_charge_id_fkey"
+            columns: ["shared_charge_id"]
+            isOneToOne: false
+            referencedRelation: "shared_building_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_charge_allocations_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -384,6 +600,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      allocate_shared_charge: {
+        Args: { _shared_charge_id: string }
+        Returns: number
+      }
       can_review_building: {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
@@ -402,6 +622,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recalc_rent_record_totals: {
+        Args: { _rent_record_id: string }
+        Returns: undefined
       }
       review_rent_payment: {
         Args: { _action: string; _note?: string; _payment_id: string }
@@ -438,9 +662,26 @@ export type Database = {
     Enums: {
       app_role: "owner" | "manager" | "tenant"
       building_status: "active" | "inactive"
+      flat_charge_type:
+        | "electricity"
+        | "gas"
+        | "water"
+        | "internet"
+        | "flat_repair"
+        | "other"
       occupancy_status: "vacant" | "occupied"
       payment_method: "bkash" | "nagad" | "bank_transfer" | "cash"
       payment_status: "unpaid" | "paid" | "overdue" | "partially_paid"
+      shared_charge_category:
+        | "guard_salary"
+        | "cleaner_salary"
+        | "generator"
+        | "lift_maintenance"
+        | "common_electricity"
+        | "water_pump"
+        | "waste_management"
+        | "cctv_internet"
+        | "other"
       verification_status:
         | "pending"
         | "verified"
@@ -575,9 +816,28 @@ export const Constants = {
     Enums: {
       app_role: ["owner", "manager", "tenant"],
       building_status: ["active", "inactive"],
+      flat_charge_type: [
+        "electricity",
+        "gas",
+        "water",
+        "internet",
+        "flat_repair",
+        "other",
+      ],
       occupancy_status: ["vacant", "occupied"],
       payment_method: ["bkash", "nagad", "bank_transfer", "cash"],
       payment_status: ["unpaid", "paid", "overdue", "partially_paid"],
+      shared_charge_category: [
+        "guard_salary",
+        "cleaner_salary",
+        "generator",
+        "lift_maintenance",
+        "common_electricity",
+        "water_pump",
+        "waste_management",
+        "cctv_internet",
+        "other",
+      ],
       verification_status: [
         "pending",
         "verified",

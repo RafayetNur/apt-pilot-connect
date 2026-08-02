@@ -273,7 +273,7 @@ export async function reviewPayment(paymentId: string, action: ReviewAction, not
   const { error } = await supabase.rpc("review_rent_payment", {
     _payment_id: paymentId,
     _action: action,
-    _note: note.trim() ? note.trim() : null,
+    _note: note.trim() ? note.trim() : undefined,
   });
   if (error) throw friendlyError(error.message);
 }

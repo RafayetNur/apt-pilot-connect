@@ -142,6 +142,7 @@ function TenantDashboard() {
       intro="This is your tenant workspace. Your flat details, notices and requests will live here."
     >
       <AssignedFlatSection />
+      <MyRentSection />
     </DashboardShell>
   );
 }

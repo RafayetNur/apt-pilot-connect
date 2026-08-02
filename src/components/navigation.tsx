@@ -27,7 +27,10 @@ export function BrandMark() {
 }
 
 const navByRole = {
-  owner: [{ label: "Dashboard", to: "/owner/dashboard" }],
+  owner: [
+    { label: "Dashboard", to: "/owner/dashboard" },
+    { label: "Buildings", to: "/owner/buildings" },
+  ],
   manager: [{ label: "Dashboard", to: "/manager/dashboard" }],
   tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],
 } as const;

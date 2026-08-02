@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      buildings: {
+        Row: {
+          address: string
+          area: string
+          assigned_manager: string
+          created_at: string
+          floors: number
+          id: string
+          name: string
+          owner_id: string
+          status: Database["public"]["Enums"]["building_status"]
+          total_flats: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          area?: string
+          assigned_manager?: string
+          created_at?: string
+          floors?: number
+          id?: string
+          name: string
+          owner_id: string
+          status?: Database["public"]["Enums"]["building_status"]
+          total_flats?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          area?: string
+          assigned_manager?: string
+          created_at?: string
+          floors?: number
+          id?: string
+          name?: string
+          owner_id?: string
+          status?: Database["public"]["Enums"]["building_status"]
+          total_flats?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -46,10 +88,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "owner" | "manager" | "tenant"
+      building_status: "active" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -178,6 +227,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "manager", "tenant"],
+      building_status: ["active", "inactive"],
     },
   },
 } as const

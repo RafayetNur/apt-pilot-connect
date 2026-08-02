@@ -69,6 +69,8 @@ function normalizeRow(row: RawRentRow): RentRow {
   return {
     ...(row as unknown as RentRecord),
     base_rent: Number(row["base_rent"] ?? 0),
+    total_paid: Number(row["total_paid"] ?? 0),
+    remaining_due: Number(row["remaining_due"] ?? 0),
     building_name: row.buildings?.name ?? "—",
     flat_number: row.flats?.flat_number ?? "—",
     tenant_name: row.profiles?.full_name ?? "—",

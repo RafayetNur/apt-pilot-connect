@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { AssignTenantDialog } from "@/components/flats/assign-tenant-dialog";
 import { FlatFormDialog } from "@/components/flats/flat-form-dialog";
 import { OwnerShell } from "@/components/owner-shell";
 import {
@@ -28,13 +29,18 @@ import {
 } from "@/components/ui/table";
 import { buildingQueryOptions } from "@/lib/buildings";
 import {
+  assignTenant,
   createFlat,
   deleteFlat,
+  flatTenantsQueryOptions,
+  removeTenant,
+  tenantProfilesQueryOptions,
   flatsQueryOptions,
   formatRent,
   occupancyLabel,
   updateFlat,
   type Flat,
+  type TenantProfile,
   type FlatInput,
 } from "@/lib/flats";
 
@@ -65,6 +71,44 @@ function ManageFlatsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Flat | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Flat | null>(null);
+  const [assigning, setAssigning] = useState<Flat | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<Flat | null>(null);
+
+  const tenantIds = (flats ?? []).map((flat) => flat.tenant_id).filter(Boolean) as string[];
+  const { data: tenantMap } = useQuery(flatTenantsQueryOptions(tenantIds));
+  const { data: tenantOptions, isLoading: tenantsLoading } = useQuery({
+    ...tenantProfilesQueryOptions(),
+    enabled: assigning !== null,
+  });
+
+  const invalidateFlats = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["flats", buildingId] });
+    await queryClient.invalidateQueries({ queryKey: ["flat-tenants"] });
+  };
+
+  const assignMutation = useMutation({
+    mutationFn: async ({ flatId, tenantId }: { flatId: string; tenantId: string }) =>
+      assignTenant(flatId, tenantId),
+    onSuccess: async () => {
+      toast.success("Tenant assigned");
+      setAssigning(null);
+      await invalidateFlats();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const removeTenantMutation = useMutation({
+    mutationFn: async (flatId: string) => removeTenant(flatId),
+    onSuccess: async () => {
+      toast.success("Tenant removed");
+      setPendingRemove(null);
+      await invalidateFlats();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const tenantFor = (flat: Flat): TenantProfile | null =>
+    flat.tenant_id ? (tenantMap?.[flat.tenant_id] ?? null) : null;
 
   const saveMutation = useMutation({
     mutationFn: async (input: FlatInput) =>
@@ -145,6 +189,7 @@ function ManageFlatsPage() {
                     <TableHead>Bathrooms</TableHead>
                     <TableHead>Rent</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Tenant</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -163,7 +208,41 @@ function ManageFlatsPage() {
                           {occupancyLabel[flat.occupancy_status]}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        {tenantFor(flat) ? (
+                          <div className="text-sm">
+                            <p className="font-medium">{tenantFor(flat)!.full_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {tenantFor(flat)!.email}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {tenantFor(flat)!.phone || "No phone"}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
+                        {flat.tenant_id ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Remove tenant from flat ${flat.flat_number}`}
+                            onClick={() => setPendingRemove(flat)}
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Assign tenant to flat ${flat.flat_number}`}
+                            onClick={() => setAssigning(flat)}
+                          >
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -209,7 +288,27 @@ function ManageFlatsPage() {
                       {occupancyLabel[flat.occupancy_status]}
                     </Badge>
                   </div>
-                  <div className="mt-3 flex gap-2">
+                  {tenantFor(flat) ? (
+                    <div className="mt-3 rounded-lg bg-surface p-3 text-sm">
+                      <p className="font-medium">{tenantFor(flat)!.full_name || "—"}</p>
+                      <p className="text-xs text-muted-foreground">{tenantFor(flat)!.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {tenantFor(flat)!.phone || "No phone"}
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {flat.tenant_id ? (
+                      <Button variant="outline" size="sm" onClick={() => setPendingRemove(flat)}>
+                        <UserMinus className="mr-2 h-4 w-4" />
+                        Remove tenant
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => setAssigning(flat)}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Assign tenant
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -249,6 +348,50 @@ function ManageFlatsPage() {
         saving={saveMutation.isPending}
         onSubmit={(input) => saveMutation.mutate(input)}
       />
+
+      <AssignTenantDialog
+        open={assigning !== null}
+        onOpenChange={(open) => {
+          if (!open) setAssigning(null);
+        }}
+        flatNumber={assigning?.flat_number ?? ""}
+        tenants={tenantOptions ?? []}
+        loading={tenantsLoading}
+        saving={assignMutation.isPending}
+        onSubmit={(tenantId) => {
+          if (assigning) assignMutation.mutate({ flatId: assigning.id, tenantId });
+        }}
+      />
+
+      <AlertDialog
+        open={pendingRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemove(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Remove tenant from flat {pendingRemove?.flat_number}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The flat will be marked vacant and the tenant will lose access to its details.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                if (pendingRemove) removeTenantMutation.mutate(pendingRemove.id);
+              }}
+              disabled={removeTenantMutation.isPending}
+            >
+              {removeTenantMutation.isPending ? "Removing…" : "Remove tenant"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={pendingDelete !== null}

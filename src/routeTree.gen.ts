@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthenticatedManagerBillsRouteImport } from './routes/_authenticated/manager/bills'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
 import { Route as AuthenticatedManagerPaymentsRouteImport } from './routes/_authenticated/manager/payments'
 import { Route as AuthenticatedOwnerBillsRouteImport } from './routes/_authenticated/owner/bills'
@@ -43,6 +44,12 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedManagerBillsRoute =
+  AuthenticatedManagerBillsRouteImport.update({
+    id: '/manager/bills',
+    path: '/manager/bills',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedManagerDashboardRoute =
   AuthenticatedManagerDashboardRouteImport.update({
     id: '/manager/dashboard',
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/owner/bills': typeof AuthenticatedOwnerBillsRoute
@@ -121,6 +129,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/owner/bills': typeof AuthenticatedOwnerBillsRoute
@@ -138,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/_authenticated/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/_authenticated/owner/bills': typeof AuthenticatedOwnerBillsRoute
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/manager/bills'
     | '/manager/dashboard'
     | '/manager/payments'
     | '/owner/bills'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/manager/bills'
     | '/manager/dashboard'
     | '/manager/payments'
     | '/owner/bills'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/register'
+    | '/_authenticated/manager/bills'
     | '/_authenticated/manager/dashboard'
     | '/_authenticated/manager/payments'
     | '/_authenticated/owner/bills'
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/manager/bills': {
+      id: '/_authenticated/manager/bills'
+      path: '/manager/bills'
+      fullPath: '/manager/bills'
+      preLoaderRoute: typeof AuthenticatedManagerBillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/manager/dashboard': {
       id: '/_authenticated/manager/dashboard'
@@ -309,6 +329,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedManagerBillsRoute: typeof AuthenticatedManagerBillsRoute
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
   AuthenticatedManagerPaymentsRoute: typeof AuthenticatedManagerPaymentsRoute
   AuthenticatedOwnerBillsRoute: typeof AuthenticatedOwnerBillsRoute
@@ -322,6 +343,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedManagerBillsRoute: AuthenticatedManagerBillsRoute,
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
   AuthenticatedManagerPaymentsRoute: AuthenticatedManagerPaymentsRoute,
   AuthenticatedOwnerBillsRoute: AuthenticatedOwnerBillsRoute,

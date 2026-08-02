@@ -33,7 +33,7 @@ export const adjustmentCategoryLabel: Record<AdjustmentCategory, string> = {
 };
 
 export const adjustmentCategoryOptions = Object.keys(
-  adjustmentCategoryLabel
+  adjustmentCategoryLabel,
 ) as AdjustmentCategory[];
 
 export const approvalStatusLabel: Record<ApprovalStatus, string> = {
@@ -152,7 +152,7 @@ export const adjustmentTargetsQueryOptions = (buildingId: string, month: string)
       const { data, error } = await supabase
         .from("rent_records")
         .select(
-          "id, building_id, flat_id, tenant_id, billing_month, total_payable, total_paid, remaining_due, flats(flat_number), profiles(full_name)"
+          "id, building_id, flat_id, tenant_id, billing_month, total_payable, total_paid, remaining_due, flats(flat_number), profiles(full_name)",
         )
         .eq("building_id", buildingId)
         .eq("billing_month", monthToDate(month));
@@ -235,7 +235,7 @@ export type AdjustmentReviewAction = "approve" | "reject";
 export async function reviewAdjustment(
   adjustmentId: string,
   action: AdjustmentReviewAction,
-  note: string
+  note: string,
 ) {
   if (action === "reject" && !note.trim()) {
     throw new Error("A reviewer note is required when rejecting an adjustment.");
@@ -259,6 +259,6 @@ export async function createDocumentSignedUrl(path: string) {
 export function netAdjustment(rows: Array<Pick<BillAdjustment, "adjustment_type" | "amount">>) {
   return rows.reduce(
     (sum, row) => sum + (row.adjustment_type === "debit" ? row.amount : -row.amount),
-    0
+    0,
   );
 }

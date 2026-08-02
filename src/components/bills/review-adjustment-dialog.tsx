@@ -103,7 +103,9 @@ export function ReviewAdjustmentDialog({
             maxLength={500}
             rows={3}
             placeholder={
-              noteRequired ? "Explain why this adjustment is rejected." : "Add a note for the record."
+              noteRequired
+                ? "Explain why this adjustment is rejected."
+                : "Add a note for the record."
             }
           />
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

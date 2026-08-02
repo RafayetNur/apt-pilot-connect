@@ -333,7 +333,7 @@ export function BillsPage({ role }: { role: AppRole }) {
             {sharedCharges.map((charge) => {
               const allocatedTotal = charge.allocations.reduce(
                 (sum, allocation) => sum + allocation.allocated_amount,
-                0
+                0,
               );
               return (
                 <li key={charge.id} className="rounded-xl border border-border/60 bg-card p-4">

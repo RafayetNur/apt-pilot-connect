@@ -102,13 +102,13 @@ export const dashboardSummaryQueryOptions = (month: string) =>
         supabase
           .from("rent_records")
           .select(
-            "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), profiles(full_name)"
+            "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), profiles(full_name)",
           )
           .eq("billing_month", billingMonth),
         supabase
           .from("rent_payments")
           .select(
-            "id, building_id, amount_paid, payment_method, verification_status, submitted_at, verified_at, receipt_number, buildings(name), flats(flat_number), tenant:profiles!rent_payments_tenant_id_fkey(full_name)"
+            "id, building_id, amount_paid, payment_method, verification_status, submitted_at, verified_at, receipt_number, buildings(name), flats(flat_number), tenant:profiles!rent_payments_tenant_id_fkey(full_name)",
           )
           .order("submitted_at", { ascending: false })
           .limit(60),
@@ -171,7 +171,7 @@ export const dashboardSummaryQueryOptions = (month: string) =>
 
       const availableCredit = (creditsRes.data ?? []).reduce(
         (sum, row) => sum + num((row as Record<string, unknown>)["remaining_amount"]),
-        0
+        0,
       );
 
       const today = new Date().toISOString().slice(0, 10);
@@ -189,7 +189,7 @@ export const dashboardSummaryQueryOptions = (month: string) =>
         const buildingFlats = flats.filter((flat) => flat.building_id === building.id);
         const buildingRecords = records.filter((row) => row.building_id === building.id);
         const occupiedCount = buildingFlats.filter(
-          (flat) => flat.occupancy_status === "occupied"
+          (flat) => flat.occupancy_status === "occupied",
         ).length;
         return {
           id: building.id,

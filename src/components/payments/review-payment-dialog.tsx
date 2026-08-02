@@ -97,9 +97,7 @@ export function ReviewPaymentDialog({
         ) : null}
 
         <div className="space-y-2">
-          <Label htmlFor="review-note">
-            Reviewer note{noteRequired ? "" : " (optional)"}
-          </Label>
+          <Label htmlFor="review-note">Reviewer note{noteRequired ? "" : " (optional)"}</Label>
           <Textarea
             id="review-note"
             value={note}

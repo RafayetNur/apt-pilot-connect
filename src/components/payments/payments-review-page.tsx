@@ -36,15 +36,17 @@ import {
 } from "@/lib/payments";
 import { formatMonth } from "@/lib/rent";
 
-const statusVariant: Record<VerificationStatus, "default" | "secondary" | "destructive" | "outline"> =
-  {
-    verified: "default",
-    pending: "secondary",
-    rejected: "destructive",
-    correction_requested: "outline",
-    withdrawn: "outline",
-    cancelled: "outline",
-  };
+const statusVariant: Record<
+  VerificationStatus,
+  "default" | "secondary" | "destructive" | "outline"
+> = {
+  verified: "default",
+  pending: "secondary",
+  rejected: "destructive",
+  correction_requested: "outline",
+  withdrawn: "outline",
+  cancelled: "outline",
+};
 
 export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
   const queryClient = useQueryClient();
@@ -87,10 +89,10 @@ export function PaymentsReviewPage({ role }: { role: "owner" | "manager" }) {
         variables.action === "cancel"
           ? "Submission cancelled. The tenant can submit a new payment."
           : variables.action === "verify"
-          ? "Payment verified and applied to the rent record."
-          : variables.action === "reject"
-            ? "Payment rejected."
-            : "Correction requested from the tenant."
+            ? "Payment verified and applied to the rent record."
+            : variables.action === "reject"
+              ? "Payment rejected."
+              : "Correction requested from the tenant.",
       );
       await invalidate();
     },

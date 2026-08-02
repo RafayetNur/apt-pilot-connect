@@ -6,12 +6,7 @@ export const PROOF_BUCKET = "payment-proofs";
 
 export type PaymentMethod = "bkash" | "nagad" | "bank_transfer" | "cash";
 export type VerificationStatus =
-  | "pending"
-  | "verified"
-  | "rejected"
-  | "correction_requested"
-  | "withdrawn"
-  | "cancelled";
+  "pending" | "verified" | "rejected" | "correction_requested" | "withdrawn" | "cancelled";
 
 export const paymentMethodLabel: Record<PaymentMethod, string> = {
   bkash: "bKash",
@@ -300,9 +295,7 @@ export async function withdrawPayment(paymentId: string, reason: string) {
 }
 
 export async function createProofSignedUrl(path: string) {
-  const { data, error } = await supabase.storage
-    .from(PROOF_BUCKET)
-    .createSignedUrl(path, 60 * 10);
+  const { data, error } = await supabase.storage.from(PROOF_BUCKET).createSignedUrl(path, 60 * 10);
   if (error) throw new Error(`Could not open the payment proof: ${error.message}`);
   return data.signedUrl;
 }

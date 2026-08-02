@@ -95,9 +95,7 @@ export const rentRecordsQueryOptions = (filters: RentFilters) =>
     queryFn: async (): Promise<RentRow[]> => {
       let query = supabase
         .from("rent_records")
-        .select(
-          "*, buildings(name), flats(flat_number), profiles(full_name)"
-        )
+        .select("*, buildings(name), flats(flat_number), profiles(full_name)")
         .order("billing_month", { ascending: false });
 
       if (filters.buildingId !== "all") query = query.eq("building_id", filters.buildingId);
@@ -127,11 +125,9 @@ export const myRentRecordsQueryOptions = (userId: string | undefined) =>
         total_paid: Number((row as Record<string, unknown>)["total_paid"] ?? 0),
         remaining_due: Number((row as Record<string, unknown>)["remaining_due"] ?? 0),
         individual_charges_total: Number(
-          (row as Record<string, unknown>)["individual_charges_total"] ?? 0
+          (row as Record<string, unknown>)["individual_charges_total"] ?? 0,
         ),
-        shared_charges_total: Number(
-          (row as Record<string, unknown>)["shared_charges_total"] ?? 0
-        ),
+        shared_charges_total: Number((row as Record<string, unknown>)["shared_charges_total"] ?? 0),
         total_payable: Number((row as Record<string, unknown>)["total_payable"] ?? 0),
       }));
     },

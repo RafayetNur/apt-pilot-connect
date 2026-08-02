@@ -232,7 +232,7 @@ function TenantDashboard() {
   const lastReview = currentPayments.find(
     (payment) =>
       payment.verification_status === "rejected" ||
-      payment.verification_status === "correction_requested"
+      payment.verification_status === "correction_requested",
   );
 
   const submitMutation = useMutation({
@@ -381,8 +381,8 @@ function TenantDashboard() {
                       {formatMonth(bill.billing_month)}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Payable {formatRent(bill.total_payable)} · Paid {formatRent(bill.total_paid)} ·
-                      Remaining {formatRent(bill.remaining_due)}
+                      Payable {formatRent(bill.total_payable)} · Paid {formatRent(bill.total_paid)}{" "}
+                      · Remaining {formatRent(bill.remaining_due)}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -393,7 +393,7 @@ function TenantDashboard() {
                     !payments.some(
                       (payment) =>
                         payment.rent_record_id === bill.id &&
-                        payment.verification_status === "pending"
+                        payment.verification_status === "pending",
                     ) ? (
                       <Button size="sm" variant="outline" onClick={() => setSubmitFor(bill)}>
                         Submit payment

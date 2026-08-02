@@ -33,13 +33,7 @@ const statusVariant: Record<ApprovalStatus, "default" | "secondary" | "destructi
   rejected: "destructive",
 };
 
-export function AdjustmentsSection({
-  buildingId,
-  month,
-}: {
-  buildingId: string;
-  month: string;
-}) {
+export function AdjustmentsSection({ buildingId, month }: { buildingId: string; month: string }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
@@ -76,7 +70,9 @@ export function AdjustmentsSection({
       }),
     onSuccess: async () => {
       setCreateOpen(false);
-      toast.success("Adjustment created. It is pending approval and not yet in the payable amount.");
+      toast.success(
+        "Adjustment created. It is pending approval and not yet in the payable amount.",
+      );
       await invalidate();
     },
     onError: (err: Error) => toast.error(err.message),
@@ -97,7 +93,7 @@ export function AdjustmentsSection({
       toast.success(
         variables.action === "approve"
           ? "Adjustment approved and applied to the monthly total."
-          : "Adjustment rejected."
+          : "Adjustment rejected.",
       );
       await invalidate();
     },

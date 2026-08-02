@@ -187,8 +187,8 @@ export function AdjustmentFormDialog({
             />
             {target ? (
               <p className="text-xs text-muted-foreground">
-                {formatMonth(target.billingMonth)} bill · payable {formatRent(target.totalPayable)} ·
-                verified paid {formatRent(target.totalPaid)} · remaining{" "}
+                {formatMonth(target.billingMonth)} bill · payable {formatRent(target.totalPayable)}{" "}
+                · verified paid {formatRent(target.totalPaid)} · remaining{" "}
                 {formatRent(target.remainingDue)}
                 {preview !== null ? ` → revised payable ${formatRent(Math.max(preview, 0))}` : ""}
               </p>

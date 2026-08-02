@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Building2, LogOut, Menu, User as UserIcon } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { dashboardPathFor, roleLabel, type Profile } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 export function BrandMark() {
   return (

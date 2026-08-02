@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
 import { Route as AuthenticatedOwnerDashboardRouteImport } from './routes/_authenticated/owner/dashboard'
+import { Route as AuthenticatedOwnerRentRouteImport } from './routes/_authenticated/owner/rent'
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
@@ -51,6 +52,11 @@ const AuthenticatedOwnerDashboardRoute =
     path: '/owner/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOwnerRentRoute = AuthenticatedOwnerRentRouteImport.update({
+  id: '/owner/rent',
+  path: '/owner/rent',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTenantDashboardRoute =
   AuthenticatedTenantDashboardRouteImport.update({
     id: '/tenant/dashboard',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/_authenticated/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/_authenticated/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/manager/dashboard'
     | '/owner/dashboard'
+    | '/owner/rent'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/manager/dashboard'
     | '/owner/dashboard'
+    | '/owner/rent'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/_authenticated/manager/dashboard'
     | '/_authenticated/owner/dashboard'
+    | '/_authenticated/owner/rent'
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/owner/buildings/$buildingId'
     | '/_authenticated/owner/flats/$buildingId'
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOwnerDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/rent': {
+      id: '/_authenticated/owner/rent'
+      path: '/owner/rent'
+      fullPath: '/owner/rent'
+      preLoaderRoute: typeof AuthenticatedOwnerRentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tenant/dashboard': {
       id: '/_authenticated/tenant/dashboard'
       path: '/tenant/dashboard'
@@ -233,6 +252,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
   AuthenticatedOwnerDashboardRoute: typeof AuthenticatedOwnerDashboardRoute
+  AuthenticatedOwnerRentRoute: typeof AuthenticatedOwnerRentRoute
   AuthenticatedTenantDashboardRoute: typeof AuthenticatedTenantDashboardRoute
   AuthenticatedOwnerBuildingsBuildingIdRoute: typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   AuthenticatedOwnerFlatsBuildingIdRoute: typeof AuthenticatedOwnerFlatsBuildingIdRoute
@@ -242,6 +262,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
   AuthenticatedOwnerDashboardRoute: AuthenticatedOwnerDashboardRoute,
+  AuthenticatedOwnerRentRoute: AuthenticatedOwnerRentRoute,
   AuthenticatedTenantDashboardRoute: AuthenticatedTenantDashboardRoute,
   AuthenticatedOwnerBuildingsBuildingIdRoute:
     AuthenticatedOwnerBuildingsBuildingIdRoute,

@@ -5,6 +5,64 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { formatRent, myFlatQueryOptions, occupancyLabel } from "@/lib/flats";
+import {
+  formatDate,
+  formatMonth,
+  myRentRecordsQueryOptions,
+  paymentStatusLabel,
+  type PaymentStatus,
+} from "@/lib/rent";
+
+const statusVariant: Record<PaymentStatus, "default" | "secondary" | "destructive"> = {
+  paid: "default",
+  unpaid: "secondary",
+  overdue: "destructive",
+};
+
+function MyRentSection() {
+  const { user } = useAuth();
+  const { data, isLoading, error } = useQuery(myRentRecordsQueryOptions(user?.id));
+  const rows = data ?? [];
+
+  return (
+    <section className="panel mt-6 p-6 sm:p-8">
+      <h2 className="font-display text-lg font-semibold">Your rent bills</h2>
+      {isLoading ? (
+        <p className="mt-3 text-sm text-muted-foreground">Loading your rent bills…</p>
+      ) : error ? (
+        <p className="mt-3 text-sm text-destructive">
+          Could not load your rent bills: {(error as Error).message}
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          No rent bill has been generated for this month.
+        </p>
+      ) : (
+        <ul className="mt-4 grid gap-3">
+          {rows.map((row) => (
+            <li key={row.id} className="rounded-xl border border-border/60 bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-display text-base font-semibold">
+                    {formatMonth(row.billing_month)}
+                  </p>
+                  <p className="mt-1 text-sm font-medium">{formatRent(row.base_rent)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Due {formatDate(row.due_date)}
+                  </p>
+                </div>
+                <Badge variant={statusVariant[row.payment_status]}>
+                  {paymentStatusLabel[row.payment_status]}
+                </Badge>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 
 export const Route = createFileRoute("/_authenticated/tenant/dashboard")({
   head: () => ({
@@ -84,6 +142,7 @@ function TenantDashboard() {
       intro="This is your tenant workspace. Your flat details, notices and requests will live here."
     >
       <AssignedFlatSection />
+      <MyRentSection />
     </DashboardShell>
   );
 }

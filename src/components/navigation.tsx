@@ -31,6 +31,7 @@ const navByRole = {
   owner: [
     { label: "Dashboard", to: "/owner/dashboard" },
     { label: "Buildings", to: "/owner/buildings" },
+    { label: "Rent", to: "/owner/rent" },
   ],
   manager: [{ label: "Dashboard", to: "/manager/dashboard" }],
   tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],

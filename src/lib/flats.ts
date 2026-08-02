@@ -82,3 +82,79 @@ export async function deleteFlat(id: string) {
 export function formatRent(value: number) {
   return `৳${value.toLocaleString("en-BD", { maximumFractionDigits: 2 })}`;
 }
+
+export type TenantProfile = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+};
+
+export const tenantProfilesQueryOptions = () =>
+  queryOptions({
+    queryKey: ["tenant-profiles"],
+    queryFn: async (): Promise<TenantProfile[]> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .eq("role", "tenant")
+        .order("full_name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as TenantProfile[];
+    },
+  });
+
+export const flatTenantsQueryOptions = (tenantIds: string[]) =>
+  queryOptions({
+    queryKey: ["flat-tenants", [...tenantIds].sort().join(",")],
+    queryFn: async (): Promise<Record<string, TenantProfile>> => {
+      if (tenantIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .in("id", tenantIds);
+      if (error) throw error;
+      const map: Record<string, TenantProfile> = {};
+      for (const row of (data ?? []) as TenantProfile[]) map[row.id] = row;
+      return map;
+    },
+  });
+
+export async function assignTenant(flatId: string, tenantId: string) {
+  const { error } = await supabase
+    .from("flats")
+    .update({ tenant_id: tenantId, occupancy_status: "occupied" })
+    .eq("id", flatId);
+  if (error) throw friendlyError(error.message);
+}
+
+export async function removeTenant(flatId: string) {
+  const { error } = await supabase
+    .from("flats")
+    .update({ tenant_id: null, occupancy_status: "vacant" })
+    .eq("id", flatId);
+  if (error) throw friendlyError(error.message);
+}
+
+export type MyFlat = {
+  flat: Flat;
+  building: { name: string; address: string } | null;
+};
+
+export const myFlatQueryOptions = (userId: string | undefined) =>
+  queryOptions({
+    queryKey: ["my-flat", userId ?? "none"],
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<MyFlat | null> => {
+      const { data, error } = await supabase
+        .from("flats")
+        .select("*, buildings(name, address)")
+        .eq("tenant_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const row = data as Record<string, unknown>;
+      const building = (row["buildings"] as { name: string; address: string } | null) ?? null;
+      return { flat: normalizeRow(row), building };
+    },
+  });

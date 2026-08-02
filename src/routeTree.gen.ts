@@ -14,7 +14,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
+import { Route as AuthenticatedManagerPaymentsRouteImport } from './routes/_authenticated/manager/payments'
 import { Route as AuthenticatedOwnerDashboardRouteImport } from './routes/_authenticated/owner/dashboard'
+import { Route as AuthenticatedOwnerPaymentsRouteImport } from './routes/_authenticated/owner/payments'
 import { Route as AuthenticatedOwnerRentRouteImport } from './routes/_authenticated/owner/rent'
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
@@ -46,10 +48,22 @@ const AuthenticatedManagerDashboardRoute =
     path: '/manager/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedManagerPaymentsRoute =
+  AuthenticatedManagerPaymentsRouteImport.update({
+    id: '/manager/payments',
+    path: '/manager/payments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOwnerDashboardRoute =
   AuthenticatedOwnerDashboardRouteImport.update({
     id: '/owner/dashboard',
     path: '/owner/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOwnerPaymentsRoute =
+  AuthenticatedOwnerPaymentsRouteImport.update({
+    id: '/owner/payments',
+    path: '/owner/payments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOwnerRentRoute = AuthenticatedOwnerRentRouteImport.update({
@@ -87,7 +101,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
+  '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/owner/payments': typeof AuthenticatedOwnerPaymentsRoute
   '/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
@@ -99,7 +115,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
+  '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/owner/payments': typeof AuthenticatedOwnerPaymentsRoute
   '/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
@@ -113,7 +131,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
+  '/_authenticated/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/_authenticated/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
+  '/_authenticated/owner/payments': typeof AuthenticatedOwnerPaymentsRoute
   '/_authenticated/owner/rent': typeof AuthenticatedOwnerRentRoute
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
@@ -127,7 +147,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/manager/dashboard'
+    | '/manager/payments'
     | '/owner/dashboard'
+    | '/owner/payments'
     | '/owner/rent'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
@@ -139,7 +161,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/manager/dashboard'
+    | '/manager/payments'
     | '/owner/dashboard'
+    | '/owner/payments'
     | '/owner/rent'
     | '/tenant/dashboard'
     | '/owner/buildings/$buildingId'
@@ -152,7 +176,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/_authenticated/manager/dashboard'
+    | '/_authenticated/manager/payments'
     | '/_authenticated/owner/dashboard'
+    | '/_authenticated/owner/payments'
     | '/_authenticated/owner/rent'
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/owner/buildings/$buildingId'
@@ -204,11 +230,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManagerDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/manager/payments': {
+      id: '/_authenticated/manager/payments'
+      path: '/manager/payments'
+      fullPath: '/manager/payments'
+      preLoaderRoute: typeof AuthenticatedManagerPaymentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/owner/dashboard': {
       id: '/_authenticated/owner/dashboard'
       path: '/owner/dashboard'
       fullPath: '/owner/dashboard'
       preLoaderRoute: typeof AuthenticatedOwnerDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/owner/payments': {
+      id: '/_authenticated/owner/payments'
+      path: '/owner/payments'
+      fullPath: '/owner/payments'
+      preLoaderRoute: typeof AuthenticatedOwnerPaymentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/owner/rent': {
@@ -251,7 +291,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
+  AuthenticatedManagerPaymentsRoute: typeof AuthenticatedManagerPaymentsRoute
   AuthenticatedOwnerDashboardRoute: typeof AuthenticatedOwnerDashboardRoute
+  AuthenticatedOwnerPaymentsRoute: typeof AuthenticatedOwnerPaymentsRoute
   AuthenticatedOwnerRentRoute: typeof AuthenticatedOwnerRentRoute
   AuthenticatedTenantDashboardRoute: typeof AuthenticatedTenantDashboardRoute
   AuthenticatedOwnerBuildingsBuildingIdRoute: typeof AuthenticatedOwnerBuildingsBuildingIdRoute
@@ -261,7 +303,9 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
+  AuthenticatedManagerPaymentsRoute: AuthenticatedManagerPaymentsRoute,
   AuthenticatedOwnerDashboardRoute: AuthenticatedOwnerDashboardRoute,
+  AuthenticatedOwnerPaymentsRoute: AuthenticatedOwnerPaymentsRoute,
   AuthenticatedOwnerRentRoute: AuthenticatedOwnerRentRoute,
   AuthenticatedTenantDashboardRoute: AuthenticatedTenantDashboardRoute,
   AuthenticatedOwnerBuildingsBuildingIdRoute:

@@ -1,0 +1,14 @@
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_view_building(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_review_building(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_review_tenant(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.review_rent_payment(uuid, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.prevent_role_change() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.rent_records_set_remaining() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_view_building(uuid, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_review_building(uuid, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_review_tenant(uuid, uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.review_rent_payment(uuid, text, text) TO authenticated, service_role;

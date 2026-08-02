@@ -147,3 +147,17 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
 }
+
+@media print {
+  body:has(#aptpilot-receipt) > *:not(:has(#aptpilot-receipt)) {
+    display: none !important;
+  }
+
+  #aptpilot-receipt {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    border: 0;
+    box-shadow: none;
+  }
+}

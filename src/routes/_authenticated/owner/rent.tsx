@@ -33,7 +33,6 @@ import {
   generateMonthlyRent,
   paymentStatusLabel,
   rentRecordsQueryOptions,
-  updateRentStatus,
   type PaymentStatus,
   type RentFilters,
 } from "@/lib/rent";
@@ -59,8 +58,9 @@ export const Route = createFileRoute("/_authenticated/owner/rent")({
   component: OwnerRentPage,
 });
 
-const statusVariant: Record<PaymentStatus, "default" | "secondary" | "destructive"> = {
+const statusVariant: Record<PaymentStatus, "default" | "secondary" | "destructive" | "outline"> = {
   paid: "default",
+  partially_paid: "outline",
   unpaid: "secondary",
   overdue: "destructive",
 };
@@ -81,12 +81,8 @@ function OwnerRentPage() {
 
   const summary = useMemo(() => {
     const expected = rows.reduce((sum, row) => sum + row.base_rent, 0);
-    const paid = rows
-      .filter((row) => row.payment_status === "paid")
-      .reduce((sum, row) => sum + row.base_rent, 0);
-    const unpaid = rows
-      .filter((row) => row.payment_status !== "paid")
-      .reduce((sum, row) => sum + row.base_rent, 0);
+    const paid = rows.reduce((sum, row) => sum + row.total_paid, 0);
+    const unpaid = rows.reduce((sum, row) => sum + row.remaining_due, 0);
     const flats = new Set(rows.map((row) => row.flat_id)).size;
     return { expected, paid, unpaid, flats };
   }, [rows]);
@@ -112,23 +108,14 @@ function OwnerRentPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: PaymentStatus }) =>
-      updateRentStatus(id, status),
-    onSuccess: async () => {
-      toast.success("Payment status updated");
-      await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
   return (
     <OwnerShell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold">Rent</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Generate monthly rent for occupied flats and track payment status.
+            Generate monthly rent for occupied flats. Payment status changes only through verified
+            payments on the Payments page.
           </p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
@@ -139,8 +126,8 @@ function OwnerRentPage() {
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard label="Total rent expected" value={formatRent(summary.expected)} />
-        <SummaryCard label="Total paid" value={formatRent(summary.paid)} />
-        <SummaryCard label="Total unpaid" value={formatRent(summary.unpaid)} />
+        <SummaryCard label="Total paid (verified)" value={formatRent(summary.paid)} />
+        <SummaryCard label="Total remaining due" value={formatRent(summary.unpaid)} />
         <SummaryCard label="Occupied flats billed" value={String(summary.flats)} />
       </div>
 
@@ -190,6 +177,7 @@ function OwnerRentPage() {
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="partially_paid">Partially paid</SelectItem>
                 <SelectItem value="unpaid">Unpaid</SelectItem>
                 <SelectItem value="overdue">Overdue</SelectItem>
               </SelectContent>
@@ -223,9 +211,10 @@ function OwnerRentPage() {
                     <TableHead>Flat</TableHead>
                     <TableHead>Tenant</TableHead>
                     <TableHead>Base rent</TableHead>
+                    <TableHead>Paid</TableHead>
+                    <TableHead>Remaining</TableHead>
                     <TableHead>Due date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -238,31 +227,13 @@ function OwnerRentPage() {
                       <TableCell>{row.flat_number}</TableCell>
                       <TableCell>{row.tenant_name}</TableCell>
                       <TableCell>{formatRent(row.base_rent)}</TableCell>
+                      <TableCell>{formatRent(row.total_paid)}</TableCell>
+                      <TableCell>{formatRent(row.remaining_due)}</TableCell>
                       <TableCell>{formatDate(row.due_date)}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariant[row.payment_status]}>
                           {paymentStatusLabel[row.payment_status]}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Select
-                          value={row.payment_status}
-                          onValueChange={(value) =>
-                            statusMutation.mutate({ id: row.id, status: value as PaymentStatus })
-                          }
-                        >
-                          <SelectTrigger
-                            className="ml-auto w-32"
-                            aria-label={`Change status for flat ${row.flat_number}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="unpaid">Unpaid</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="overdue">Overdue</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -287,31 +258,12 @@ function OwnerRentPage() {
                       {paymentStatusLabel[row.payment_status]}
                     </Badge>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{formatRent(row.base_rent)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Due {formatDate(row.due_date)}
-                      </p>
-                    </div>
-                    <Select
-                      value={row.payment_status}
-                      onValueChange={(value) =>
-                        statusMutation.mutate({ id: row.id, status: value as PaymentStatus })
-                      }
-                    >
-                      <SelectTrigger
-                        className="w-32"
-                        aria-label={`Change status for flat ${row.flat_number}`}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unpaid">Unpaid</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="mt-3 grid gap-1 text-sm">
+                    <p className="font-medium">{formatRent(row.base_rent)} base rent</p>
+                    <p className="text-muted-foreground">
+                      Paid {formatRent(row.total_paid)} · Remaining {formatRent(row.remaining_due)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Due {formatDate(row.due_date)}</p>
                   </div>
                 </li>
               ))}

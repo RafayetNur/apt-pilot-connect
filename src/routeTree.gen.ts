@@ -16,6 +16,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
 import { Route as AuthenticatedOwnerDashboardRouteImport } from './routes/_authenticated/owner/dashboard'
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
+import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,6 +55,12 @@ const AuthenticatedTenantDashboardRoute =
     path: '/tenant/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOwnerBuildingsIndexRoute =
+  AuthenticatedOwnerBuildingsIndexRouteImport.update({
+    id: '/owner/buildings/',
+    path: '/owner/buildings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
+  '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
+  '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/_authenticated/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
+  '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
     | '/manager/dashboard'
     | '/owner/dashboard'
     | '/tenant/dashboard'
+    | '/owner/buildings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,6 +109,7 @@ export interface FileRouteTypes {
     | '/manager/dashboard'
     | '/owner/dashboard'
     | '/tenant/dashboard'
+    | '/owner/buildings'
   id:
     | '__root__'
     | '/'
@@ -107,6 +119,7 @@ export interface FileRouteTypes {
     | '/_authenticated/manager/dashboard'
     | '/_authenticated/owner/dashboard'
     | '/_authenticated/tenant/dashboard'
+    | '/_authenticated/owner/buildings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/owner/buildings/': {
+      id: '/_authenticated/owner/buildings/'
+      path: '/owner/buildings'
+      fullPath: '/owner/buildings/'
+      preLoaderRoute: typeof AuthenticatedOwnerBuildingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -174,12 +194,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
   AuthenticatedOwnerDashboardRoute: typeof AuthenticatedOwnerDashboardRoute
   AuthenticatedTenantDashboardRoute: typeof AuthenticatedTenantDashboardRoute
+  AuthenticatedOwnerBuildingsIndexRoute: typeof AuthenticatedOwnerBuildingsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
   AuthenticatedOwnerDashboardRoute: AuthenticatedOwnerDashboardRoute,
   AuthenticatedTenantDashboardRoute: AuthenticatedTenantDashboardRoute,
+  AuthenticatedOwnerBuildingsIndexRoute: AuthenticatedOwnerBuildingsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

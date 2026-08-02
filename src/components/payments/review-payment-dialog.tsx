@@ -14,10 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatRent } from "@/lib/flats";
 import type { PaymentRow, ReviewAction } from "@/lib/payments";
 
-const actionTitle: Record<ReviewAction, string> = {
+export type PaymentDialogAction = ReviewAction | "cancel";
+
+const actionTitle: Record<PaymentDialogAction, string> = {
   verify: "Verify payment",
   reject: "Reject payment",
   correction_requested: "Request correction",
+  cancel: "Cancel submission",
 };
 
 export function ReviewPaymentDialog({
@@ -28,7 +31,7 @@ export function ReviewPaymentDialog({
   onConfirm,
 }: {
   payment: PaymentRow | null;
-  action: ReviewAction | null;
+  action: PaymentDialogAction | null;
   saving: boolean;
   onClose: () => void;
   onConfirm: (note: string) => void;
@@ -42,7 +45,8 @@ export function ReviewPaymentDialog({
   }, [payment?.id, action]);
 
   const open = Boolean(payment && action);
-  const noteRequired = action === "reject" || action === "correction_requested";
+  const noteRequired =
+    action === "reject" || action === "correction_requested" || action === "cancel";
 
   const handleConfirm = () => {
     if (noteRequired && !note.trim()) {
@@ -70,6 +74,14 @@ export function ReviewPaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {action === "cancel" ? (
+          <p className="rounded-xl bg-surface p-4 text-sm text-muted-foreground">
+            The submission and its uploaded proof are kept for audit history. Nothing was applied to
+            the rent record, so no total changes. Bill charges become editable again and the tenant
+            can submit a new payment.
+          </p>
+        ) : null}
+
         {action === "verify" && payment ? (
           <div className="space-y-2 rounded-xl bg-surface p-4 text-sm">
             <p>
@@ -95,7 +107,11 @@ export function ReviewPaymentDialog({
             maxLength={500}
             rows={3}
             placeholder={
-              noteRequired ? "Explain what the tenant needs to fix." : "Add a note for the record."
+              action === "cancel"
+                ? "Explain why this submission is cancelled."
+                : noteRequired
+                  ? "Explain what the tenant needs to fix."
+                  : "Add a note for the record."
             }
           />
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

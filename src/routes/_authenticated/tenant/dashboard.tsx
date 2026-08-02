@@ -28,9 +28,17 @@ import {
   paymentMethodLabel,
   submitTenantPayment,
   verificationStatusLabel,
+  withdrawPayment,
   type PaymentRow,
   type VerificationStatus,
 } from "@/lib/payments";
+import {
+  adjustmentCategoryLabel,
+  adjustmentTypeLabel,
+  approvalStatusLabel,
+  myAdjustmentsQueryOptions,
+  type ApprovalStatus,
+} from "@/lib/adjustments";
 import { formatDate, formatMonth, paymentStatusLabel, type PaymentStatus } from "@/lib/rent";
 
 const statusVariant: Record<PaymentStatus, "default" | "secondary" | "destructive" | "outline"> = {
@@ -48,6 +56,14 @@ const verificationVariant: Record<
   pending: "secondary",
   rejected: "destructive",
   correction_requested: "outline",
+  withdrawn: "outline",
+  cancelled: "outline",
+};
+
+const approvalVariant: Record<ApprovalStatus, "default" | "secondary" | "destructive"> = {
+  approved: "default",
+  pending: "secondary",
+  rejected: "destructive",
 };
 
 export const Route = createFileRoute("/_authenticated/tenant/dashboard")({
@@ -117,9 +133,13 @@ function BillBreakdown({ bill }: { bill: TenantMonthlyBill }) {
 function PaymentHistoryItem({
   payment,
   onReceipt,
+  onWithdraw,
+  withdrawing,
 }: {
   payment: PaymentRow;
   onReceipt: (payment: PaymentRow) => void;
+  onWithdraw: (payment: PaymentRow) => void;
+  withdrawing: boolean;
 }) {
   const openProof = async () => {
     if (!payment.payment_proof_url) return;
@@ -171,6 +191,16 @@ function PaymentHistoryItem({
             View receipt
           </Button>
         ) : null}
+        {payment.verification_status === "pending" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={withdrawing}
+            onClick={() => onWithdraw(payment)}
+          >
+            {withdrawing ? "Withdrawing…" : "Withdraw submission"}
+          </Button>
+        ) : null}
       </div>
     </li>
   );
@@ -184,6 +214,7 @@ function TenantDashboard() {
   const billsQuery = useQuery(myMonthlyBillsQueryOptions(user?.id));
   const paymentsQuery = useQuery(myPaymentsQueryOptions(user?.id));
   const creditsQuery = useQuery(myCreditsQueryOptions(user?.id));
+  const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id));
 
   const [submitFor, setSubmitFor] = useState<TenantMonthlyBill | null>(null);
   const [receipt, setReceipt] = useState<PaymentRow | null>(null);
@@ -234,6 +265,19 @@ function TenantDashboard() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const withdrawMutation = useMutation({
+    mutationFn: async (payment: PaymentRow) => withdrawPayment(payment.id, ""),
+    onSuccess: async () => {
+      toast.success("Submission withdrawn. You can submit a corrected payment now.");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["my-rent-payments"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-monthly-bills"] }),
+      ]);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const adjustments = adjustmentsQuery.data ?? [];
   const flat = flatQuery.data;
 
   return (
@@ -375,7 +419,57 @@ function TenantDashboard() {
         ) : (
           <ul className="grid gap-2">
             {payments.map((payment) => (
-              <PaymentHistoryItem key={payment.id} payment={payment} onReceipt={setReceipt} />
+              <PaymentHistoryItem
+                key={payment.id}
+                payment={payment}
+                onReceipt={setReceipt}
+                onWithdraw={(row) => withdrawMutation.mutate(row)}
+                withdrawing={
+                  withdrawMutation.isPending && withdrawMutation.variables?.id === payment.id
+                }
+              />
+            ))}
+          </ul>
+        )}
+      </DashboardSection>
+
+      <DashboardSection
+        title="Bill adjustments"
+        description="Late or corrected charges. Only approved adjustments change what you owe."
+      >
+        {adjustments.length === 0 ? (
+          <EmptyState>No adjustment has been made to your bills.</EmptyState>
+        ) : (
+          <ul className="grid gap-2">
+            {adjustments.map((row) => (
+              <li key={row.id} className="rounded-xl border border-border/60 bg-card p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {row.adjustment_type === "debit" ? "+" : "−"}
+                      {formatRent(row.amount)} · {adjustmentCategoryLabel[row.category]} (
+                      {adjustmentTypeLabel[row.adjustment_type]})
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatMonth(row.original_billing_month)} bill · posted to{" "}
+                      {formatMonth(row.posted_billing_month)}
+                    </p>
+                  </div>
+                  <Badge variant={approvalVariant[row.approval_status]}>
+                    {approvalStatusLabel[row.approval_status]}
+                  </Badge>
+                </div>
+                <p className="mt-3 rounded-lg bg-surface p-3 text-sm">
+                  <span className="text-muted-foreground">Reason: </span>
+                  {row.reason}
+                </p>
+                {row.reviewer_note ? (
+                  <p className="mt-2 rounded-lg bg-surface p-3 text-sm">
+                    <span className="text-muted-foreground">Reviewer note: </span>
+                    {row.reviewer_note}
+                  </p>
+                ) : null}
+              </li>
             ))}
           </ul>
         )}

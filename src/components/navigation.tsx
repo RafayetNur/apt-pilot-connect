@@ -1,0 +1,165 @@
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Building2, LogOut, Menu, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { dashboardPathFor, roleLabel, type Profile } from "@/hooks/useAuth";
+
+export function BrandMark() {
+  return (
+    <Link to="/" className="flex items-center gap-2">
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <Building2 className="h-5 w-5" />
+      </span>
+      <span className="font-display text-lg font-semibold tracking-tight">AptPilot</span>
+    </Link>
+  );
+}
+
+const navByRole = {
+  owner: [{ label: "Dashboard", to: "/owner/dashboard" }],
+  manager: [{ label: "Dashboard", to: "/manager/dashboard" }],
+  tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],
+} as const;
+
+export function ProfileMenu({ profile, email }: { profile: Profile | null; email: string }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const initials = (profile?.full_name || email || "?")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
+  async function handleSignOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/login", replace: true });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-full border border-border/60 bg-card py-1 pl-1 pr-3 text-sm transition-colors hover:bg-muted"
+          aria-label="Open profile menu"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+            {initials || <UserIcon className="h-4 w-4" />}
+          </span>
+          <span className="hidden max-w-[10rem] truncate sm:inline">
+            {profile?.full_name || email}
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="space-y-1">
+          <p className="truncate text-sm font-semibold">{profile?.full_name || "Your account"}</p>
+          <p className="truncate text-xs font-normal text-muted-foreground">{email}</p>
+          {profile ? (
+            <p className="text-xs font-normal text-muted-foreground">
+              Role: {roleLabel[profile.role]}
+            </p>
+          ) : null}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {profile ? (
+          <DropdownMenuItem asChild>
+            <Link to={dashboardPathFor(profile.role)}>Go to dashboard</Link>
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem onSelect={() => void handleSignOut()}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Log out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function AppHeader({ profile, email }: { profile: Profile | null; email: string }) {
+  const [open, setOpen] = useState(false);
+  const links = profile ? navByRole[profile.role] : [];
+
+  return (
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-6">
+          <BrandMark />
+          <nav className="hidden items-center gap-1 md:flex">
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                activeProps={{ className: "bg-accent text-accent-foreground" }}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="flex items-center gap-2">
+          <ProfileMenu profile={profile} email={email} />
+          {links.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label="Toggle navigation"
+              onClick={() => setOpen((value) => !value)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      {open && links.length > 0 ? (
+        <nav className="border-t border-border/60 bg-card px-4 py-2 md:hidden">
+          {links.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setOpen(false)}
+              className="block rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+    </header>
+  );
+}
+
+export function PublicHeader() {
+  return (
+    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+        <BrandMark />
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost">
+            <Link to="/login">Log in</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/register">Create account</Link>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}

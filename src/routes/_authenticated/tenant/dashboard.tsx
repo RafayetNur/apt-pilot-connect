@@ -342,6 +342,10 @@ function TenantDashboard() {
                 {occupancyLabel[flat.flat.occupancy_status]}
               </Badge>
             ) : null}
+            {isFinalized(current.building_id, current.billing_month) ? (
+              <Badge variant="outline">Month finalized</Badge>
+            ) : null}
+
             <span className="text-sm text-muted-foreground">
               Advance credit available: {formatRent(availableCredit)}
             </span>

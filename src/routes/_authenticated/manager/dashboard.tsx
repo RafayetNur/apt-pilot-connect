@@ -107,9 +107,21 @@ function ManagerDashboard() {
           </div>
 
           <DashboardSection
+            title="Monthly closing status"
+            description={`Read-only. Only the building owner can close or reopen ${formatMonth(`${month}-01`)}.`}
+          >
+            {data.buildings.length === 0 ? (
+              <EmptyState>No building has been assigned to you yet.</EmptyState>
+            ) : (
+              <ClosureStatusStrip month={month} buildings={data.buildings} />
+            )}
+          </DashboardSection>
+
+          <DashboardSection
             title="Building-wise summary"
             description={`Assigned buildings for ${formatMonth(`${month}-01`)}.`}
           >
+
             {data.buildingSummaries.length === 0 ? (
               <EmptyState>No building has been assigned to you yet.</EmptyState>
             ) : (

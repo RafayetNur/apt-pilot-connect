@@ -412,7 +412,10 @@ export function BillsPage({ role }: { role: AppRole }) {
         )}
       </section>
 
-      <AdjustmentsSection buildingId={buildingId} month={month} />
+      <AdjustmentsSection buildingId={buildingId} month={month} monthClosed={monthClosed} />
+
+      <MonthClosingSection buildingId={buildingId} month={month} canManage={role === "owner"} />
+
 
       <SharedChargeDialog
         open={sharedOpen}

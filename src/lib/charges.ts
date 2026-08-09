@@ -114,7 +114,7 @@ export const billEntryRowsQueryOptions = (buildingId: string, month: string) =>
       const { data, error } = await supabase
         .from("rent_records")
         .select(
-          "id, building_id, flat_id, tenant_id, billing_month, base_rent, individual_charges_total, shared_charges_total, total_payable, flats(flat_number), profiles(full_name), flat_bill_charges(id, charge_type, amount, description), rent_payments(verification_status)",
+          "id, building_id, flat_id, tenant_id, billing_month, base_rent, individual_charges_total, shared_charges_total, total_payable, flats(flat_number), profiles(full_name), flat_bill_charges(id, charge_type, amount, description), rent_payments!rent_payments_rent_record_id_fkey(verification_status)",
         )
         .eq("building_id", buildingId)
         .eq("billing_month", monthToDate(month));

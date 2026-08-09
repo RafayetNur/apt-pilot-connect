@@ -344,9 +344,13 @@ export function BillsPage({ role }: { role: AppRole }) {
               this month: {formatRent(sharedTotal)}
             </p>
           </div>
-          <Button onClick={() => setSharedOpen(true)} disabled={!buildingId || !month}>
+          <Button
+            onClick={() => setSharedOpen(true)}
+            disabled={!buildingId || !month || monthClosed}
+          >
             Add shared charge
           </Button>
+
         </div>
 
         {sharedQuery.isLoading ? (

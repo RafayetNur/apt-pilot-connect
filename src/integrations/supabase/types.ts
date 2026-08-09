@@ -421,6 +421,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rent_payments_record_scope_fkey"
+            columns: ["rent_record_id", "building_id", "flat_id", "tenant_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id", "building_id", "flat_id", "tenant_id"]
+          },
+          {
             foreignKeyName: "rent_payments_rent_record_id_fkey"
             columns: ["rent_record_id"]
             isOneToOne: false

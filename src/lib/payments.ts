@@ -77,7 +77,7 @@ export type TenantCredit = {
 };
 
 const SELECT_WITH_JOINS =
-  "*, buildings(name), flats(flat_number), tenant:profiles!rent_payments_tenant_id_fkey(full_name, email, phone), reviewer:profiles!rent_payments_verified_by_fkey(full_name), rent_records(billing_month, base_rent, total_paid, remaining_due)";
+  "*, buildings(name), flats(flat_number), tenant:profiles!rent_payments_tenant_id_fkey(full_name, email, phone), reviewer:profiles!rent_payments_verified_by_fkey(full_name), rent_records!rent_payments_rent_record_id_fkey(billing_month, base_rent, total_paid, remaining_due)";
 
 type RawPaymentRow = Record<string, unknown> & {
   buildings?: { name: string } | null;

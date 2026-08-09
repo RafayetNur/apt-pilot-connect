@@ -4,8 +4,10 @@ import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { MonthClosingSection } from "@/components/closings/month-closing-section";
 import { OwnerShell } from "@/components/owner-shell";
 import { GenerateRentDialog, type GenerateRentValues } from "@/components/rent/generate-rent-dialog";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -272,8 +274,18 @@ function OwnerRentPage() {
         )}
       </section>
 
+      {filters.buildingId !== "all" && filters.month ? (
+        <MonthClosingSection buildingId={filters.buildingId} month={filters.month} canManage />
+      ) : (
+        <p className="panel mt-6 p-4 text-sm text-muted-foreground sm:p-6">
+          Select one building and one month above to close, reopen or review the monthly closing
+          status.
+        </p>
+      )}
+
       <GenerateRentDialog
         open={dialogOpen}
+
         onOpenChange={setDialogOpen}
         buildings={buildings ?? []}
         saving={generateMutation.isPending}

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { AdjustmentsSection } from "@/components/bills/adjustments-section";
 import { SharedChargeDialog } from "@/components/bills/shared-charge-dialog";
+import { MonthClosingSection } from "@/components/closings/month-closing-section";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +33,9 @@ import {
 } from "@/lib/charges";
 import { formatRent } from "@/lib/flats";
 import { currentMonthInput, formatMonth } from "@/lib/rent";
+import { describeClosedMonthError, monthClosureQueryOptions } from "@/lib/closings";
 import type { AppRole } from "@/hooks/useAuth";
+
 
 type Draft = {
   amounts: Record<string, string>;
@@ -70,6 +74,9 @@ export function BillsPage({ role }: { role: AppRole }) {
   const rows = rowsQuery.data ?? [];
   const sharedQuery = useQuery(sharedChargesQueryOptions(buildingId, month));
   const sharedCharges = sharedQuery.data ?? [];
+  const closureQuery = useQuery(monthClosureQueryOptions(buildingId, month));
+  const monthClosed = closureQuery.data?.status === "closed";
+
 
   const baseline = useMemo(() => {
     const map: Record<string, Draft> = {};
@@ -114,7 +121,7 @@ export function BillsPage({ role }: { role: AppRole }) {
       await queryClient.invalidateQueries({ queryKey: ["bill-entry-rows"] });
       await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(describeClosedMonthError(error.message)),
   });
 
   const deleteSharedMutation = useMutation({
@@ -125,8 +132,9 @@ export function BillsPage({ role }: { role: AppRole }) {
       await queryClient.invalidateQueries({ queryKey: ["bill-entry-rows"] });
       await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(describeClosedMonthError(error.message)),
   });
+
 
   const updateAmount = (id: string, type: FlatChargeType, value: string) => {
     setDrafts((previous) => {
@@ -206,16 +214,26 @@ export function BillsPage({ role }: { role: AppRole }) {
               {month ? formatMonth(`${month}-01`) : "—"} · {rows.length} billed flat
               {rows.length === 1 ? "" : "s"}
             </p>
+            {monthClosed ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                This month is closed and finalized. Post a bill adjustment to the next open month
+                instead of editing these amounts.
+              </p>
+            ) : null}
           </div>
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={dirtyIds.length === 0 || saveMutation.isPending}
-          >
-            {saveMutation.isPending
-              ? "Saving…"
-              : `Save all${dirtyIds.length > 0 ? ` (${dirtyIds.length})` : ""}`}
-          </Button>
+          <div className="flex items-center gap-2">
+            {monthClosed ? <Badge variant="secondary">Month closed</Badge> : null}
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={dirtyIds.length === 0 || saveMutation.isPending || monthClosed}
+            >
+              {saveMutation.isPending
+                ? "Saving…"
+                : `Save all${dirtyIds.length > 0 ? ` (${dirtyIds.length})` : ""}`}
+            </Button>
+          </div>
         </div>
+
 
         {rowsQuery.isLoading ? (
           <p className="mt-4 text-sm text-muted-foreground">Loading billed flats…</p>
@@ -264,7 +282,8 @@ export function BillsPage({ role }: { role: AppRole }) {
                             inputMode="decimal"
                             aria-label={`${flatChargeLabel[type]} amount for flat ${row.flatNumber}`}
                             value={draft.amounts[type] ?? ""}
-                            disabled={row.locked}
+                            disabled={row.locked || monthClosed}
+
                             onChange={(event) =>
                               updateAmount(row.rentRecordId, type, event.target.value)
                             }
@@ -277,7 +296,7 @@ export function BillsPage({ role }: { role: AppRole }) {
                           aria-label={`Notes for flat ${row.flatNumber}`}
                           value={draft.notes}
                           maxLength={200}
-                          disabled={row.locked}
+                          disabled={row.locked || monthClosed}
                           onChange={(event) => updateNotes(row.rentRecordId, event.target.value)}
                         />
                       </td>
@@ -288,7 +307,14 @@ export function BillsPage({ role }: { role: AppRole }) {
                         </p>
                       </td>
                       <td className="py-2">
-                        {row.locked ? (
+                        {monthClosed ? (
+                          <div className="max-w-[12rem]">
+                            <Badge variant="secondary">Finalized</Badge>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              The month is closed.
+                            </p>
+                          </div>
+                        ) : row.locked ? (
                           <div className="max-w-[12rem]">
                             <Badge variant="secondary">Locked</Badge>
                             <p className="mt-1 text-xs text-muted-foreground">{row.lockReason}</p>
@@ -299,6 +325,7 @@ export function BillsPage({ role }: { role: AppRole }) {
                           <Badge variant="default">Saved</Badge>
                         )}
                       </td>
+
                     </tr>
                   );
                 })}
@@ -317,9 +344,13 @@ export function BillsPage({ role }: { role: AppRole }) {
               this month: {formatRent(sharedTotal)}
             </p>
           </div>
-          <Button onClick={() => setSharedOpen(true)} disabled={!buildingId || !month}>
+          <Button
+            onClick={() => setSharedOpen(true)}
+            disabled={!buildingId || !month || monthClosed}
+          >
             Add shared charge
           </Button>
+
         </div>
 
         {sharedQuery.isLoading ? (
@@ -354,10 +385,11 @@ export function BillsPage({ role }: { role: AppRole }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={deleteSharedMutation.isPending}
+                      disabled={deleteSharedMutation.isPending || monthClosed}
                       onClick={() => deleteSharedMutation.mutate(charge.id)}
                     >
                       Remove
+
                     </Button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
@@ -380,7 +412,10 @@ export function BillsPage({ role }: { role: AppRole }) {
         )}
       </section>
 
-      <AdjustmentsSection buildingId={buildingId} month={month} />
+      <AdjustmentsSection buildingId={buildingId} month={month} monthClosed={monthClosed} />
+
+      <MonthClosingSection buildingId={buildingId} month={month} canManage={role === "owner"} />
+
 
       <SharedChargeDialog
         open={sharedOpen}

@@ -130,7 +130,10 @@ export const myAdjustmentsQueryOptions = (userId: string | undefined) =>
     },
   });
 
-/** Billed flats of a building/month that an adjustment can be attached to. */
+/**
+ * Billed flats an adjustment can be attached to. Includes earlier months so a late
+ * charge for a closed month can be posted into the currently open month.
+ */
 export type AdjustmentTarget = {
   rentRecordId: string;
   buildingId: string;
@@ -155,7 +158,9 @@ export const adjustmentTargetsQueryOptions = (buildingId: string, month: string)
           "id, building_id, flat_id, tenant_id, billing_month, total_payable, total_paid, remaining_due, flats(flat_number), profiles(full_name)",
         )
         .eq("building_id", buildingId)
-        .eq("billing_month", monthToDate(month));
+        .lte("billing_month", monthToDate(month))
+        .order("billing_month", { ascending: false })
+        .limit(400);
       if (error) throw error;
       return (data ?? [])
         .map((raw) => {
@@ -176,9 +181,14 @@ export const adjustmentTargetsQueryOptions = (buildingId: string, month: string)
             remainingDue: num(row["remaining_due"]),
           } satisfies AdjustmentTarget;
         })
-        .sort((a, b) => a.flatNumber.localeCompare(b.flatNumber, undefined, { numeric: true }));
+        .sort(
+          (a, b) =>
+            b.billingMonth.localeCompare(a.billingMonth) ||
+            a.flatNumber.localeCompare(b.flatNumber, undefined, { numeric: true }),
+        );
     },
   });
+
 
 async function uploadSupportingDocument(userId: string, file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";

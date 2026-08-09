@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/dashboard-shell";
+import { closuresQueryOptions } from "@/lib/closings";
+
 import { DashboardSection, EmptyState, StatCard } from "@/components/dashboard/parts";
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
 import {
@@ -215,6 +217,8 @@ function TenantDashboard() {
   const paymentsQuery = useQuery(myPaymentsQueryOptions(user?.id));
   const creditsQuery = useQuery(myCreditsQueryOptions(user?.id));
   const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id));
+  const closuresQuery = useQuery(closuresQueryOptions());
+
 
   const [submitFor, setSubmitFor] = useState<TenantMonthlyBill | null>(null);
   const [receipt, setReceipt] = useState<PaymentRow | null>(null);
@@ -280,6 +284,16 @@ function TenantDashboard() {
   const adjustments = adjustmentsQuery.data ?? [];
   const flat = flatQuery.data;
 
+  const closures = closuresQuery.data ?? [];
+  const isFinalized = (buildingId: string, billingMonth: string) =>
+    closures.some(
+      (row) =>
+        row.building_id === buildingId &&
+        row.billing_month === billingMonth &&
+        row.status === "closed",
+    );
+
+
   return (
     <DashboardShell
       role="tenant"
@@ -328,6 +342,10 @@ function TenantDashboard() {
                 {occupancyLabel[flat.flat.occupancy_status]}
               </Badge>
             ) : null}
+            {isFinalized(current.building_id, current.billing_month) ? (
+              <Badge variant="outline">Month finalized</Badge>
+            ) : null}
+
             <span className="text-sm text-muted-foreground">
               Advance credit available: {formatRent(availableCredit)}
             </span>
@@ -341,6 +359,15 @@ function TenantDashboard() {
               </span>
             ) : null}
           </div>
+
+          {isFinalized(current.building_id, current.billing_month) ? (
+            <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
+              This month has been finalized by your owner, so the charges no longer change. Any
+              remaining due can still be paid and any late charge will appear on a later month as an
+              adjustment.
+            </p>
+          ) : null}
+
 
           {lastReview?.reviewer_note ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm">
@@ -389,6 +416,10 @@ function TenantDashboard() {
                     <Badge variant={statusVariant[bill.payment_status as PaymentStatus]}>
                       {paymentStatusLabel[bill.payment_status as PaymentStatus]}
                     </Badge>
+                    {isFinalized(bill.building_id, bill.billing_month) ? (
+                      <Badge variant="outline">Finalized</Badge>
+                    ) : null}
+
                     {bill.remaining_due > 0 &&
                     !payments.some(
                       (payment) =>

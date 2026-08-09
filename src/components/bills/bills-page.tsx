@@ -121,7 +121,7 @@ export function BillsPage({ role }: { role: AppRole }) {
       await queryClient.invalidateQueries({ queryKey: ["bill-entry-rows"] });
       await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(describeClosedMonthError(error.message)),
   });
 
   const deleteSharedMutation = useMutation({
@@ -132,8 +132,9 @@ export function BillsPage({ role }: { role: AppRole }) {
       await queryClient.invalidateQueries({ queryKey: ["bill-entry-rows"] });
       await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error) => toast.error(describeClosedMonthError(error.message)),
   });
+
 
   const updateAmount = (id: string, type: FlatChargeType, value: string) => {
     setDrafts((previous) => {

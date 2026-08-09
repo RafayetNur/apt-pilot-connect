@@ -214,16 +214,26 @@ export function BillsPage({ role }: { role: AppRole }) {
               {month ? formatMonth(`${month}-01`) : "—"} · {rows.length} billed flat
               {rows.length === 1 ? "" : "s"}
             </p>
+            {monthClosed ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                This month is closed and finalized. Post a bill adjustment to the next open month
+                instead of editing these amounts.
+              </p>
+            ) : null}
           </div>
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={dirtyIds.length === 0 || saveMutation.isPending}
-          >
-            {saveMutation.isPending
-              ? "Saving…"
-              : `Save all${dirtyIds.length > 0 ? ` (${dirtyIds.length})` : ""}`}
-          </Button>
+          <div className="flex items-center gap-2">
+            {monthClosed ? <Badge variant="secondary">Month closed</Badge> : null}
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={dirtyIds.length === 0 || saveMutation.isPending || monthClosed}
+            >
+              {saveMutation.isPending
+                ? "Saving…"
+                : `Save all${dirtyIds.length > 0 ? ` (${dirtyIds.length})` : ""}`}
+            </Button>
+          </div>
         </div>
+
 
         {rowsQuery.isLoading ? (
           <p className="mt-4 text-sm text-muted-foreground">Loading billed flats…</p>

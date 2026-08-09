@@ -360,6 +360,15 @@ function TenantDashboard() {
             ) : null}
           </div>
 
+          {isFinalized(current.building_id, current.billing_month) ? (
+            <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
+              This month has been finalized by your owner, so the charges no longer change. Any
+              remaining due can still be paid and any late charge will appear on a later month as an
+              adjustment.
+            </p>
+          ) : null}
+
+
           {lastReview?.reviewer_note ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm">
               <span className="font-medium">

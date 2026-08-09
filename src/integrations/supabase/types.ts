@@ -126,6 +126,128 @@ export type Database = {
           },
         ]
       }
+      building_month_closure_events: {
+        Row: {
+          action: Database["public"]["Enums"]["month_closure_action"]
+          billing_month: string
+          building_id: string
+          closure_id: string
+          created_at: string
+          id: string
+          performed_by: string
+          reason_or_note: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["month_closure_action"]
+          billing_month: string
+          building_id: string
+          closure_id: string
+          created_at?: string
+          id?: string
+          performed_by: string
+          reason_or_note?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["month_closure_action"]
+          billing_month?: string
+          building_id?: string
+          closure_id?: string
+          created_at?: string
+          id?: string
+          performed_by?: string
+          reason_or_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_month_closure_events_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_month_closure_events_closure_id_fkey"
+            columns: ["closure_id"]
+            isOneToOne: false
+            referencedRelation: "building_month_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_month_closure_events_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      building_month_closures: {
+        Row: {
+          billing_month: string
+          building_id: string
+          closed_at: string | null
+          closed_by: string | null
+          closing_note: string | null
+          created_at: string
+          id: string
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          status: Database["public"]["Enums"]["month_closure_status"]
+          updated_at: string
+        }
+        Insert: {
+          billing_month: string
+          building_id: string
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_note?: string | null
+          created_at?: string
+          id?: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+          reopening_reason?: string | null
+          status?: Database["public"]["Enums"]["month_closure_status"]
+          updated_at?: string
+        }
+        Update: {
+          billing_month?: string
+          building_id?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_note?: string | null
+          created_at?: string
+          id?: string
+          reopened_at?: string | null
+          reopened_by?: string | null
+          reopening_reason?: string | null
+          status?: Database["public"]["Enums"]["month_closure_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_month_closures_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_month_closures_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_month_closures_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           address: string
@@ -741,6 +863,29 @@ export type Database = {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
       }
+      close_building_month: {
+        Args: { _billing_month: string; _building_id: string; _note?: string }
+        Returns: {
+          billing_month: string
+          building_id: string
+          closed_at: string | null
+          closed_by: string | null
+          closing_note: string | null
+          created_at: string
+          id: string
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          status: Database["public"]["Enums"]["month_closure_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_month_closures"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -748,9 +893,40 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_building_owner: {
+        Args: { building_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      is_month_closed: {
+        Args: { _billing_month: string; _building_id: string }
+        Returns: boolean
+      }
       recalc_rent_record_totals: {
         Args: { _rent_record_id: string }
         Returns: undefined
+      }
+      reopen_building_month: {
+        Args: { _billing_month: string; _building_id: string; _reason: string }
+        Returns: {
+          billing_month: string
+          building_id: string
+          closed_at: string | null
+          closed_by: string | null
+          closing_note: string | null
+          created_at: string
+          id: string
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          status: Database["public"]["Enums"]["month_closure_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_month_closures"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       review_bill_adjustment: {
         Args: { _action: string; _adjustment_id: string; _note?: string }
@@ -867,6 +1043,8 @@ export type Database = {
         | "internet"
         | "flat_repair"
         | "other"
+      month_closure_action: "closed" | "reopened"
+      month_closure_status: "open" | "closed" | "reopened"
       occupancy_status: "vacant" | "occupied"
       payment_method: "bkash" | "nagad" | "bank_transfer" | "cash"
       payment_status: "unpaid" | "paid" | "overdue" | "partially_paid"
@@ -1036,6 +1214,8 @@ export const Constants = {
         "flat_repair",
         "other",
       ],
+      month_closure_action: ["closed", "reopened"],
+      month_closure_status: ["open", "closed", "reopened"],
       occupancy_status: ["vacant", "occupied"],
       payment_method: ["bkash", "nagad", "bank_transfer", "cash"],
       payment_status: ["unpaid", "paid", "overdue", "partially_paid"],

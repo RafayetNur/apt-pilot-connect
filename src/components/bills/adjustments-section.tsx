@@ -33,7 +33,16 @@ const statusVariant: Record<ApprovalStatus, "default" | "secondary" | "destructi
   rejected: "destructive",
 };
 
-export function AdjustmentsSection({ buildingId, month }: { buildingId: string; month: string }) {
+export function AdjustmentsSection({
+  buildingId,
+  month,
+  monthClosed = false,
+}: {
+  buildingId: string;
+  month: string;
+  monthClosed?: boolean;
+}) {
+
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);

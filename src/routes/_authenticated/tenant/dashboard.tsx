@@ -215,6 +215,8 @@ function TenantDashboard() {
   const paymentsQuery = useQuery(myPaymentsQueryOptions(user?.id));
   const creditsQuery = useQuery(myCreditsQueryOptions(user?.id));
   const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id));
+  const closuresQuery = useQuery(closuresQueryOptions());
+
 
   const [submitFor, setSubmitFor] = useState<TenantMonthlyBill | null>(null);
   const [receipt, setReceipt] = useState<PaymentRow | null>(null);

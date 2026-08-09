@@ -33,7 +33,9 @@ import {
 } from "@/lib/charges";
 import { formatRent } from "@/lib/flats";
 import { currentMonthInput, formatMonth } from "@/lib/rent";
+import { describeClosedMonthError, monthClosureQueryOptions } from "@/lib/closings";
 import type { AppRole } from "@/hooks/useAuth";
+
 
 type Draft = {
   amounts: Record<string, string>;

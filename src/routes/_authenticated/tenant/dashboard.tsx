@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/dashboard-shell";
+import { closuresQueryOptions } from "@/lib/closings";
+
 import { DashboardSection, EmptyState, StatCard } from "@/components/dashboard/parts";
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
 import {

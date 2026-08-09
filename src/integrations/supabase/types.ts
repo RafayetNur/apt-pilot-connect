@@ -126,6 +126,140 @@ export type Database = {
           },
         ]
       }
+      building_expenses: {
+        Row: {
+          accounting_month: string
+          amount: number
+          approval_status: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string
+          description: string
+          expense_date: string
+          id: string
+          payment_method: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url: string | null
+          related_month: string | null
+          replaced_by_expense_id: string | null
+          replaces_expense_id: string | null
+          reviewer_note: string | null
+          source_shared_charge_id: string | null
+          transaction_reference: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          accounting_month: string
+          amount: number
+          approval_status?: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by: string
+          description: string
+          expense_date: string
+          id?: string
+          payment_method: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url?: string | null
+          related_month?: string | null
+          replaced_by_expense_id?: string | null
+          replaces_expense_id?: string | null
+          reviewer_note?: string | null
+          source_shared_charge_id?: string | null
+          transaction_reference?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          accounting_month?: string
+          amount?: number
+          approval_status?: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          building_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          category?: Database["public"]["Enums"]["expense_category"]
+          created_at?: string
+          created_by?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          payment_method?: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url?: string | null
+          related_month?: string | null
+          replaced_by_expense_id?: string | null
+          replaces_expense_id?: string | null
+          reviewer_note?: string | null
+          source_shared_charge_id?: string | null
+          transaction_reference?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_expenses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_replaced_by_expense_id_fkey"
+            columns: ["replaced_by_expense_id"]
+            isOneToOne: false
+            referencedRelation: "building_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_replaces_expense_id_fkey"
+            columns: ["replaces_expense_id"]
+            isOneToOne: false
+            referencedRelation: "building_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_source_shared_charge_id_fkey"
+            columns: ["source_shared_charge_id"]
+            isOneToOne: false
+            referencedRelation: "shared_building_charges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       building_month_closure_events: {
         Row: {
           action: Database["public"]["Enums"]["month_closure_action"]
@@ -863,6 +997,46 @@ export type Database = {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
       }
+      cancel_building_expense: {
+        Args: {
+          _expense_id: string
+          _reason: string
+          _replacement_expense_id?: string
+        }
+        Returns: {
+          accounting_month: string
+          amount: number
+          approval_status: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string
+          description: string
+          expense_date: string
+          id: string
+          payment_method: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url: string | null
+          related_month: string | null
+          replaced_by_expense_id: string | null
+          replaces_expense_id: string | null
+          reviewer_note: string | null
+          source_shared_charge_id: string | null
+          transaction_reference: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       close_building_month: {
         Args: { _billing_month: string; _building_id: string; _note?: string }
         Returns: {
@@ -959,6 +1133,42 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_building_expense: {
+        Args: { _action: string; _expense_id: string; _note?: string }
+        Returns: {
+          accounting_month: string
+          amount: number
+          approval_status: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string
+          description: string
+          expense_date: string
+          id: string
+          payment_method: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url: string | null
+          related_month: string | null
+          replaced_by_expense_id: string | null
+          replaces_expense_id: string | null
+          reviewer_note: string | null
+          source_shared_charge_id: string | null
+          transaction_reference: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_rent_payment: {
         Args: { _action: string; _note?: string; _payment_id: string }
         Returns: {
@@ -1036,6 +1246,31 @@ export type Database = {
       app_role: "owner" | "manager" | "tenant"
       approval_status: "pending" | "approved" | "rejected"
       building_status: "active" | "inactive"
+      expense_approval_status: "pending" | "approved" | "rejected" | "cancelled"
+      expense_category:
+        | "electricity_common"
+        | "generator_fuel"
+        | "water"
+        | "gas"
+        | "internet"
+        | "security_guard"
+        | "cleaner"
+        | "caretaker"
+        | "maintenance"
+        | "repair"
+        | "lift"
+        | "supplies"
+        | "tax"
+        | "insurance"
+        | "management"
+        | "other"
+      expense_payment_method:
+        | "cash"
+        | "bkash"
+        | "nagad"
+        | "bank_transfer"
+        | "cheque"
+        | "other"
       flat_charge_type:
         | "electricity"
         | "gas"
@@ -1206,6 +1441,33 @@ export const Constants = {
       app_role: ["owner", "manager", "tenant"],
       approval_status: ["pending", "approved", "rejected"],
       building_status: ["active", "inactive"],
+      expense_approval_status: ["pending", "approved", "rejected", "cancelled"],
+      expense_category: [
+        "electricity_common",
+        "generator_fuel",
+        "water",
+        "gas",
+        "internet",
+        "security_guard",
+        "cleaner",
+        "caretaker",
+        "maintenance",
+        "repair",
+        "lift",
+        "supplies",
+        "tax",
+        "insurance",
+        "management",
+        "other",
+      ],
+      expense_payment_method: [
+        "cash",
+        "bkash",
+        "nagad",
+        "bank_transfer",
+        "cheque",
+        "other",
+      ],
       flat_charge_type: [
         "electricity",
         "gas",

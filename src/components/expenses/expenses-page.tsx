@@ -213,7 +213,7 @@ export function ExpensesPage({ role }: { role: AppRole }) {
           value={
             summary.topCategory ? expenseCategoryLabel[summary.topCategory.category] : "No data yet"
           }
-          hint={summary.topCategory ? formatRent(summary.topCategory.total) : undefined}
+          {...(summary.topCategory ? { hint: formatRent(summary.topCategory.total) } : {})}
         />
         <StatCard label="Approved entries" value={String(summary.approvedCount)} />
       </section>

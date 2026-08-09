@@ -282,7 +282,8 @@ export function BillsPage({ role }: { role: AppRole }) {
                             inputMode="decimal"
                             aria-label={`${flatChargeLabel[type]} amount for flat ${row.flatNumber}`}
                             value={draft.amounts[type] ?? ""}
-                            disabled={row.locked}
+                            disabled={row.locked || monthClosed}
+
                             onChange={(event) =>
                               updateAmount(row.rentRecordId, type, event.target.value)
                             }

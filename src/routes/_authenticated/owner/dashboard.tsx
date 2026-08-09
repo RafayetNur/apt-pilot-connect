@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { ClosureStatusStrip } from "@/components/closings/closure-status-strip";
+import { ExpenseDashboardSection } from "@/components/expenses/expense-dashboard-section";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 import {
@@ -132,6 +133,10 @@ function OwnerDashboard() {
               <ClosureStatusStrip month={month} buildings={data.buildings} />
             )}
           </DashboardSection>
+
+          <ExpenseDashboardSection role="owner" month={month} />
+
+
 
           <DashboardSection
             title="Building-wise summary"

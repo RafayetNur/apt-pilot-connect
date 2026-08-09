@@ -274,8 +274,18 @@ function OwnerRentPage() {
         )}
       </section>
 
+      {filters.buildingId !== "all" && filters.month ? (
+        <MonthClosingSection buildingId={filters.buildingId} month={filters.month} canManage />
+      ) : (
+        <p className="panel mt-6 p-4 text-sm text-muted-foreground sm:p-6">
+          Select one building and one month above to close, reopen or review the monthly closing
+          status.
+        </p>
+      )}
+
       <GenerateRentDialog
         open={dialogOpen}
+
         onOpenChange={setDialogOpen}
         buildings={buildings ?? []}
         saving={generateMutation.isPending}

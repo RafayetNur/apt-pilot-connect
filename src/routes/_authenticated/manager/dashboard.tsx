@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { ClosureStatusStrip } from "@/components/closings/closure-status-strip";
 import { DashboardShell } from "@/components/dashboard-shell";
+
 import {
   DashboardSection,
   EmptyState,

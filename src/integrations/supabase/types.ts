@@ -1102,6 +1102,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      report_accessible_buildings: {
+        Args: never
+        Returns: {
+          id: string
+          is_owner: boolean
+          name: string
+        }[]
+      }
+      report_cash_flow: {
+        Args: { _building_id: string; _from: string; _to: string }
+        Returns: Json
+      }
+      report_collection: {
+        Args: { _building_id?: string; _from_month: string; _to_month: string }
+        Returns: {
+          billing_month: string
+          building_id: string
+          building_name: string
+          collected: number
+          collection_rate: number
+          fully_paid: number
+          outstanding: number
+          overdue: number
+          partially_paid: number
+          total_billed: number
+          unpaid: number
+        }[]
+      }
+      report_expenses: {
+        Args: { _building_id?: string; _from_month: string; _to_month: string }
+        Returns: Json
+      }
+      report_guard: { Args: { _building_id: string }; Returns: undefined }
+      report_monthly_statement: {
+        Args: { _billing_month: string; _building_id: string }
+        Returns: Json
+      }
+      report_outstanding: {
+        Args: {
+          _building_id: string
+          _flat_id?: string
+          _from_month: string
+          _include_settled?: boolean
+          _status?: string
+          _tenant_id?: string
+          _to_month: string
+        }
+        Returns: {
+          billing_month: string
+          days_overdue: number
+          due_date: string
+          flat_number: string
+          last_verified_payment: string
+          payment_status: string
+          remaining_due: number
+          rent_record_id: string
+          tenant_name: string
+          total_billed: number
+          total_paid: number
+        }[]
+      }
+      report_owner_summary: {
+        Args: { _from_month: string; _to_month: string }
+        Returns: Json
+      }
+      report_reconciliation: {
+        Args: { _billing_month: string; _building_id: string }
+        Returns: Json
+      }
+      report_tenant_ledger: {
+        Args: { _flat_id?: string; _tenant_id: string }
+        Returns: Json
+      }
       review_bill_adjustment: {
         Args: { _action: string; _adjustment_id: string; _note?: string }
         Returns: {

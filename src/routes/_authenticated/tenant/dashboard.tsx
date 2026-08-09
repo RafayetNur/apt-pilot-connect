@@ -416,6 +416,10 @@ function TenantDashboard() {
                     <Badge variant={statusVariant[bill.payment_status as PaymentStatus]}>
                       {paymentStatusLabel[bill.payment_status as PaymentStatus]}
                     </Badge>
+                    {isFinalized(bill.building_id, bill.billing_month) ? (
+                      <Badge variant="outline">Finalized</Badge>
+                    ) : null}
+
                     {bill.remaining_due > 0 &&
                     !payments.some(
                       (payment) =>

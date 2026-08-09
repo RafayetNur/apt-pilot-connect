@@ -307,7 +307,14 @@ export function BillsPage({ role }: { role: AppRole }) {
                         </p>
                       </td>
                       <td className="py-2">
-                        {row.locked ? (
+                        {monthClosed ? (
+                          <div className="max-w-[12rem]">
+                            <Badge variant="secondary">Finalized</Badge>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              The month is closed.
+                            </p>
+                          </div>
+                        ) : row.locked ? (
                           <div className="max-w-[12rem]">
                             <Badge variant="secondary">Locked</Badge>
                             <p className="mt-1 text-xs text-muted-foreground">{row.lockReason}</p>
@@ -318,6 +325,7 @@ export function BillsPage({ role }: { role: AppRole }) {
                           <Badge variant="default">Saved</Badge>
                         )}
                       </td>
+
                     </tr>
                   );
                 })}

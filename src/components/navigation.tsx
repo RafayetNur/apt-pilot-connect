@@ -35,6 +35,7 @@ const navByRole = {
     { label: "Bills", to: "/owner/bills" },
     { label: "Payments", to: "/owner/payments" },
     { label: "Expenses", to: "/owner/expenses" },
+    { label: "Maintenance", to: "/owner/maintenance" },
     { label: "Reports", to: "/owner/reports" },
   ],
   manager: [
@@ -42,9 +43,13 @@ const navByRole = {
     { label: "Bills", to: "/manager/bills" },
     { label: "Payments", to: "/manager/payments" },
     { label: "Expenses", to: "/manager/expenses" },
+    { label: "Maintenance", to: "/manager/maintenance" },
     { label: "Reports", to: "/manager/reports" },
   ],
-  tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],
+  tenant: [
+    { label: "Dashboard", to: "/tenant/dashboard" },
+    { label: "Maintenance", to: "/tenant/maintenance" },
+  ],
 } as const;
 
 export function ProfileMenu({ profile, email }: { profile: Profile | null; email: string }) {

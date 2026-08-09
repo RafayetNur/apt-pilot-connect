@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ClosureStatusStrip } from "@/components/closings/closure-status-strip";
 import { ExpenseDashboardSection } from "@/components/expenses/expense-dashboard-section";
+import { FinancialDashboardSection } from "@/components/reports/financial-dashboard-section";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 import {
@@ -133,6 +134,8 @@ function OwnerDashboard() {
               <ClosureStatusStrip month={month} buildings={data.buildings} />
             )}
           </DashboardSection>
+
+          <FinancialDashboardSection role="owner" />
 
           <ExpenseDashboardSection role="owner" month={month} />
 

@@ -149,6 +149,17 @@
 }
 
 @media print {
+  body:has(#aptpilot-report) .print\:hidden,
+  body:has(#aptpilot-report) header.sticky {
+    display: none !important;
+  }
+
+  body:has(#aptpilot-report) #aptpilot-report {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
   body:has(#aptpilot-receipt) > *:not(:has(#aptpilot-receipt)) {
     display: none !important;
   }

@@ -150,6 +150,7 @@ export type Database = {
           replaces_expense_id: string | null
           reviewer_note: string | null
           source_shared_charge_id: string | null
+          source_work_order_id: string | null
           transaction_reference: string | null
           updated_at: string
           vendor_name: string | null
@@ -177,6 +178,7 @@ export type Database = {
           replaces_expense_id?: string | null
           reviewer_note?: string | null
           source_shared_charge_id?: string | null
+          source_work_order_id?: string | null
           transaction_reference?: string | null
           updated_at?: string
           vendor_name?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           replaces_expense_id?: string | null
           reviewer_note?: string | null
           source_shared_charge_id?: string | null
+          source_work_order_id?: string | null
           transaction_reference?: string | null
           updated_at?: string
           vendor_name?: string | null
@@ -256,6 +259,13 @@ export type Database = {
             columns: ["source_shared_charge_id"]
             isOneToOne: false
             referencedRelation: "shared_building_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_expenses_source_work_order_id_fkey"
+            columns: ["source_work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -563,6 +573,316 @@ export type Database = {
             columns: ["building_id"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_attachments: {
+        Row: {
+          attachment_type: Database["public"]["Enums"]["maintenance_attachment_type"]
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          maintenance_request_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          attachment_type?: Database["public"]["Enums"]["maintenance_attachment_type"]
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          maintenance_request_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          attachment_type?: Database["public"]["Enums"]["maintenance_attachment_type"]
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          maintenance_request_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_attachments_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_comments: {
+        Row: {
+          author_id: string
+          comment_text: string
+          created_at: string
+          id: string
+          maintenance_request_id: string
+          updated_at: string | null
+          visibility: Database["public"]["Enums"]["maintenance_comment_visibility"]
+        }
+        Insert: {
+          author_id: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          maintenance_request_id: string
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["maintenance_comment_visibility"]
+        }
+        Update: {
+          author_id?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          maintenance_request_id?: string
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["maintenance_comment_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_comments_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_requests: {
+        Row: {
+          access_instructions: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          building_id: string
+          cancellation_reason: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          flat_id: string | null
+          id: string
+          is_common_area: boolean
+          preferred_visit_date: string | null
+          priority: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          request_number: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          access_instructions?: string | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          building_id: string
+          cancellation_reason?: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          description: string
+          flat_id?: string | null
+          id?: string
+          is_common_area?: boolean
+          preferred_visit_date?: string | null
+          priority?: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          reopening_reason?: string | null
+          request_number: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          access_instructions?: string | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          building_id?: string
+          cancellation_reason?: string | null
+          category?: Database["public"]["Enums"]["maintenance_category"]
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          description?: string
+          flat_id?: string | null
+          id?: string
+          is_common_area?: boolean
+          preferred_visit_date?: string | null
+          priority?: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          reopening_reason?: string | null
+          request_number?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_reopened_by_fkey"
+            columns: ["reopened_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_status_events: {
+        Row: {
+          created_at: string
+          id: string
+          maintenance_request_id: string
+          new_status: Database["public"]["Enums"]["maintenance_status"]
+          note: string | null
+          performed_by: string
+          previous_status:
+            | Database["public"]["Enums"]["maintenance_status"]
+            | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          maintenance_request_id: string
+          new_status: Database["public"]["Enums"]["maintenance_status"]
+          note?: string | null
+          performed_by: string
+          previous_status?:
+            | Database["public"]["Enums"]["maintenance_status"]
+            | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          maintenance_request_id?: string
+          new_status?: Database["public"]["Enums"]["maintenance_status"]
+          note?: string | null
+          performed_by?: string
+          previous_status?:
+            | Database["public"]["Enums"]["maintenance_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_status_events_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_status_events_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -976,6 +1296,165 @@ export type Database = {
           },
         ]
       }
+      work_order_events: {
+        Row: {
+          created_at: string
+          id: string
+          new_status: Database["public"]["Enums"]["work_order_status"]
+          note: string | null
+          performed_by: string
+          previous_status:
+            | Database["public"]["Enums"]["work_order_status"]
+            | null
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_status: Database["public"]["Enums"]["work_order_status"]
+          note?: string | null
+          performed_by: string
+          previous_status?:
+            | Database["public"]["Enums"]["work_order_status"]
+            | null
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["work_order_status"]
+          note?: string | null
+          performed_by?: string
+          previous_status?:
+            | Database["public"]["Enums"]["work_order_status"]
+            | null
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_events_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_events_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          actual_cost: number | null
+          assigned_manager_id: string | null
+          building_id: string
+          cancellation_reason: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_note: string | null
+          created_at: string
+          created_by: string
+          estimated_cost: number | null
+          id: string
+          maintenance_request_id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          technician_name: string | null
+          updated_at: string
+          vendor_name: string | null
+          vendor_phone: string | null
+          work_description: string
+          work_order_number: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_manager_id?: string | null
+          building_id: string
+          cancellation_reason?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_note?: string | null
+          created_at?: string
+          created_by: string
+          estimated_cost?: number | null
+          id?: string
+          maintenance_request_id: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          technician_name?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          vendor_phone?: string | null
+          work_description: string
+          work_order_number: string
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_manager_id?: string | null
+          building_id?: string
+          cancellation_reason?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_note?: string | null
+          created_at?: string
+          created_by?: string
+          estimated_cost?: number | null
+          id?: string
+          maintenance_request_id?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          status?: Database["public"]["Enums"]["work_order_status"]
+          technician_name?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          vendor_phone?: string | null
+          work_description?: string
+          work_order_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_assigned_manager_id_fkey"
+            columns: ["assigned_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -984,6 +1463,10 @@ export type Database = {
       allocate_shared_charge: {
         Args: { _shared_charge_id: string }
         Returns: number
+      }
+      can_manage_maintenance_request: {
+        Args: { _request_id: string; _user_id: string }
+        Returns: boolean
       }
       can_review_building: {
         Args: { building_uuid: string; user_uuid: string }
@@ -995,6 +1478,10 @@ export type Database = {
       }
       can_view_building: {
         Args: { building_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      can_view_maintenance_request: {
+        Args: { _request_id: string; _user_id: string }
         Returns: boolean
       }
       cancel_building_expense: {
@@ -1026,6 +1513,7 @@ export type Database = {
           replaces_expense_id: string | null
           reviewer_note: string | null
           source_shared_charge_id: string | null
+          source_work_order_id: string | null
           transaction_reference: string | null
           updated_at: string
           vendor_name: string | null
@@ -1060,6 +1548,104 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_expense_draft_from_work_order: {
+        Args: {
+          _accounting_month: string
+          _amount: number
+          _category: Database["public"]["Enums"]["expense_category"]
+          _description: string
+          _expense_date: string
+          _payment_method?: Database["public"]["Enums"]["expense_payment_method"]
+          _transaction_reference?: string
+          _vendor_name?: string
+          _work_order_id: string
+        }
+        Returns: {
+          accounting_month: string
+          amount: number
+          approval_status: Database["public"]["Enums"]["expense_approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          building_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          category: Database["public"]["Enums"]["expense_category"]
+          created_at: string
+          created_by: string
+          description: string
+          expense_date: string
+          id: string
+          payment_method: Database["public"]["Enums"]["expense_payment_method"]
+          receipt_document_url: string | null
+          related_month: string | null
+          replaced_by_expense_id: string | null
+          replaces_expense_id: string | null
+          reviewer_note: string | null
+          source_shared_charge_id: string | null
+          source_work_order_id: string | null
+          transaction_reference: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_maintenance_request: {
+        Args: {
+          _access_instructions?: string
+          _building_id: string
+          _category: Database["public"]["Enums"]["maintenance_category"]
+          _description: string
+          _flat_id?: string
+          _is_common_area?: boolean
+          _preferred_visit_date?: string
+          _priority?: Database["public"]["Enums"]["maintenance_priority"]
+          _title: string
+        }
+        Returns: {
+          access_instructions: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          building_id: string
+          cancellation_reason: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          flat_id: string | null
+          id: string
+          is_common_area: boolean
+          preferred_visit_date: string | null
+          priority: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          request_number: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "maintenance_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1073,6 +1659,159 @@ export type Database = {
       }
       is_month_closed: {
         Args: { _billing_month: string; _building_id: string }
+        Returns: boolean
+      }
+      maintenance_assign: {
+        Args: {
+          _assigned_to: string
+          _priority?: Database["public"]["Enums"]["maintenance_priority"]
+          _request_id: string
+        }
+        Returns: {
+          access_instructions: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          building_id: string
+          cancellation_reason: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          flat_id: string | null
+          id: string
+          is_common_area: boolean
+          preferred_visit_date: string | null
+          priority: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          request_number: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "maintenance_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      maintenance_change_status: {
+        Args: {
+          _new_status: Database["public"]["Enums"]["maintenance_status"]
+          _note?: string
+          _request_id: string
+        }
+        Returns: {
+          access_instructions: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          building_id: string
+          cancellation_reason: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          flat_id: string | null
+          id: string
+          is_common_area: boolean
+          preferred_visit_date: string | null
+          priority: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          request_number: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "maintenance_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      maintenance_set_priority: {
+        Args: {
+          _priority: Database["public"]["Enums"]["maintenance_priority"]
+          _request_id: string
+        }
+        Returns: {
+          access_instructions: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          building_id: string
+          cancellation_reason: string | null
+          category: Database["public"]["Enums"]["maintenance_category"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          description: string
+          flat_id: string | null
+          id: string
+          is_common_area: boolean
+          preferred_visit_date: string | null
+          priority: Database["public"]["Enums"]["maintenance_priority"]
+          rejection_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          reopening_reason: string | null
+          request_number: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["maintenance_status"]
+          submitted_by: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "maintenance_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      maintenance_tenant_schedule: {
+        Args: { _request_id: string }
+        Returns: {
+          completed_at: string
+          scheduled_date: string
+          scheduled_time: string
+          status: Database["public"]["Enums"]["work_order_status"]
+          technician_name: string
+          work_description: string
+          work_order_number: string
+        }[]
+      }
+      maintenance_transition_allowed: {
+        Args: {
+          _from: Database["public"]["Enums"]["maintenance_status"]
+          _to: Database["public"]["Enums"]["maintenance_status"]
+        }
         Returns: boolean
       }
       recalc_rent_record_totals: {
@@ -1231,6 +1970,7 @@ export type Database = {
           replaces_expense_id: string | null
           reviewer_note: string | null
           source_shared_charge_id: string | null
+          source_work_order_id: string | null
           transaction_reference: string | null
           updated_at: string
           vendor_name: string | null
@@ -1304,6 +2044,127 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      work_order_create: {
+        Args: {
+          _assigned_manager_id?: string
+          _estimated_cost?: number
+          _maintenance_request_id: string
+          _scheduled_date?: string
+          _scheduled_time?: string
+          _technician_name?: string
+          _vendor_name?: string
+          _vendor_phone?: string
+          _work_description: string
+        }
+        Returns: {
+          actual_cost: number | null
+          assigned_manager_id: string | null
+          building_id: string
+          cancellation_reason: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_note: string | null
+          created_at: string
+          created_by: string
+          estimated_cost: number | null
+          id: string
+          maintenance_request_id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          technician_name: string | null
+          updated_at: string
+          vendor_name: string | null
+          vendor_phone: string | null
+          work_description: string
+          work_order_number: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      work_order_update_details: {
+        Args: {
+          _assigned_manager_id?: string
+          _estimated_cost?: number
+          _scheduled_date?: string
+          _scheduled_time?: string
+          _technician_name?: string
+          _vendor_name?: string
+          _vendor_phone?: string
+          _work_description?: string
+          _work_order_id: string
+        }
+        Returns: {
+          actual_cost: number | null
+          assigned_manager_id: string | null
+          building_id: string
+          cancellation_reason: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_note: string | null
+          created_at: string
+          created_by: string
+          estimated_cost: number | null
+          id: string
+          maintenance_request_id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          technician_name: string | null
+          updated_at: string
+          vendor_name: string | null
+          vendor_phone: string | null
+          work_description: string
+          work_order_number: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      work_order_update_status: {
+        Args: {
+          _actual_cost?: number
+          _new_status: Database["public"]["Enums"]["work_order_status"]
+          _note?: string
+          _work_order_id: string
+        }
+        Returns: {
+          actual_cost: number | null
+          assigned_manager_id: string | null
+          building_id: string
+          cancellation_reason: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_note: string | null
+          created_at: string
+          created_by: string
+          estimated_cost: number | null
+          id: string
+          maintenance_request_id: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: Database["public"]["Enums"]["work_order_status"]
+          technician_name: string | null
+          updated_at: string
+          vendor_name: string | null
+          vendor_phone: string | null
+          work_description: string
+          work_order_number: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "work_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       adjustment_category:
@@ -1351,6 +2212,38 @@ export type Database = {
         | "internet"
         | "flat_repair"
         | "other"
+      maintenance_attachment_type:
+        | "issue_photo"
+        | "issue_video"
+        | "document"
+        | "completion_proof"
+      maintenance_category:
+        | "plumbing"
+        | "electrical"
+        | "gas"
+        | "water"
+        | "appliance"
+        | "structural"
+        | "lift"
+        | "security"
+        | "cleanliness"
+        | "common_area"
+        | "internet"
+        | "pest_control"
+        | "other"
+      maintenance_comment_visibility: "shared" | "internal"
+      maintenance_priority: "low" | "medium" | "high" | "emergency"
+      maintenance_status:
+        | "submitted"
+        | "acknowledged"
+        | "assigned"
+        | "in_progress"
+        | "waiting_for_parts"
+        | "resolved"
+        | "closed"
+        | "rejected"
+        | "cancelled"
+        | "reopened"
       month_closure_action: "closed" | "reopened"
       month_closure_status: "open" | "closed" | "reopened"
       occupancy_status: "vacant" | "occupied"
@@ -1372,6 +2265,12 @@ export type Database = {
         | "rejected"
         | "correction_requested"
         | "withdrawn"
+        | "cancelled"
+      work_order_status:
+        | "draft"
+        | "assigned"
+        | "in_progress"
+        | "completed"
         | "cancelled"
     }
     CompositeTypes: {
@@ -1549,6 +2448,41 @@ export const Constants = {
         "flat_repair",
         "other",
       ],
+      maintenance_attachment_type: [
+        "issue_photo",
+        "issue_video",
+        "document",
+        "completion_proof",
+      ],
+      maintenance_category: [
+        "plumbing",
+        "electrical",
+        "gas",
+        "water",
+        "appliance",
+        "structural",
+        "lift",
+        "security",
+        "cleanliness",
+        "common_area",
+        "internet",
+        "pest_control",
+        "other",
+      ],
+      maintenance_comment_visibility: ["shared", "internal"],
+      maintenance_priority: ["low", "medium", "high", "emergency"],
+      maintenance_status: [
+        "submitted",
+        "acknowledged",
+        "assigned",
+        "in_progress",
+        "waiting_for_parts",
+        "resolved",
+        "closed",
+        "rejected",
+        "cancelled",
+        "reopened",
+      ],
       month_closure_action: ["closed", "reopened"],
       month_closure_status: ["open", "closed", "reopened"],
       occupancy_status: ["vacant", "occupied"],
@@ -1571,6 +2505,13 @@ export const Constants = {
         "rejected",
         "correction_requested",
         "withdrawn",
+        "cancelled",
+      ],
+      work_order_status: [
+        "draft",
+        "assigned",
+        "in_progress",
+        "completed",
         "cancelled",
       ],
     },

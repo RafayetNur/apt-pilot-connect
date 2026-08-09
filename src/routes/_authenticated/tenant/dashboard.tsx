@@ -7,6 +7,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { closuresQueryOptions } from "@/lib/closings";
 
 import { DashboardSection, EmptyState, StatCard } from "@/components/dashboard/parts";
+import { TenantMaintenanceSummary } from "@/components/maintenance/maintenance-dashboard-section";
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
 import {
   SubmitPaymentDialog,
@@ -544,6 +545,8 @@ function TenantDashboard() {
       />
 
       <ReceiptDialog payment={receipt} onClose={() => setReceipt(null)} />
+          <TenantMaintenanceSummary />
+
     </DashboardShell>
   );
 }

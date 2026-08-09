@@ -34,11 +34,13 @@ const navByRole = {
     { label: "Rent", to: "/owner/rent" },
     { label: "Bills", to: "/owner/bills" },
     { label: "Payments", to: "/owner/payments" },
+    { label: "Expenses", to: "/owner/expenses" },
   ],
   manager: [
     { label: "Dashboard", to: "/manager/dashboard" },
     { label: "Bills", to: "/manager/bills" },
     { label: "Payments", to: "/manager/payments" },
+    { label: "Expenses", to: "/manager/expenses" },
   ],
   tenant: [{ label: "Dashboard", to: "/tenant/dashboard" }],
 } as const;

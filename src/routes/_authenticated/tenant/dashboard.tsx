@@ -280,6 +280,16 @@ function TenantDashboard() {
   const adjustments = adjustmentsQuery.data ?? [];
   const flat = flatQuery.data;
 
+  const closures = closuresQuery.data ?? [];
+  const isFinalized = (buildingId: string, billingMonth: string) =>
+    closures.some(
+      (row) =>
+        row.building_id === buildingId &&
+        row.billing_month === billingMonth &&
+        row.status === "closed",
+    );
+
+
   return (
     <DashboardShell
       role="tenant"

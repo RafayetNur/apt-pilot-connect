@@ -130,11 +130,21 @@ export function AdjustmentsSection({
             Late or corrected charges for {month ? formatMonth(`${month}-01`) : "—"}. Approved net
             effect: {formatRent(approvedNet)} · {pending.length} awaiting approval.
           </p>
+          {monthClosed ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              This month is closed, so new adjustments must be posted to the next open month. You can
+              still approve or reject what is already here.
+            </p>
+          ) : null}
         </div>
-        <Button onClick={() => setCreateOpen(true)} disabled={!buildingId || !month}>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          disabled={!buildingId || !month || monthClosed}
+        >
           Create adjustment
         </Button>
       </div>
+
 
       {listQuery.isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">Loading adjustments…</p>

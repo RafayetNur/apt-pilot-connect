@@ -118,7 +118,7 @@ export function AdjustmentFormDialog({
 
         <div className="grid gap-4">
           <div className="space-y-2">
-            <Label htmlFor="adjustment-flat">Flat &amp; tenant</Label>
+            <Label htmlFor="adjustment-flat">Original bill (flat &amp; month)</Label>
             <Select value={recordId} onValueChange={setRecordId}>
               <SelectTrigger id="adjustment-flat">
                 <SelectValue placeholder="Select a billed flat" />
@@ -126,17 +126,25 @@ export function AdjustmentFormDialog({
               <SelectContent>
                 {targets.map((item) => (
                   <SelectItem key={item.rentRecordId} value={item.rentRecordId}>
-                    Flat {item.flatNumber} · {item.tenantName}
+                    {formatMonth(item.billingMonth)} · Flat {item.flatNumber} · {item.tenantName}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {targets.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                No rent record exists for this building and month yet.
+                No rent record exists for this building yet.
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The adjustment is posted to {month ? formatMonth(`${month}-01`) : "the open month"}.
+                {target && target.billingMonth.slice(0, 7) !== month
+                  ? " Because the original month is different (or already closed), the amount is collected with this month's bill."
+                  : ""}
+              </p>
+            )}
           </div>
+
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

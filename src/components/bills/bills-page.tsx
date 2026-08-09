@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { AdjustmentsSection } from "@/components/bills/adjustments-section";
 import { SharedChargeDialog } from "@/components/bills/shared-charge-dialog";
+import { MonthClosingSection } from "@/components/closings/month-closing-section";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

@@ -385,10 +385,11 @@ export function BillsPage({ role }: { role: AppRole }) {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={deleteSharedMutation.isPending}
+                      disabled={deleteSharedMutation.isPending || monthClosed}
                       onClick={() => deleteSharedMutation.mutate(charge.id)}
                     >
                       Remove
+
                     </Button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">

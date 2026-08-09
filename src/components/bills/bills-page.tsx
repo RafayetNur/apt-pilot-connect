@@ -74,6 +74,9 @@ export function BillsPage({ role }: { role: AppRole }) {
   const rows = rowsQuery.data ?? [];
   const sharedQuery = useQuery(sharedChargesQueryOptions(buildingId, month));
   const sharedCharges = sharedQuery.data ?? [];
+  const closureQuery = useQuery(monthClosureQueryOptions(buildingId, month));
+  const monthClosed = closureQuery.data?.status === "closed";
+
 
   const baseline = useMemo(() => {
     const map: Record<string, Draft> = {};

@@ -4,8 +4,10 @@ import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { MonthClosingSection } from "@/components/closings/month-closing-section";
 import { OwnerShell } from "@/components/owner-shell";
 import { GenerateRentDialog, type GenerateRentValues } from "@/components/rent/generate-rent-dialog";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

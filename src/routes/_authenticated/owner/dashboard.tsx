@@ -121,9 +121,21 @@ function OwnerDashboard() {
           </div>
 
           <DashboardSection
+            title="Monthly closing status"
+            description={`Whether ${formatMonth(`${month}-01`)} is still open for bill edits. Close a month from the Rent or Bills page.`}
+          >
+            {data.buildings.length === 0 ? (
+              <EmptyState>No buildings yet.</EmptyState>
+            ) : (
+              <ClosureStatusStrip month={month} buildings={data.buildings} />
+            )}
+          </DashboardSection>
+
+          <DashboardSection
             title="Building-wise summary"
             description={`Occupancy and collection for ${formatMonth(`${month}-01`)}.`}
           >
+
             {data.buildingSummaries.length === 0 ? (
               <EmptyState>No buildings yet. Add your first building to get started.</EmptyState>
             ) : (

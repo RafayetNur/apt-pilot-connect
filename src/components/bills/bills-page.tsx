@@ -296,7 +296,7 @@ export function BillsPage({ role }: { role: AppRole }) {
                           aria-label={`Notes for flat ${row.flatNumber}`}
                           value={draft.notes}
                           maxLength={200}
-                          disabled={row.locked}
+                          disabled={row.locked || monthClosed}
                           onChange={(event) => updateNotes(row.rentRecordId, event.target.value)}
                         />
                       </td>

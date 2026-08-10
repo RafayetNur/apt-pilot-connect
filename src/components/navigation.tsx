@@ -36,6 +36,7 @@ const navByRole = {
     { label: "Payments", to: "/owner/payments" },
     { label: "Expenses", to: "/owner/expenses" },
     { label: "Maintenance", to: "/owner/maintenance" },
+    { label: "Notices", to: "/owner/communication" },
     { label: "Reports", to: "/owner/reports" },
   ],
   manager: [
@@ -44,11 +45,13 @@ const navByRole = {
     { label: "Payments", to: "/manager/payments" },
     { label: "Expenses", to: "/manager/expenses" },
     { label: "Maintenance", to: "/manager/maintenance" },
+    { label: "Notices", to: "/manager/communication" },
     { label: "Reports", to: "/manager/reports" },
   ],
   tenant: [
     { label: "Dashboard", to: "/tenant/dashboard" },
     { label: "Maintenance", to: "/tenant/maintenance" },
+    { label: "Notices", to: "/tenant/notices" },
   ],
 } as const;
 

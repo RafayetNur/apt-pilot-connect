@@ -16,12 +16,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedManagerBillsRouteImport } from './routes/_authenticated/manager/bills'
+import { Route as AuthenticatedManagerCommunicationRouteImport } from './routes/_authenticated/manager/communication'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
 import { Route as AuthenticatedManagerExpensesRouteImport } from './routes/_authenticated/manager/expenses'
 import { Route as AuthenticatedManagerMaintenanceRouteImport } from './routes/_authenticated/manager/maintenance'
 import { Route as AuthenticatedManagerPaymentsRouteImport } from './routes/_authenticated/manager/payments'
 import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
 import { Route as AuthenticatedOwnerBillsRouteImport } from './routes/_authenticated/owner/bills'
+import { Route as AuthenticatedOwnerCommunicationRouteImport } from './routes/_authenticated/owner/communication'
 import { Route as AuthenticatedOwnerDashboardRouteImport } from './routes/_authenticated/owner/dashboard'
 import { Route as AuthenticatedOwnerExpensesRouteImport } from './routes/_authenticated/owner/expenses'
 import { Route as AuthenticatedOwnerMaintenanceRouteImport } from './routes/_authenticated/owner/maintenance'
@@ -30,6 +32,7 @@ import { Route as AuthenticatedOwnerRentRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOwnerReportsRouteImport } from './routes/_authenticated/owner/reports'
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedTenantMaintenanceRouteImport } from './routes/_authenticated/tenant/maintenance'
+import { Route as AuthenticatedTenantNoticesRouteImport } from './routes/_authenticated/tenant/notices'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
 import { Route as AuthenticatedOwnerFlatsBuildingIdRouteImport } from './routes/_authenticated/owner/flats/$buildingId'
@@ -69,6 +72,12 @@ const AuthenticatedManagerBillsRoute =
     path: '/manager/bills',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedManagerCommunicationRoute =
+  AuthenticatedManagerCommunicationRouteImport.update({
+    id: '/manager/communication',
+    path: '/manager/communication',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedManagerDashboardRoute =
   AuthenticatedManagerDashboardRouteImport.update({
     id: '/manager/dashboard',
@@ -104,6 +113,12 @@ const AuthenticatedOwnerBillsRoute = AuthenticatedOwnerBillsRouteImport.update({
   path: '/owner/bills',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOwnerCommunicationRoute =
+  AuthenticatedOwnerCommunicationRouteImport.update({
+    id: '/owner/communication',
+    path: '/owner/communication',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOwnerDashboardRoute =
   AuthenticatedOwnerDashboardRouteImport.update({
     id: '/owner/dashboard',
@@ -151,6 +166,12 @@ const AuthenticatedTenantMaintenanceRoute =
     path: '/tenant/maintenance',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTenantNoticesRoute =
+  AuthenticatedTenantNoticesRouteImport.update({
+    id: '/tenant/notices',
+    path: '/tenant/notices',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOwnerBuildingsIndexRoute =
   AuthenticatedOwnerBuildingsIndexRouteImport.update({
     id: '/owner/buildings/',
@@ -177,12 +198,14 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
   '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/owner/bills': typeof AuthenticatedOwnerBillsRoute
+  '/owner/communication': typeof AuthenticatedOwnerCommunicationRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/owner/expenses': typeof AuthenticatedOwnerExpensesRoute
   '/owner/maintenance': typeof AuthenticatedOwnerMaintenanceRoute
@@ -191,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/owner/reports': typeof AuthenticatedOwnerReportsRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
+  '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -202,12 +226,14 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
   '/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/owner/bills': typeof AuthenticatedOwnerBillsRoute
+  '/owner/communication': typeof AuthenticatedOwnerCommunicationRoute
   '/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/owner/expenses': typeof AuthenticatedOwnerExpensesRoute
   '/owner/maintenance': typeof AuthenticatedOwnerMaintenanceRoute
@@ -216,6 +242,7 @@ export interface FileRoutesByTo {
   '/owner/reports': typeof AuthenticatedOwnerReportsRoute
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
+  '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -229,12 +256,14 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/_authenticated/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/_authenticated/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/_authenticated/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
   '/_authenticated/manager/payments': typeof AuthenticatedManagerPaymentsRoute
   '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/_authenticated/owner/bills': typeof AuthenticatedOwnerBillsRoute
+  '/_authenticated/owner/communication': typeof AuthenticatedOwnerCommunicationRoute
   '/_authenticated/owner/dashboard': typeof AuthenticatedOwnerDashboardRoute
   '/_authenticated/owner/expenses': typeof AuthenticatedOwnerExpensesRoute
   '/_authenticated/owner/maintenance': typeof AuthenticatedOwnerMaintenanceRoute
@@ -243,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/owner/reports': typeof AuthenticatedOwnerReportsRoute
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
+  '/_authenticated/tenant/notices': typeof AuthenticatedTenantNoticesRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -256,12 +286,14 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/manager/bills'
+    | '/manager/communication'
     | '/manager/dashboard'
     | '/manager/expenses'
     | '/manager/maintenance'
     | '/manager/payments'
     | '/manager/reports'
     | '/owner/bills'
+    | '/owner/communication'
     | '/owner/dashboard'
     | '/owner/expenses'
     | '/owner/maintenance'
@@ -270,6 +302,7 @@ export interface FileRouteTypes {
     | '/owner/reports'
     | '/tenant/dashboard'
     | '/tenant/maintenance'
+    | '/tenant/notices'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings/'
@@ -281,12 +314,14 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/manager/bills'
+    | '/manager/communication'
     | '/manager/dashboard'
     | '/manager/expenses'
     | '/manager/maintenance'
     | '/manager/payments'
     | '/manager/reports'
     | '/owner/bills'
+    | '/owner/communication'
     | '/owner/dashboard'
     | '/owner/expenses'
     | '/owner/maintenance'
@@ -295,6 +330,7 @@ export interface FileRouteTypes {
     | '/owner/reports'
     | '/tenant/dashboard'
     | '/tenant/maintenance'
+    | '/tenant/notices'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings'
@@ -307,12 +343,14 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_authenticated/manager/bills'
+    | '/_authenticated/manager/communication'
     | '/_authenticated/manager/dashboard'
     | '/_authenticated/manager/expenses'
     | '/_authenticated/manager/maintenance'
     | '/_authenticated/manager/payments'
     | '/_authenticated/manager/reports'
     | '/_authenticated/owner/bills'
+    | '/_authenticated/owner/communication'
     | '/_authenticated/owner/dashboard'
     | '/_authenticated/owner/expenses'
     | '/_authenticated/owner/maintenance'
@@ -321,6 +359,7 @@ export interface FileRouteTypes {
     | '/_authenticated/owner/reports'
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/tenant/maintenance'
+    | '/_authenticated/tenant/notices'
     | '/_authenticated/owner/buildings/$buildingId'
     | '/_authenticated/owner/flats/$buildingId'
     | '/_authenticated/owner/buildings/'
@@ -386,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManagerBillsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/manager/communication': {
+      id: '/_authenticated/manager/communication'
+      path: '/manager/communication'
+      fullPath: '/manager/communication'
+      preLoaderRoute: typeof AuthenticatedManagerCommunicationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/manager/dashboard': {
       id: '/_authenticated/manager/dashboard'
       path: '/manager/dashboard'
@@ -426,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/owner/bills'
       fullPath: '/owner/bills'
       preLoaderRoute: typeof AuthenticatedOwnerBillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/owner/communication': {
+      id: '/_authenticated/owner/communication'
+      path: '/owner/communication'
+      fullPath: '/owner/communication'
+      preLoaderRoute: typeof AuthenticatedOwnerCommunicationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/owner/dashboard': {
@@ -484,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantMaintenanceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tenant/notices': {
+      id: '/_authenticated/tenant/notices'
+      path: '/tenant/notices'
+      fullPath: '/tenant/notices'
+      preLoaderRoute: typeof AuthenticatedTenantNoticesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/owner/buildings/': {
       id: '/_authenticated/owner/buildings/'
       path: '/owner/buildings'
@@ -510,12 +570,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedManagerBillsRoute: typeof AuthenticatedManagerBillsRoute
+  AuthenticatedManagerCommunicationRoute: typeof AuthenticatedManagerCommunicationRoute
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
   AuthenticatedManagerExpensesRoute: typeof AuthenticatedManagerExpensesRoute
   AuthenticatedManagerMaintenanceRoute: typeof AuthenticatedManagerMaintenanceRoute
   AuthenticatedManagerPaymentsRoute: typeof AuthenticatedManagerPaymentsRoute
   AuthenticatedManagerReportsRoute: typeof AuthenticatedManagerReportsRoute
   AuthenticatedOwnerBillsRoute: typeof AuthenticatedOwnerBillsRoute
+  AuthenticatedOwnerCommunicationRoute: typeof AuthenticatedOwnerCommunicationRoute
   AuthenticatedOwnerDashboardRoute: typeof AuthenticatedOwnerDashboardRoute
   AuthenticatedOwnerExpensesRoute: typeof AuthenticatedOwnerExpensesRoute
   AuthenticatedOwnerMaintenanceRoute: typeof AuthenticatedOwnerMaintenanceRoute
@@ -524,6 +586,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOwnerReportsRoute: typeof AuthenticatedOwnerReportsRoute
   AuthenticatedTenantDashboardRoute: typeof AuthenticatedTenantDashboardRoute
   AuthenticatedTenantMaintenanceRoute: typeof AuthenticatedTenantMaintenanceRoute
+  AuthenticatedTenantNoticesRoute: typeof AuthenticatedTenantNoticesRoute
   AuthenticatedOwnerBuildingsBuildingIdRoute: typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   AuthenticatedOwnerFlatsBuildingIdRoute: typeof AuthenticatedOwnerFlatsBuildingIdRoute
   AuthenticatedOwnerBuildingsIndexRoute: typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -531,12 +594,15 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagerBillsRoute: AuthenticatedManagerBillsRoute,
+  AuthenticatedManagerCommunicationRoute:
+    AuthenticatedManagerCommunicationRoute,
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
   AuthenticatedManagerExpensesRoute: AuthenticatedManagerExpensesRoute,
   AuthenticatedManagerMaintenanceRoute: AuthenticatedManagerMaintenanceRoute,
   AuthenticatedManagerPaymentsRoute: AuthenticatedManagerPaymentsRoute,
   AuthenticatedManagerReportsRoute: AuthenticatedManagerReportsRoute,
   AuthenticatedOwnerBillsRoute: AuthenticatedOwnerBillsRoute,
+  AuthenticatedOwnerCommunicationRoute: AuthenticatedOwnerCommunicationRoute,
   AuthenticatedOwnerDashboardRoute: AuthenticatedOwnerDashboardRoute,
   AuthenticatedOwnerExpensesRoute: AuthenticatedOwnerExpensesRoute,
   AuthenticatedOwnerMaintenanceRoute: AuthenticatedOwnerMaintenanceRoute,
@@ -545,6 +611,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOwnerReportsRoute: AuthenticatedOwnerReportsRoute,
   AuthenticatedTenantDashboardRoute: AuthenticatedTenantDashboardRoute,
   AuthenticatedTenantMaintenanceRoute: AuthenticatedTenantMaintenanceRoute,
+  AuthenticatedTenantNoticesRoute: AuthenticatedTenantNoticesRoute,
   AuthenticatedOwnerBuildingsBuildingIdRoute:
     AuthenticatedOwnerBuildingsBuildingIdRoute,
   AuthenticatedOwnerFlatsBuildingIdRoute:

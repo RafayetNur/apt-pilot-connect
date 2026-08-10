@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedManagerBillsRouteImport } from './routes/_authenticated/manager/bills'
+import { Route as AuthenticatedManagerCommunicationRouteImport } from './routes/_authenticated/manager/communication'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
 import { Route as AuthenticatedManagerExpensesRouteImport } from './routes/_authenticated/manager/expenses'
 import { Route as AuthenticatedManagerMaintenanceRouteImport } from './routes/_authenticated/manager/maintenance'
@@ -68,6 +69,12 @@ const AuthenticatedManagerBillsRoute =
   AuthenticatedManagerBillsRouteImport.update({
     id: '/manager/bills',
     path: '/manager/bills',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedManagerCommunicationRoute =
+  AuthenticatedManagerCommunicationRouteImport.update({
+    id: '/manager/communication',
+    path: '/manager/communication',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedManagerDashboardRoute =
@@ -184,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
@@ -238,6 +247,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/manager/bills': typeof AuthenticatedManagerBillsRoute
+  '/_authenticated/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
   '/_authenticated/manager/expenses': typeof AuthenticatedManagerExpensesRoute
   '/_authenticated/manager/maintenance': typeof AuthenticatedManagerMaintenanceRoute
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/manager/bills'
+    | '/manager/communication'
     | '/manager/dashboard'
     | '/manager/expenses'
     | '/manager/maintenance'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/manager/bills'
+    | '/manager/communication'
     | '/manager/dashboard'
     | '/manager/expenses'
     | '/manager/maintenance'
@@ -319,6 +331,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_authenticated/manager/bills'
+    | '/_authenticated/manager/communication'
     | '/_authenticated/manager/dashboard'
     | '/_authenticated/manager/expenses'
     | '/_authenticated/manager/maintenance'
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       path: '/manager/bills'
       fullPath: '/manager/bills'
       preLoaderRoute: typeof AuthenticatedManagerBillsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/manager/communication': {
+      id: '/_authenticated/manager/communication'
+      path: '/manager/communication'
+      fullPath: '/manager/communication'
+      preLoaderRoute: typeof AuthenticatedManagerCommunicationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/manager/dashboard': {
@@ -530,6 +550,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedManagerBillsRoute: typeof AuthenticatedManagerBillsRoute
+  AuthenticatedManagerCommunicationRoute: typeof AuthenticatedManagerCommunicationRoute
   AuthenticatedManagerDashboardRoute: typeof AuthenticatedManagerDashboardRoute
   AuthenticatedManagerExpensesRoute: typeof AuthenticatedManagerExpensesRoute
   AuthenticatedManagerMaintenanceRoute: typeof AuthenticatedManagerMaintenanceRoute
@@ -552,6 +573,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedManagerBillsRoute: AuthenticatedManagerBillsRoute,
+  AuthenticatedManagerCommunicationRoute:
+    AuthenticatedManagerCommunicationRoute,
   AuthenticatedManagerDashboardRoute: AuthenticatedManagerDashboardRoute,
   AuthenticatedManagerExpensesRoute: AuthenticatedManagerExpensesRoute,
   AuthenticatedManagerMaintenanceRoute: AuthenticatedManagerMaintenanceRoute,

@@ -596,3 +596,23 @@ export function sortNoticesForTenant(notices: Notice[]) {
     return (b.published_at ?? b.created_at).localeCompare(a.published_at ?? a.created_at);
   });
 }
+
+/** Number of occupied flats with a tenant per building — the expected audience
+ *  size for an "all tenants" notice. RLS scopes rows to what the user may see. */
+export const occupiedTenantCountsQueryOptions = () =>
+  queryOptions({
+    queryKey: ["occupied-tenant-counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from("flats")
+        .select("building_id, tenant_id, occupancy_status");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const raw of data ?? []) {
+        const row = raw as { building_id: string; tenant_id: string | null; occupancy_status: string };
+        if (row.occupancy_status !== "occupied" || !row.tenant_id) continue;
+        counts[row.building_id] = (counts[row.building_id] ?? 0) + 1;
+      }
+      return counts;
+    },
+  });

@@ -126,6 +126,97 @@ export type Database = {
           },
         ]
       }
+      building_documents: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          is_active: boolean
+          replaced_by_document_id: string | null
+          replaces_document_id: string | null
+          storage_path: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+          version_number: number
+          visibility: Database["public"]["Enums"]["document_visibility"]
+        }
+        Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          building_id: string
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          is_active?: boolean
+          replaced_by_document_id?: string | null
+          replaces_document_id?: string | null
+          storage_path: string
+          title: string
+          updated_at?: string
+          uploaded_by: string
+          version_number?: number
+          visibility?: Database["public"]["Enums"]["document_visibility"]
+        }
+        Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          building_id?: string
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          is_active?: boolean
+          replaced_by_document_id?: string | null
+          replaces_document_id?: string | null
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+          version_number?: number
+          visibility?: Database["public"]["Enums"]["document_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_documents_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_documents_replaced_by_document_id_fkey"
+            columns: ["replaced_by_document_id"]
+            isOneToOne: false
+            referencedRelation: "building_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_documents_replaces_document_id_fkey"
+            columns: ["replaces_document_id"]
+            isOneToOne: false
+            referencedRelation: "building_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       building_expenses: {
         Row: {
           accounting_month: string
@@ -392,6 +483,100 @@ export type Database = {
           },
         ]
       }
+      building_notices: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          audience_type?: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          effective_from?: string | null
+          expires_at?: string | null
+          id?: string
+          notice_number: string
+          priority?: Database["public"]["Enums"]["notice_priority"]
+          published_at?: string | null
+          published_by?: string | null
+          replaced_by_notice_id?: string | null
+          replaces_notice_id?: string | null
+          requires_acknowledgement?: boolean
+          status?: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          audience_type?: Database["public"]["Enums"]["notice_audience_type"]
+          building_id?: string
+          cancellation_reason?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          effective_from?: string | null
+          expires_at?: string | null
+          id?: string
+          notice_number?: string
+          priority?: Database["public"]["Enums"]["notice_priority"]
+          published_at?: string | null
+          published_by?: string | null
+          replaced_by_notice_id?: string | null
+          replaces_notice_id?: string | null
+          requires_acknowledgement?: boolean
+          status?: Database["public"]["Enums"]["notice_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_notices_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_notices_replaced_by_notice_id_fkey"
+            columns: ["replaced_by_notice_id"]
+            isOneToOne: false
+            referencedRelation: "building_notices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_notices_replaces_notice_id_fkey"
+            columns: ["replaces_notice_id"]
+            isOneToOne: false
+            referencedRelation: "building_notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           address: string
@@ -433,6 +618,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      document_recipients: {
+        Row: {
+          created_at: string
+          document_id: string
+          flat_id: string | null
+          id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          flat_id?: string | null
+          id?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          flat_id?: string | null
+          id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_recipients_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "building_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_recipients_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flat_bill_charges: {
         Row: {
@@ -576,6 +800,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      in_app_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          read_at: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          read_at?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       maintenance_attachments: {
         Row: {
@@ -883,6 +1146,109 @@ export type Database = {
             columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          notice_id: string
+          tenant_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          notice_id: string
+          tenant_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          notice_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_acknowledgements_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "building_notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_events: {
+        Row: {
+          action: Database["public"]["Enums"]["notice_action"]
+          created_at: string
+          id: string
+          note: string | null
+          notice_id: string
+          performed_by: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["notice_action"]
+          created_at?: string
+          id?: string
+          note?: string | null
+          notice_id: string
+          performed_by: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["notice_action"]
+          created_at?: string
+          id?: string
+          note?: string | null
+          notice_id?: string
+          performed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_events_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "building_notices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notice_recipients: {
+        Row: {
+          created_at: string
+          flat_id: string | null
+          id: string
+          notice_id: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          flat_id?: string | null
+          id?: string
+          notice_id: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          flat_id?: string | null
+          id?: string
+          notice_id?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notice_recipients_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notice_recipients_notice_id_fkey"
+            columns: ["notice_id"]
+            isOneToOne: false
+            referencedRelation: "building_notices"
             referencedColumns: ["id"]
           },
         ]
@@ -1480,6 +1846,10 @@ export type Database = {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
       }
+      can_view_document: {
+        Args: { _document_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_maintenance_request: {
         Args: { _request_id: string; _user_id: string }
         Returns: boolean
@@ -1645,6 +2015,89 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      document_archive: {
+        Args: { _document_id: string; _reason: string }
+        Returns: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          is_active: boolean
+          replaced_by_document_id: string | null
+          replaces_document_id: string | null
+          storage_path: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+          version_number: number
+          visibility: Database["public"]["Enums"]["document_visibility"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      document_create: {
+        Args: {
+          _building_id: string
+          _category: Database["public"]["Enums"]["document_category"]
+          _description?: string
+          _file_name: string
+          _file_size: number
+          _file_type: string
+          _flat_ids?: string[]
+          _replaces_document_id?: string
+          _storage_path: string
+          _tenant_ids?: string[]
+          _title: string
+          _visibility?: Database["public"]["Enums"]["document_visibility"]
+        }
+        Returns: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          building_id: string
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          is_active: boolean
+          replaced_by_document_id: string | null
+          replaces_document_id: string | null
+          storage_path: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+          version_number: number
+          visibility: Database["public"]["Enums"]["document_visibility"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_documents"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      document_set_recipients: {
+        Args: {
+          _document_id: string
+          _flat_ids: string[]
+          _tenant_ids: string[]
+        }
+        Returns: undefined
       }
       has_role: {
         Args: {
@@ -1813,6 +2266,268 @@ export type Database = {
           _to: Database["public"]["Enums"]["maintenance_status"]
         }
         Returns: boolean
+      }
+      notice_acknowledge: {
+        Args: { _notice_id: string }
+        Returns: {
+          acknowledged_at: string
+          id: string
+          notice_id: string
+          tenant_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "notice_acknowledgements"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_archive: {
+        Args: { _note?: string; _notice_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_audience_user_ids: {
+        Args: { _notice_id: string }
+        Returns: string[]
+      }
+      notice_cancel: {
+        Args: { _notice_id: string; _reason: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_create: {
+        Args: {
+          _audience_type?: Database["public"]["Enums"]["notice_audience_type"]
+          _building_id: string
+          _content: string
+          _effective_from?: string
+          _expires_at?: string
+          _flat_ids?: string[]
+          _priority?: Database["public"]["Enums"]["notice_priority"]
+          _requires_acknowledgement?: boolean
+          _tenant_ids?: string[]
+          _title: string
+        }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_publish: {
+        Args: { _confirmed?: boolean; _notice_id: string }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_publish_revision: {
+        Args: {
+          _audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          _confirmed?: boolean
+          _content: string
+          _effective_from?: string
+          _expires_at?: string
+          _flat_ids?: string[]
+          _notice_id: string
+          _priority: Database["public"]["Enums"]["notice_priority"]
+          _reason: string
+          _requires_acknowledgement: boolean
+          _tenant_ids?: string[]
+          _title: string
+        }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notice_set_recipients: {
+        Args: { _flat_ids: string[]; _notice_id: string; _tenant_ids: string[] }
+        Returns: undefined
+      }
+      notice_update_draft: {
+        Args: {
+          _audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          _content: string
+          _effective_from?: string
+          _expires_at?: string
+          _flat_ids?: string[]
+          _notice_id: string
+          _priority: Database["public"]["Enums"]["notice_priority"]
+          _requires_acknowledgement: boolean
+          _tenant_ids?: string[]
+          _title: string
+        }
+        Returns: {
+          archived_at: string | null
+          archived_by: string | null
+          audience_type: Database["public"]["Enums"]["notice_audience_type"]
+          building_id: string
+          cancellation_reason: string | null
+          content: string
+          created_at: string
+          created_by: string
+          effective_from: string | null
+          expires_at: string | null
+          id: string
+          notice_number: string
+          priority: Database["public"]["Enums"]["notice_priority"]
+          published_at: string | null
+          published_by: string | null
+          replaced_by_notice_id: string | null
+          replaces_notice_id: string | null
+          requires_acknowledgement: boolean
+          status: Database["public"]["Enums"]["notice_status"]
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "building_notices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      notifications_mark_read: { Args: { _ids?: string[] }; Returns: number }
+      notify_users: {
+        Args: {
+          _entity_id: string
+          _entity_type: string
+          _message: string
+          _title: string
+          _type: Database["public"]["Enums"]["notification_type"]
+          _user_ids: string[]
+        }
+        Returns: undefined
       }
       recalc_rent_record_totals: {
         Args: { _rent_record_id: string }
@@ -2013,6 +2728,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      tenant_can_view_document: {
+        Args: { _document_id: string; _user_id: string }
+        Returns: boolean
+      }
+      tenant_can_view_notice: {
+        Args: { _notice_id: string; _user_id: string }
+        Returns: boolean
+      }
       withdraw_rent_payment: {
         Args: { _payment_id: string; _reason?: string }
         Returns: {
@@ -2180,6 +2903,23 @@ export type Database = {
       app_role: "owner" | "manager" | "tenant"
       approval_status: "pending" | "approved" | "rejected"
       building_status: "active" | "inactive"
+      document_category:
+        | "building_rule"
+        | "tenant_guideline"
+        | "emergency_contact"
+        | "rent_policy"
+        | "maintenance_policy"
+        | "meeting_minutes"
+        | "utility_document"
+        | "legal_document"
+        | "receipt_or_invoice"
+        | "other"
+      document_visibility:
+        | "owner_only"
+        | "owner_manager"
+        | "all_building_tenants"
+        | "selected_flats"
+        | "selected_tenants"
       expense_approval_status: "pending" | "approved" | "rejected" | "cancelled"
       expense_category:
         | "electricity_common"
@@ -2246,6 +2986,27 @@ export type Database = {
         | "reopened"
       month_closure_action: "closed" | "reopened"
       month_closure_status: "open" | "closed" | "reopened"
+      notice_action:
+        | "created"
+        | "edited"
+        | "published"
+        | "acknowledged"
+        | "archived"
+        | "cancelled"
+      notice_audience_type:
+        | "all_tenants"
+        | "selected_flats"
+        | "selected_tenants"
+        | "owner_manager_only"
+      notice_priority: "normal" | "important" | "urgent" | "emergency"
+      notice_status: "draft" | "published" | "archived" | "cancelled"
+      notification_type:
+        | "notice_published"
+        | "notice_updated"
+        | "document_shared"
+        | "maintenance_update"
+        | "payment_update"
+        | "general"
       occupancy_status: "vacant" | "occupied"
       payment_method: "bkash" | "nagad" | "bank_transfer" | "cash"
       payment_status: "unpaid" | "paid" | "overdue" | "partially_paid"
@@ -2413,6 +3174,25 @@ export const Constants = {
       app_role: ["owner", "manager", "tenant"],
       approval_status: ["pending", "approved", "rejected"],
       building_status: ["active", "inactive"],
+      document_category: [
+        "building_rule",
+        "tenant_guideline",
+        "emergency_contact",
+        "rent_policy",
+        "maintenance_policy",
+        "meeting_minutes",
+        "utility_document",
+        "legal_document",
+        "receipt_or_invoice",
+        "other",
+      ],
+      document_visibility: [
+        "owner_only",
+        "owner_manager",
+        "all_building_tenants",
+        "selected_flats",
+        "selected_tenants",
+      ],
       expense_approval_status: ["pending", "approved", "rejected", "cancelled"],
       expense_category: [
         "electricity_common",
@@ -2485,6 +3265,30 @@ export const Constants = {
       ],
       month_closure_action: ["closed", "reopened"],
       month_closure_status: ["open", "closed", "reopened"],
+      notice_action: [
+        "created",
+        "edited",
+        "published",
+        "acknowledged",
+        "archived",
+        "cancelled",
+      ],
+      notice_audience_type: [
+        "all_tenants",
+        "selected_flats",
+        "selected_tenants",
+        "owner_manager_only",
+      ],
+      notice_priority: ["normal", "important", "urgent", "emergency"],
+      notice_status: ["draft", "published", "archived", "cancelled"],
+      notification_type: [
+        "notice_published",
+        "notice_updated",
+        "document_shared",
+        "maintenance_update",
+        "payment_update",
+        "general",
+      ],
       occupancy_status: ["vacant", "occupied"],
       payment_method: ["bkash", "nagad", "bank_transfer", "cash"],
       payment_status: ["unpaid", "paid", "overdue", "partially_paid"],

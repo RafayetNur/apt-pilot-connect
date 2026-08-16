@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MaintenanceManagementPage } from "@/components/maintenance/maintenance-management-page";
+import { OwnerShell } from "@/components/owner-shell";
 
 export const Route = createFileRoute("/_authenticated/owner/maintenance")({
   head: () => ({
@@ -20,5 +21,9 @@ export const Route = createFileRoute("/_authenticated/owner/maintenance")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MaintenanceManagementPage role="owner" />,
+  component: () => (
+    <OwnerShell>
+      <MaintenanceManagementPage role="owner" />
+    </OwnerShell>
+  ),
 });

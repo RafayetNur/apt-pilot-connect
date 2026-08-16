@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { TenantMaintenancePage } from "@/components/maintenance/tenant-maintenance-page";
+import { TenantShell } from "@/components/tenant-shell";
 
 export const Route = createFileRoute("/_authenticated/tenant/maintenance")({
   head: () => ({
@@ -20,5 +21,9 @@ export const Route = createFileRoute("/_authenticated/tenant/maintenance")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: TenantMaintenancePage,
+  component: () => (
+    <TenantShell>
+      <TenantMaintenancePage />
+    </TenantShell>
+  ),
 });

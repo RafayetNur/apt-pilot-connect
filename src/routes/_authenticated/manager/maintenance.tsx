@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { MaintenanceManagementPage } from "@/components/maintenance/maintenance-management-page";
+import { ManagerShell } from "@/components/manager-shell";
 
 export const Route = createFileRoute("/_authenticated/manager/maintenance")({
   head: () => ({
@@ -20,5 +21,9 @@ export const Route = createFileRoute("/_authenticated/manager/maintenance")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MaintenanceManagementPage role="manager" />,
+  component: () => (
+    <ManagerShell>
+      <MaintenanceManagementPage role="manager" />
+    </ManagerShell>
+  ),
 });

@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   ClipboardList,
-  FileText,
   Home,
   LayoutGrid,
   LogOut,
@@ -181,5 +180,3 @@ export function MobileBottomNav({
     </nav>
   );
 }
-
-export { FileText };

@@ -22,7 +22,7 @@ export function ManagerShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader profile={profile} email={user?.email ?? ""} />
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-6xl overflow-x-hidden px-4 py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-8">{children}</main>
     </div>
   );
 }

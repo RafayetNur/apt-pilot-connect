@@ -1,6 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Building2, LogOut, Menu, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import { Building2, LogOut, User as UserIcon } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { dashboardPathFor, roleLabel, type Profile } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { MobileBottomNav } from "@/components/mobile-nav";
 
 export function BrandMark() {
   return (
@@ -118,7 +118,6 @@ export function ProfileMenu({ profile, email }: { profile: Profile | null; email
 }
 
 export function AppHeader({ profile, email }: { profile: Profile | null; email: string }) {
-  const [open, setOpen] = useState(false);
   const links = profile ? navByRole[profile.role] : [];
   const currentPath = useRouterState({
     select: (router) => router.location.pathname,
@@ -130,9 +129,13 @@ export function AppHeader({ profile, email }: { profile: Profile | null; email: 
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
+    <>
+    <header
+      className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-6">
+        <div className="flex min-w-0 items-center gap-6">
           <BrandMark />
           <nav className="hidden items-center gap-1 md:flex">
             {links.map((link) => (
@@ -153,39 +156,11 @@ export function AppHeader({ profile, email }: { profile: Profile | null; email: 
         </div>
         <div className="flex items-center gap-2">
           <ProfileMenu profile={profile} email={email} />
-          {links.length > 0 ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              aria-label="Toggle navigation"
-              onClick={() => setOpen((value) => !value)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          ) : null}
         </div>
       </div>
-      {open && links.length > 0 ? (
-        <nav className="border-t border-border/60 bg-card px-4 py-2 md:hidden">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setOpen(false)}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm font-medium",
-                isActive(link.to)
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
     </header>
+      <MobileBottomNav profile={profile} email={email} currentPath={currentPath} />
+    </>
   );
 }
 

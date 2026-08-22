@@ -48,7 +48,7 @@ const schema = z
       .regex(/^[0-9+\-\s]+$/, { message: "Phone number can contain digits, +, - and spaces" }),
     password: z.string().min(8, { message: "Password must be at least 8 characters" }).max(128),
     confirmPassword: z.string(),
-    role: z.enum(["owner", "manager", "tenant"]),
+    role: z.enum(["owner", "tenant"]),
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: "Passwords do not match",
@@ -213,10 +213,13 @@ function RegisterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="owner">Owner</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
                       <SelectItem value="tenant">Tenant</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Manager accounts cannot be self-created. A building owner assigns the manager
+                    role after you register as a tenant.
+                  </p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={submitting}>

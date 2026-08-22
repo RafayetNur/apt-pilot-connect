@@ -1830,6 +1830,26 @@ export type Database = {
         Args: { _shared_charge_id: string }
         Returns: number
       }
+      assign_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       can_manage_maintenance_request: {
         Args: { _request_id: string; _user_id: string }
         Returns: boolean

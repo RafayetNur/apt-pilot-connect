@@ -1,98 +1,269 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Session } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setCheckingSession(false);
+    });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+    });
+
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  async function signIn() {
+    if (!email.trim() || !password) {
+      Alert.alert('Missing information', 'Enter your email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      Alert.alert('Login failed', error.message);
+    }
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+  }
+
+  if (checkingSession) {
+    return (
+      <SafeAreaView style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color="#639873" />
+      </SafeAreaView>
+    );
+  }
+
+  if (session) {
+    return (
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.successCard}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>AP</Text>
+          </View>
+
+          <Text style={styles.title}>Welcome to AptPilot</Text>
+          <Text style={styles.successText}>Backend login successful</Text>
+          <Text style={styles.email}>{session.user.email}</Text>
+
+          <Pressable style={styles.button} onPress={signOut}>
+            <Text style={styles.buttonText}>Log out</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.brandRow}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>AP</Text>
+          </View>
+          <Text style={styles.brand}>AptPilot</Text>
+        </View>
+
+        <Text style={styles.eyebrow}>APARTMENT MANAGEMENT</Text>
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.subtitle}>
+          Log in to access your AptPilot workspace.
+        </Text>
+
+        <View style={styles.form}>
+          <Text style={styles.label}>Email address</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="you@example.com"
+            placeholderTextColor="#9B95A5"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+          />
+
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            placeholderTextColor="#9B95A5"
+            secureTextEntry
+          />
+
+          <Pressable
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={signIn}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Log in</Text>
+            )}
+          </Pressable>
+        </View>
+
+        <Text style={styles.footer}>
+          Owners, managers and tenants use the same secure login.
+        </Text>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#FBF7F2',
+  },
+  loadingScreen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FBF7F2',
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 26,
+  },
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 46,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  logo: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#639873',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  brand: {
+    marginLeft: 12,
+    color: '#292332',
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  eyebrow: {
+    marginBottom: 10,
+    color: '#639873',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.4,
+  },
+  title: {
+    color: '#292332',
+    fontSize: 38,
+    fontWeight: '800',
+  },
+  subtitle: {
+    marginTop: 10,
+    marginBottom: 30,
+    color: '#777184',
+    fontSize: 16,
+    lineHeight: 23,
+  },
+  form: {
+    gap: 10,
+  },
+  label: {
+    marginTop: 7,
+    color: '#3B3543',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  input: {
+    height: 54,
+    borderWidth: 1,
+    borderColor: '#DED6CE',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    color: '#292332',
+    fontSize: 16,
+  },
+  button: {
+    height: 54,
+    marginTop: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#639873',
+  },
+  buttonDisabled: {
+    opacity: 0.65,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  footer: {
+    marginTop: 28,
+    color: '#8A8492',
+    textAlign: 'center',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  successCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 26,
+  },
+  successText: {
+    marginTop: 14,
+    color: '#639873',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  email: {
+    marginTop: 8,
+    color: '#777184',
+    fontSize: 15,
   },
 });

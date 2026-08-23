@@ -1850,30 +1850,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      can_manage_maintenance_request: {
-        Args: { _request_id: string; _user_id: string }
-        Returns: boolean
-      }
-      can_review_building: {
-        Args: { building_uuid: string; user_uuid: string }
-        Returns: boolean
-      }
-      can_review_tenant: {
-        Args: { tenant_uuid: string; user_uuid: string }
-        Returns: boolean
-      }
-      can_view_building: {
-        Args: { building_uuid: string; user_uuid: string }
-        Returns: boolean
-      }
-      can_view_document: {
-        Args: { _document_id: string; _user_id: string }
-        Returns: boolean
-      }
-      can_view_maintenance_request: {
-        Args: { _request_id: string; _user_id: string }
-        Returns: boolean
-      }
       cancel_building_expense: {
         Args: {
           _expense_id: string
@@ -2118,17 +2094,6 @@ export type Database = {
           _tenant_ids: string[]
         }
         Returns: undefined
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_building_owner: {
-        Args: { building_uuid: string; user_uuid: string }
-        Returns: boolean
       }
       is_month_closed: {
         Args: { _billing_month: string; _building_id: string }
@@ -2747,14 +2712,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      tenant_can_view_document: {
-        Args: { _document_id: string; _user_id: string }
-        Returns: boolean
-      }
-      tenant_can_view_notice: {
-        Args: { _notice_id: string; _user_id: string }
-        Returns: boolean
       }
       withdraw_rent_payment: {
         Args: { _payment_id: string; _reason?: string }

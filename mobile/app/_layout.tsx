@@ -13,9 +13,11 @@ import { AuthProvider, useAuth } from '@/lib/auth-context';
  * `isLoggedIn`/`role` pair). Here it is driven by the real Supabase session
  * and `profiles.role` from `useAuth()` instead.
  *
- * Only the "tenant" destination is live in this phase. Owner/manager
- * accounts are routed to a placeholder screen rather than into tenant UI —
- * see app/role-pending.tsx.
+ * "tenant" and "manager" are live in this phase. `role` always comes from
+ * the server-side `profiles.role` column (read-only from the client — RLS
+ * does not allow a user to change their own role), so this redirect cannot
+ * be spoofed by client state. Owner accounts still route to a placeholder
+ * screen — see app/role-pending.tsx.
  */
 function AuthGate() {
   const { session, role, initializing, profileLoading } = useAuth();
@@ -26,10 +28,11 @@ function AuthGate() {
     if (initializing) return;
 
     const inTenantGroup = segments[0] === '(tenant)';
+    const inManagerGroup = segments[0] === '(manager)';
     const onRolePending = segments[0] === 'role-pending';
 
     if (!session) {
-      if (inTenantGroup || onRolePending) router.replace('/');
+      if (inTenantGroup || inManagerGroup || onRolePending) router.replace('/');
       return;
     }
 
@@ -39,6 +42,8 @@ function AuthGate() {
 
     if (role === 'tenant') {
       if (!inTenantGroup) router.replace('/(tenant)');
+    } else if (role === 'manager') {
+      if (!inManagerGroup) router.replace('/(manager)');
     } else if (!onRolePending) {
       router.replace('/role-pending');
     }
@@ -51,6 +56,7 @@ function AuthGate() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="role-pending" />
       <Stack.Screen name="(tenant)" />
+      <Stack.Screen name="(manager)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>

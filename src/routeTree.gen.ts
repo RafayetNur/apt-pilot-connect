@@ -15,6 +15,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ApiAptbotRouteImport } from './routes/api/aptbot'
 import { Route as AuthenticatedManagerBillsRouteImport } from './routes/_authenticated/manager/bills'
 import { Route as AuthenticatedManagerCommunicationRouteImport } from './routes/_authenticated/manager/communication'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
@@ -33,6 +34,7 @@ import { Route as AuthenticatedOwnerReportsRouteImport } from './routes/_authent
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedTenantMaintenanceRouteImport } from './routes/_authenticated/tenant/maintenance'
 import { Route as AuthenticatedTenantNoticesRouteImport } from './routes/_authenticated/tenant/notices'
+import { Route as ApiPublicAptbotRouteImport } from './routes/api/public/aptbot'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
 import { Route as AuthenticatedOwnerFlatsBuildingIdRouteImport } from './routes/_authenticated/owner/flats/$buildingId'
@@ -64,6 +66,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAptbotRoute = ApiAptbotRouteImport.update({
+  id: '/api/aptbot',
+  path: '/api/aptbot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedManagerBillsRoute =
@@ -172,6 +179,11 @@ const AuthenticatedTenantNoticesRoute =
     path: '/tenant/notices',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAptbotRoute = ApiPublicAptbotRouteImport.update({
+  id: '/api/public/aptbot',
+  path: '/api/public/aptbot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedOwnerBuildingsIndexRoute =
   AuthenticatedOwnerBuildingsIndexRouteImport.update({
     id: '/owner/buildings/',
@@ -197,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -215,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -225,6 +239,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -243,6 +258,7 @@ export interface FileRoutesByTo {
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -255,6 +271,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/_authenticated/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/_authenticated/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -273,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/_authenticated/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -285,6 +303,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/manager/bills'
     | '/manager/communication'
     | '/manager/dashboard'
@@ -303,6 +322,7 @@ export interface FileRouteTypes {
     | '/tenant/dashboard'
     | '/tenant/maintenance'
     | '/tenant/notices'
+    | '/api/public/aptbot'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings/'
@@ -313,6 +333,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/manager/bills'
     | '/manager/communication'
     | '/manager/dashboard'
@@ -331,6 +352,7 @@ export interface FileRouteTypes {
     | '/tenant/dashboard'
     | '/tenant/maintenance'
     | '/tenant/notices'
+    | '/api/public/aptbot'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings'
@@ -342,6 +364,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/_authenticated/manager/bills'
     | '/_authenticated/manager/communication'
     | '/_authenticated/manager/dashboard'
@@ -360,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/tenant/maintenance'
     | '/_authenticated/tenant/notices'
+    | '/api/public/aptbot'
     | '/_authenticated/owner/buildings/$buildingId'
     | '/_authenticated/owner/flats/$buildingId'
     | '/_authenticated/owner/buildings/'
@@ -372,6 +396,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAptbotRoute: typeof ApiAptbotRoute
+  ApiPublicAptbotRoute: typeof ApiPublicAptbotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -416,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/aptbot': {
+      id: '/api/aptbot'
+      path: '/api/aptbot'
+      fullPath: '/api/aptbot'
+      preLoaderRoute: typeof ApiAptbotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/manager/bills': {
@@ -544,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantNoticesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/aptbot': {
+      id: '/api/public/aptbot'
+      path: '/api/public/aptbot'
+      fullPath: '/api/public/aptbot'
+      preLoaderRoute: typeof ApiPublicAptbotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/owner/buildings/': {
       id: '/_authenticated/owner/buildings/'
       path: '/owner/buildings'
@@ -629,6 +669,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAptbotRoute: ApiAptbotRoute,
+  ApiPublicAptbotRoute: ApiPublicAptbotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

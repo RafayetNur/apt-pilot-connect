@@ -118,7 +118,6 @@ export function RequestFormDialog({
   });
   const flats = flatsQuery.data ?? [];
 
-
   const mutation = useMutation({
     mutationFn: async () => {
       const request = await createMaintenanceRequest({

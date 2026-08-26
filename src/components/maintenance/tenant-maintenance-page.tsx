@@ -142,7 +142,6 @@ export function TenantMaintenancePage() {
         defaultBuildingId={flat?.building_id ?? ""}
         lockedFlatNumber={flat?.flat_number ?? null}
         lockedFlatId={flat?.id ?? null}
-
       />
     </div>
   );

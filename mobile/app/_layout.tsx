@@ -33,7 +33,15 @@ function AuthGate() {
     const onRolePending = segments[0] === 'role-pending';
 
     if (!session) {
-      if (inTenantGroup || inManagerGroup || inOwnerGroup || onRolePending) router.replace('/');
+      // Only reached when a previously-authenticated screen (a role group
+      // or role-pending) loses its session — a fresh cold start never has
+      // segments in one of those groups, so this is effectively "just
+      // logged out (or the session expired) while using the app". Replace
+      // straight to /login (not the splash) per the logout flow, and use
+      // `replace` (not `push`) so this role screen is removed from the
+      // native stack — the Android back button from /login lands on the
+      // splash, not back on the authenticated dashboard.
+      if (inTenantGroup || inManagerGroup || inOwnerGroup || onRolePending) router.replace('/login');
       return;
     }
 

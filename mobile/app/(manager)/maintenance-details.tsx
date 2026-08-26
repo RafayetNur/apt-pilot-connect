@@ -34,7 +34,38 @@ import {
  * lib/manager/maintenance.ts's allowedTransitions (mirrors the database's
  * maintenance_transition_allowed) so only valid next statuses are offered,
  * and real work orders via the `work_order_create` RPC.
+ *
+ * "Resolved", "Rejected", "Cancelled" and "Reopened" all require a note —
+ * mirrors the web app's own request-detail panel
+ * (src/components/maintenance/request-detail-panel.tsx's noteRequiredFor
+ * list), which the database enforces: `maintenance_change_status`'s
+ * optional `_note` argument becomes the required resolution_note /
+ * rejection_reason / cancellation_reason / reopening_reason column for
+ * those four transitions. Submitting one of them with no note previously
+ * failed silently from the tester's perspective (the RPC rejected it and
+ * the status never changed) — a StatusNoteModal now collects and requires
+ * that note before calling the same `changeMaintenanceStatus` (still the
+ * same `maintenance_change_status` RPC, still the same allowed-transition
+ * map) for those four statuses; the remaining transitions (acknowledge,
+ * assign, start, wait for parts, close) are unchanged one-tap actions.
  */
+const noteRequiredFor: MaintenanceStatus[] = ["resolved", "rejected", "cancelled", "reopened"];
+
+function noteLabelFor(status: MaintenanceStatus) {
+  switch (status) {
+    case "resolved":
+      return "Resolution note (required — describe what was fixed)";
+    case "rejected":
+      return "Rejection reason (required)";
+    case "cancelled":
+      return "Cancellation reason (required)";
+    case "reopened":
+      return "Reopening reason (required)";
+    default:
+      return "Note (optional)";
+  }
+}
+
 export default function ManagerMaintenanceDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -43,18 +74,27 @@ export default function ManagerMaintenanceDetails() {
   const { workOrders, refresh: refreshWorkOrders } = useWorkOrders(id ?? null);
   const [updatingStatus, setUpdatingStatus] = useState<MaintenanceStatus | null>(null);
   const [workOrderModalVisible, setWorkOrderModalVisible] = useState(false);
+  const [noteStatus, setNoteStatus] = useState<MaintenanceStatus | null>(null);
 
-  async function handleStatusChange(status: MaintenanceStatus) {
+  async function handleStatusChange(status: MaintenanceStatus, note?: string) {
     if (!request) return;
     setUpdatingStatus(status);
     try {
-      await changeMaintenanceStatus(request.id, status);
+      await changeMaintenanceStatus(request.id, status, note);
       await refresh();
     } catch (statusError) {
       Alert.alert("Could not update status", statusError instanceof Error ? statusError.message : "Try again.");
     } finally {
       setUpdatingStatus(null);
     }
+  }
+
+  function handleTransitionPress(status: MaintenanceStatus) {
+    if (noteRequiredFor.includes(status)) {
+      setNoteStatus(status);
+      return;
+    }
+    handleStatusChange(status);
   }
 
   return (
@@ -116,7 +156,7 @@ export default function ManagerMaintenanceDetails() {
                 <TouchableOpacity
                   key={next}
                   style={[styles.actionBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => handleStatusChange(next)}
+                  onPress={() => handleTransitionPress(next)}
                   disabled={updatingStatus !== null}
                 >
                   {updatingStatus === next ? (
@@ -124,7 +164,9 @@ export default function ManagerMaintenanceDetails() {
                   ) : (
                     <CheckCircle color={colors.primary} size={18} />
                   )}
-                  <Text style={[styles.actionBtnText, { color: colors.text }]}>{maintenanceStatusLabel[next]}</Text>
+                  <Text style={[styles.actionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3} numberOfLines={2}>
+                    {maintenanceStatusLabel[next]}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -167,7 +209,100 @@ export default function ManagerMaintenanceDetails() {
           refreshWorkOrders();
         }}
       />
+
+      <StatusNoteModal
+        status={noteStatus}
+        requestNumber={request?.request_number ?? ""}
+        submitting={updatingStatus !== null}
+        onClose={() => setNoteStatus(null)}
+        onSubmit={async (note) => {
+          if (!noteStatus) return;
+          await handleStatusChange(noteStatus, note);
+          setNoteStatus(null);
+        }}
+      />
     </SafeAreaView>
+  );
+}
+
+/**
+ * Collects the required note for "resolved" / "rejected" / "cancelled" /
+ * "reopened" transitions before submitting — see the top-of-file comment
+ * for why this exists. Confirm stays disabled until the note is non-empty,
+ * and while a submission is in flight, so the request can't be double-
+ * submitted by an extra tap.
+ */
+function StatusNoteModal({
+  status,
+  requestNumber,
+  submitting,
+  onClose,
+  onSubmit,
+}: {
+  status: MaintenanceStatus | null;
+  requestNumber: string;
+  submitting: boolean;
+  onClose: () => void;
+  onSubmit: (note: string) => Promise<void>;
+}) {
+  const colors = useThemeColors();
+  const [note, setNote] = useState("");
+
+  if (!status) return null;
+
+  const trimmed = note.trim();
+
+  async function handleConfirm() {
+    if (!trimmed || submitting) return;
+    await onSubmit(trimmed);
+    setNote("");
+  }
+
+  function handleClose() {
+    setNote("");
+    onClose();
+  }
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={handleClose}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={2}>
+                {maintenanceStatusLabel[status]} — {requestNumber}
+              </Text>
+              <TouchableOpacity onPress={handleClose}>
+                <Text style={[styles.close, { color: colors.primary }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.label, { color: colors.text }]}>{noteLabelFor(status)}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text, minHeight: 90, textAlignVertical: "top" }]}
+              value={note}
+              onChangeText={setNote}
+              placeholder="Required before this status can be saved"
+              placeholderTextColor={colors.textSub}
+              multiline
+            />
+            {status === "resolved" ? (
+              <Text style={[styles.helperText, { color: colors.textSub }]}>
+                All open work orders for this request must be completed or cancelled first.
+              </Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.submitBtn, { backgroundColor: colors.primary }, (!trimmed || submitting) && { opacity: 0.6 }]}
+              onPress={handleConfirm}
+              disabled={!trimmed || submitting}
+            >
+              {submitting ? <ActivityIndicator color="#ffffff" /> : <Text style={styles.submitBtnText}>Confirm</Text>}
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -299,8 +434,13 @@ const styles = StyleSheet.create({
   addChipText: { color: "#ffffff", fontSize: 12, fontWeight: "700" },
 
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24 },
-  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 14, minHeight: 44, borderRadius: 14, borderWidth: 1 },
-  actionBtnText: { fontSize: 13, fontWeight: "700" },
+  // flexGrow + minWidth (instead of sizing tightly to the label's intrinsic
+  // width) give a multi-word status label like "Waiting for parts" enough
+  // room to stay on one line on a narrow phone; when two buttons can't both
+  // fit at that minimum width, flexWrap drops the second to its own row
+  // instead of squeezing the label into an awkward mid-word wrap.
+  actionBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, flexGrow: 1, minWidth: 150, paddingHorizontal: 14, minHeight: 48, borderRadius: 14, borderWidth: 1 },
+  actionBtnText: { fontSize: 13, fontWeight: "700", textAlign: "center" },
 
   list: { gap: 12 },
   metaText: { fontSize: 12 },
@@ -308,11 +448,15 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: "88%" },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "800" },
+  // flex + marginRight so a longer two-line title (StatusNoteModal's
+  // "<Status> — <request number>") wraps within its own space instead of
+  // pushing the Cancel/Close button off the row.
+  modalTitle: { fontSize: 18, fontWeight: "800", flex: 1, marginRight: 12 },
   close: { fontSize: 14, fontWeight: "700" },
 
   label: { fontSize: 13, fontWeight: "700", marginBottom: 8, marginTop: 12 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 14 },
+  helperText: { fontSize: 12, lineHeight: 17, marginTop: 8 },
 
   submitBtn: { marginTop: 24, borderRadius: 12, paddingVertical: 15, alignItems: "center" },
   submitBtnText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },

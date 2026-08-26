@@ -37,7 +37,7 @@ type AuthContextValue = {
     phone: string;
     role: SelfServeRole;
   }) => Promise<SignUpResult>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<AuthResult>;
   refreshProfile: () => Promise<void>;
 };
 
@@ -125,8 +125,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+  const signOut = useCallback(async (): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signOut();
+    // Clear local session/profile state ourselves rather than relying only
+    // on the async onAuthStateChange listener above: `supabase.auth.signOut()`
+    // has to make a network call to revoke the refresh token server-side,
+    // and on a slow/unreliable connection that call — or the listener
+    // notification that follows it — can lag well behind this promise
+    // resolving. Setting it here, synchronously with the rest of this
+    // function, guarantees `session`/`role` go to null (and the AuthGate's
+    // redirect fires) the moment sign-out is attempted, instead of leaving
+    // the UI stuck on the authenticated dashboard until that event arrives.
+    setSession(null);
+    setProfile(null);
+    return { error: error?.message ?? null };
   }, []);
 
   const refreshProfile = useCallback(async () => {

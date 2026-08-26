@@ -1,4 +1,6 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useRef } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Building, LogOut, Mail, Phone } from "lucide-react-native";
 
 import { useAuth } from "@/lib/auth-context";
@@ -18,11 +20,40 @@ import { useOwnerBuildingsList } from "@/lib/owner/buildings";
 export default function OwnerProfile() {
   const colors = useThemeColors();
   const { profile, signOut } = useAuth();
-  const { buildings, loading, error } = useOwnerBuildingsList();
+  const { buildings, loading, error, refresh } = useOwnerBuildingsList();
+
+  // Buildings are added/edited from the Properties tab, which stays mounted
+  // (not unmounted) once visited — react-navigation's bottom tabs keep
+  // background tabs alive — so this screen's own mount-time fetch never
+  // re-runs when the owner comes back here. Re-fetch on every focus after
+  // the first so a building added elsewhere shows up without an app
+  // restart. The first focus is skipped because useOwnerBuildingsList
+  // already fetches once on mount; `refresh` itself isn't a stable
+  // reference (a fresh closure each render), so the effect callback is
+  // deliberately captured once with an empty dependency array — it still
+  // calls the hook's underlying stable `load`, and this avoids the
+  // callback identity changing every render, which would otherwise
+  // re-trigger the focus effect (and reload) in a loop.
+  const hasFocusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedOnce.current) {
+        hasFocusedOnce.current = true;
+        return;
+      }
+      refresh();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
 
   async function handleLogout() {
-    await signOut();
-    // The AuthGate (app/_layout.tsx) will redirect to "/" once the session clears.
+    const { error } = await signOut();
+    // signOut() clears the local session synchronously (see auth-context.tsx),
+    // so the AuthGate (app/_layout.tsx) redirects to /login immediately
+    // regardless of whether the server-side call below succeeded.
+    if (error) {
+      Alert.alert("Signed out", `You've been signed out on this device, but the server could not confirm it: ${error}`);
+    }
   }
 
   const initials = (profile?.full_name || "?")

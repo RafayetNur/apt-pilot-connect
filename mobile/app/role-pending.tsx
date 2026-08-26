@@ -1,5 +1,5 @@
 import { Wrench } from "lucide-react-native";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
@@ -16,6 +16,16 @@ export default function RolePendingScreen() {
 
   const roleLabel = profile?.role === "owner" ? "Owner" : profile?.role === "manager" ? "Manager" : "Your";
 
+  async function handleLogout() {
+    const { error } = await signOut();
+    // signOut() clears the local session synchronously (see auth-context.tsx),
+    // so the AuthGate (app/_layout.tsx) redirects to /login immediately
+    // regardless of whether the server-side call below succeeded.
+    if (error) {
+      Alert.alert("Signed out", `You've been signed out on this device, but the server could not confirm it: ${error}`);
+    }
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
@@ -27,7 +37,7 @@ export default function RolePendingScreen() {
           The {roleLabel.toLowerCase()} mobile experience is still being integrated. Please use
           the AptPilot web app in the meantime — your account and data are unaffected.
         </Text>
-        <Pressable style={[styles.button, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]} onPress={signOut}>
+        <Pressable style={[styles.button, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]} onPress={handleLogout}>
           <Text style={[styles.buttonText, { color: colors.danger }]}>Log out</Text>
         </Pressable>
       </View>

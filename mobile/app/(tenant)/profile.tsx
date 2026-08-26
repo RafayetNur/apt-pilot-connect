@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Home, LogOut, Mail, Phone, User } from "lucide-react-native";
 
 import { useAuth } from "@/lib/auth-context";
@@ -89,10 +90,32 @@ export default function TenantProfile() {
     load();
   }, [load]);
 
+  // Re-fetch flat/building/manager details on every focus after the first
+  // — this screen stays mounted once visited (react-navigation keeps
+  // background tabs alive), so without this its own mount-time fetch above
+  // never re-runs if an owner assigns/reassigns this tenant's flat while
+  // the app is open. `load` is already a stable useCallback (only changes
+  // with `session`), so it's safe to depend on directly. The first focus
+  // is skipped since the effect above already fetches on mount.
+  const hasFocusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedOnce.current) {
+        hasFocusedOnce.current = true;
+        return;
+      }
+      load();
+    }, [load]),
+  );
+
   async function handleLogout() {
-    await signOut();
-    // The AuthGate (app/_layout.tsx) will redirect to "/" once the
-    // session clears.
+    const { error } = await signOut();
+    // signOut() clears the local session synchronously (see auth-context.tsx),
+    // so the AuthGate (app/_layout.tsx) redirects to /login immediately
+    // regardless of whether the server-side call below succeeded.
+    if (error) {
+      Alert.alert("Signed out", `You've been signed out on this device, but the server could not confirm it: ${error}`);
+    }
   }
 
   const initials = (profile?.full_name || "?")

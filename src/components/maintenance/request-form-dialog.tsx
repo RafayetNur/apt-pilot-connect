@@ -56,6 +56,8 @@ export function RequestFormDialog({
   defaultBuildingId,
   /** Tenants always report against their own flat, so the picker is hidden. */
   lockedFlatNumber,
+  /** The tenant's real assigned flat UUID (RLS-scoped). Never derived from the label. */
+  lockedFlatId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -63,6 +65,7 @@ export function RequestFormDialog({
   buildings: Array<{ id: string; name: string }>;
   defaultBuildingId: string;
   lockedFlatNumber?: string | null;
+  lockedFlatId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const isTenant = role === "tenant";
@@ -89,7 +92,7 @@ export function RequestFormDialog({
   useEffect(() => {
     if (!open) return;
     setBuildingId(defaultBuildingId);
-    setFlatId("");
+    setFlatId(isTenant ? (lockedFlatId ?? "") : "");
     setIsCommonArea(false);
     setCategory("plumbing");
     setPriority("medium");
@@ -101,13 +104,20 @@ export function RequestFormDialog({
     setSuggestion(null);
     setAnalyzedInput(null);
     setAiError(null);
-  }, [open, defaultBuildingId]);
+  }, [open, defaultBuildingId, isTenant, lockedFlatId]);
+
+  /** Keep the tenant's flat selection in sync when their assignment finishes loading. */
+  useEffect(() => {
+    if (!open || !isTenant) return;
+    setFlatId(lockedFlatId ?? "");
+  }, [open, isTenant, lockedFlatId]);
 
   const flatsQuery = useQuery({
     ...flatsQueryOptions(buildingId),
     enabled: !isTenant && Boolean(buildingId) && open,
   });
   const flats = flatsQuery.data ?? [];
+
 
   const mutation = useMutation({
     mutationFn: async () => {

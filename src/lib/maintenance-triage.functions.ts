@@ -88,7 +88,10 @@ export const triageMaintenanceRequest = createServerFn({ method: "POST" })
                 role: "user",
                 parts: [
                   {
-                    text: `<report>\n<title>${data.title}</title>\n<description>${data.description}</description>\n</report>`,
+                    text: JSON.stringify({
+                      title: data.title,
+                      description: data.description,
+                    }),
                   },
                 ],
               },

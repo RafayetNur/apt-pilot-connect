@@ -34,6 +34,7 @@ import { Route as AuthenticatedOwnerReportsRouteImport } from './routes/_authent
 import { Route as AuthenticatedTenantDashboardRouteImport } from './routes/_authenticated/tenant/dashboard'
 import { Route as AuthenticatedTenantMaintenanceRouteImport } from './routes/_authenticated/tenant/maintenance'
 import { Route as AuthenticatedTenantNoticesRouteImport } from './routes/_authenticated/tenant/notices'
+import { Route as ApiPublicAptbotRouteImport } from './routes/api/public/aptbot'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
 import { Route as AuthenticatedOwnerFlatsBuildingIdRouteImport } from './routes/_authenticated/owner/flats/$buildingId'
@@ -178,6 +179,11 @@ const AuthenticatedTenantNoticesRoute =
     path: '/tenant/notices',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAptbotRoute = ApiPublicAptbotRouteImport.update({
+  id: '/api/public/aptbot',
+  path: '/api/public/aptbot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedOwnerBuildingsIndexRoute =
   AuthenticatedOwnerBuildingsIndexRouteImport.update({
     id: '/owner/buildings/',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -251,6 +258,7 @@ export interface FileRoutesByTo {
   '/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/_authenticated/tenant/dashboard': typeof AuthenticatedTenantDashboardRoute
   '/_authenticated/tenant/maintenance': typeof AuthenticatedTenantMaintenanceRoute
   '/_authenticated/tenant/notices': typeof AuthenticatedTenantNoticesRoute
+  '/api/public/aptbot': typeof ApiPublicAptbotRoute
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/tenant/dashboard'
     | '/tenant/maintenance'
     | '/tenant/notices'
+    | '/api/public/aptbot'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings/'
@@ -342,6 +352,7 @@ export interface FileRouteTypes {
     | '/tenant/dashboard'
     | '/tenant/maintenance'
     | '/tenant/notices'
+    | '/api/public/aptbot'
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tenant/dashboard'
     | '/_authenticated/tenant/maintenance'
     | '/_authenticated/tenant/notices'
+    | '/api/public/aptbot'
     | '/_authenticated/owner/buildings/$buildingId'
     | '/_authenticated/owner/flats/$buildingId'
     | '/_authenticated/owner/buildings/'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiAptbotRoute: typeof ApiAptbotRoute
+  ApiPublicAptbotRoute: typeof ApiPublicAptbotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -564,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantNoticesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/aptbot': {
+      id: '/api/public/aptbot'
+      path: '/api/public/aptbot'
+      fullPath: '/api/public/aptbot'
+      preLoaderRoute: typeof ApiPublicAptbotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/owner/buildings/': {
       id: '/_authenticated/owner/buildings/'
       path: '/owner/buildings'
@@ -650,6 +670,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiAptbotRoute: ApiAptbotRoute,
+  ApiPublicAptbotRoute: ApiPublicAptbotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

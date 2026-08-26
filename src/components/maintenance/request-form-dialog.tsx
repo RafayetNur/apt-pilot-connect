@@ -128,7 +128,7 @@ export function RequestFormDialog({
         description,
         priority,
         isCommonArea,
-        flatId: isTenant ? null : flatId || null,
+        flatId: isCommonArea ? null : flatId || null,
         preferredVisitDate,
         accessInstructions,
       });
@@ -155,7 +155,7 @@ export function RequestFormDialog({
     description,
     priority,
     isCommonArea,
-    flatId: isTenant ? "tenant-flat" : flatId || null,
+    flatId: isCommonArea ? null : flatId || null,
     preferredVisitDate,
     accessInstructions,
   });
@@ -266,9 +266,16 @@ export function RequestFormDialog({
               isTenant ? (
                 <div className="space-y-2">
                   <Label>Flat</Label>
-                  <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm">
-                    {lockedFlatNumber ? `Flat ${lockedFlatNumber}` : "Your assigned flat"}
-                  </p>
+                  {lockedFlatId ? (
+                    <p className="rounded-xl border border-border bg-surface px-3 py-2 text-sm">
+                      {lockedFlatNumber ? `Flat ${lockedFlatNumber}` : "Your assigned flat"}
+                    </p>
+                  ) : (
+                    <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
+                      No flat is assigned to you yet. Contact your building manager, or report this
+                      as a common-area issue.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">

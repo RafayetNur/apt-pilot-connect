@@ -15,6 +15,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ApiAptbotRouteImport } from './routes/api/aptbot'
 import { Route as AuthenticatedManagerBillsRouteImport } from './routes/_authenticated/manager/bills'
 import { Route as AuthenticatedManagerCommunicationRouteImport } from './routes/_authenticated/manager/communication'
 import { Route as AuthenticatedManagerDashboardRouteImport } from './routes/_authenticated/manager/dashboard'
@@ -64,6 +65,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAptbotRoute = ApiAptbotRouteImport.update({
+  id: '/api/aptbot',
+  path: '/api/aptbot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedManagerBillsRoute =
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/aptbot': typeof ApiAptbotRoute
   '/_authenticated/manager/bills': typeof AuthenticatedManagerBillsRoute
   '/_authenticated/manager/communication': typeof AuthenticatedManagerCommunicationRoute
   '/_authenticated/manager/dashboard': typeof AuthenticatedManagerDashboardRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/manager/bills'
     | '/manager/communication'
     | '/manager/dashboard'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/manager/bills'
     | '/manager/communication'
     | '/manager/dashboard'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/api/aptbot'
     | '/_authenticated/manager/bills'
     | '/_authenticated/manager/communication'
     | '/_authenticated/manager/dashboard'
@@ -372,6 +384,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiAptbotRoute: typeof ApiAptbotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/aptbot': {
+      id: '/api/aptbot'
+      path: '/api/aptbot'
+      fullPath: '/api/aptbot'
+      preLoaderRoute: typeof ApiAptbotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/manager/bills': {
@@ -629,6 +649,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiAptbotRoute: ApiAptbotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

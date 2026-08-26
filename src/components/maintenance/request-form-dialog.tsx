@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Sparkles, X, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { AttachmentPicker } from "@/components/maintenance/parts";
@@ -25,6 +27,10 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AppRole } from "@/hooks/useAuth";
 import { flatsQueryOptions } from "@/lib/flats";
 import {
+  triageMaintenanceRequest,
+  type TriageSuggestion,
+} from "@/lib/maintenance-triage.functions";
+import {
   createMaintenanceRequest,
   maintenanceCategoryLabel,
   maintenanceCategoryOptions,
@@ -35,6 +41,12 @@ import {
   type MaintenanceCategory,
   type MaintenancePriority,
 } from "@/lib/maintenance";
+
+function meetsTriageInputRequirements(title: string, description: string) {
+  const t = title.trim();
+  const d = description.trim();
+  return t.length >= 3 && t.length <= 120 && d.length >= 10 && d.length <= 1500;
+}
 
 export function RequestFormDialog({
   open,
@@ -54,6 +66,7 @@ export function RequestFormDialog({
 }) {
   const queryClient = useQueryClient();
   const isTenant = role === "tenant";
+  const runTriage = useServerFn(triageMaintenanceRequest);
 
   const [buildingId, setBuildingId] = useState(defaultBuildingId);
   const [flatId, setFlatId] = useState("");
@@ -65,6 +78,11 @@ export function RequestFormDialog({
   const [preferredVisitDate, setPreferredVisitDate] = useState("");
   const [accessInstructions, setAccessInstructions] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+
+  const [suggestion, setSuggestion] = useState<TriageSuggestion | null>(null);
+  const [analyzedInput, setAnalyzedInput] = useState<{ title: string; description: string } | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +96,9 @@ export function RequestFormDialog({
     setPreferredVisitDate("");
     setAccessInstructions("");
     setFiles([]);
+    setSuggestion(null);
+    setAnalyzedInput(null);
+    setAiError(null);
   }, [open, defaultBuildingId]);
 
   const flatsQuery = useQuery({
@@ -126,6 +147,54 @@ export function RequestFormDialog({
     preferredVisitDate,
     accessInstructions,
   });
+
+  const canAnalyze = useMemo(
+    () => meetsTriageInputRequirements(title, description),
+    [title, description]
+  );
+
+  const isOutdated = useMemo(() => {
+    if (!analyzedInput) return false;
+    return analyzedInput.title !== title.trim() || analyzedInput.description !== description.trim();
+  }, [analyzedInput, title, description]);
+
+  const handleAnalyze = async () => {
+    if (isAnalyzing || !canAnalyze) return;
+    setIsAnalyzing(true);
+    setAiError(null);
+    try {
+      const result = await runTriage({ data: { title, description } });
+      if (result.ok) {
+        setSuggestion(result.suggestion);
+        setAnalyzedInput({ title: title.trim(), description: description.trim() });
+      } else {
+        setAiError(result.error);
+        setSuggestion(null);
+      }
+    } catch {
+      setAiError("AI triage is unavailable right now. Please continue manually.");
+      setSuggestion(null);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const applyCategoryAndPriority = () => {
+    if (!suggestion || isOutdated) return;
+    setCategory(suggestion.suggestedCategory);
+    setPriority(suggestion.suggestedPriority);
+  };
+
+  const applySummary = () => {
+    if (!suggestion || isOutdated) return;
+    setDescription(suggestion.professionalSummary);
+  };
+
+  const dismissSuggestion = () => {
+    setSuggestion(null);
+    setAnalyzedInput(null);
+    setAiError(null);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -287,6 +356,126 @@ export function RequestFormDialog({
               onChange={(event) => setDescription(event.target.value)}
             />
           </div>
+
+          {isTenant ? (
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={!canAnalyze || isAnalyzing}
+                onClick={handleAnalyze}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Analyzing with AI…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Analyze with AI
+                  </>
+                )}
+              </Button>
+
+              {aiError ? (
+                <p className="text-sm text-destructive">{aiError}</p>
+              ) : null}
+
+              {suggestion ? (
+                <div className="relative rounded-xl border border-border bg-muted/40 p-4">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-sage" aria-hidden="true" />
+                      <h4 className="text-sm font-semibold text-foreground">AI suggestion</h4>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-2 py-1 text-muted-foreground"
+                      onClick={dismissSuggestion}
+                      aria-label="Dismiss AI suggestion"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {isOutdated ? (
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      This suggestion is based on an earlier version of your description.
+                    </p>
+                  ) : null}
+
+                  <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Suggested category</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {maintenanceCategoryLabel[suggestion.suggestedCategory]}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Suggested priority</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {maintenancePriorityLabel[suggestion.suggestedPriority]}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-3 space-y-1">
+                    <p className="text-xs text-muted-foreground">Professional summary</p>
+                    <p className="text-sm text-foreground">{suggestion.professionalSummary}</p>
+                  </div>
+
+                  {suggestion.safetyAdvice ? (
+                    <div className="mb-3 rounded-lg border-l-4 border-orange bg-orange/10 p-3">
+                      <div className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground">
+                        <ShieldAlert className="h-4 w-4 text-orange" aria-hidden="true" />
+                        Safety note
+                      </div>
+                      <p className="text-sm text-foreground">{suggestion.safetyAdvice}</p>
+                    </div>
+                  ) : null}
+
+                  <p className="mb-3 text-xs text-muted-foreground">{suggestion.disclaimer}</p>
+
+                  <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isOutdated}
+                      onClick={applyCategoryAndPriority}
+                    >
+                      Apply category &amp; priority
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isOutdated}
+                      onClick={applySummary}
+                    >
+                      Use suggested summary
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={dismissSuggestion}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              <p className="text-xs text-muted-foreground">
+                AI assistance helps describe your issue, but it is not a guaranteed diagnosis.
+              </p>
+            </div>
+          ) : null}
 
           <div className="space-y-2">
             <Label htmlFor="request-access">Access instructions (optional)</Label>

@@ -20,7 +20,7 @@ const CATEGORIES = [
 
 const PRIORITIES = ["low", "medium", "high", "emergency"] as const;
 
-const GEMINI_MODEL = "gemini-2.5-flash-lite";
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DISCLAIMER = "AI-generated suggestion. Review before submitting.";
 
 export type TriageSuggestion = {

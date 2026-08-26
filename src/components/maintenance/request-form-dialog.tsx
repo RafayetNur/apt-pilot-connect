@@ -80,7 +80,9 @@ export function RequestFormDialog({
   const [files, setFiles] = useState<File[]>([]);
 
   const [suggestion, setSuggestion] = useState<TriageSuggestion | null>(null);
-  const [analyzedInput, setAnalyzedInput] = useState<{ title: string; description: string } | null>(null);
+  const [analyzedInput, setAnalyzedInput] = useState<{ title: string; description: string } | null>(
+    null,
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
@@ -150,7 +152,7 @@ export function RequestFormDialog({
 
   const canAnalyze = useMemo(
     () => meetsTriageInputRequirements(title, description),
-    [title, description]
+    [title, description],
   );
 
   const isOutdated = useMemo(() => {
@@ -379,9 +381,7 @@ export function RequestFormDialog({
                 )}
               </Button>
 
-              {aiError ? (
-                <p className="text-sm text-destructive">{aiError}</p>
-              ) : null}
+              {aiError ? <p className="text-sm text-destructive">{aiError}</p> : null}
 
               {suggestion ? (
                 <div className="relative rounded-xl border border-border bg-muted/40 p-4">
@@ -459,12 +459,7 @@ export function RequestFormDialog({
                     >
                       Use suggested summary
                     </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={dismissSuggestion}
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={dismissSuggestion}>
                       Dismiss
                     </Button>
                   </div>

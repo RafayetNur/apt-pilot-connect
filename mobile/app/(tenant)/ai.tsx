@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -17,52 +18,161 @@ import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 
 /**
- * Ported from the Sanjida reference's app/(tenant)/ai.tsx. There is no live
- * AI/LLM backend in this project (no edge function, no model endpoint) —
- * the reference's scripted, keyword-matched replies are kept as-is, but
- * relabeled from "Always online" to an explicit "Demo assistant" so the
- * screen never implies it is a real, connected AI service (per
- * AptPilot-architecture-comparison.md §9/§10).
+ * Live AptBot chat, backed by the production AptBot API. The screen is
+ * chat-only: it never submits repairs, payments, or any other action on the
+ * tenant's behalf, and it never falls back to scripted answers when the
+ * live API fails — a failed request is surfaced as a failure with a Retry
+ * action, not disguised as a real reply.
  */
+const AI_ENDPOINT = "https://apt-pilot-connect.lovable.app/api/public/aptbot";
+const REQUEST_TIMEOUT_MS = 25000;
+const MAX_HISTORY_MESSAGES = 10;
+const WELCOME_ID = "welcome";
+
+type ChatMessage = {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  /** True when this (user) message failed to get a live reply and can be retried. */
+  failed?: boolean;
+};
+
+function makeId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export default function TenantAptBot() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { profile } = useAuth();
+  const { session, profile } = useAuth();
 
-  const [messages, setMessages] = useState<{ sender: "user" | "bot"; text: string }[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
+      id: WELCOME_ID,
       sender: "bot",
-      text: `Hi ${profile?.full_name || "there"}! I'm AptBot, a demo assistant with a handful of scripted answers about rent, repairs and building policies — I'm not a live AI service.`,
+      text: `Hi ${profile?.full_name || "there"}! I'm AptBot, your AI assistant. I can help with questions about using AptPilot, your bills, repairs, notices, and general building-management guidance.`,
     },
   ]);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
 
-  function handleSend(textToSend?: string) {
-    const query = textToSend || input;
-    if (!query.trim()) return;
+  const scrollRef = useRef<ScrollView>(null);
+  const mountedRef = useRef(true);
 
-    setMessages((prev) => [...prev, { sender: "user", text: query }]);
-    if (!textToSend) setInput("");
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
-    setTimeout(() => {
-      let botResponse = "That's outside my scripted answers for this demo — please contact your building manager for that.";
-      const q = query.toLowerCase();
-      if (q.includes("rent") || q.includes("bill") || q.includes("due")) {
-        botResponse = "Check the Bills tab for your exact due date and amount — it's pulled live from your rent record.";
-      } else if (q.includes("repair") || q.includes("leak") || q.includes("plumber")) {
-        botResponse = "To request a repair, use the Repairs tab. For anything urgent, use Emergency instead.";
-      } else if (q.includes("water") || q.includes("cleaning")) {
-        botResponse = "Utility and cleaning schedules are usually shared via building Notices — check that tab for the latest.";
-      } else if (q.includes("park") || q.includes("car") || q.includes("visitor")) {
-        botResponse = "Guest parking rules vary by building — check Notices or ask your manager.";
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, [messages, sending]);
+
+  function markFailed(userMsgId: string, errorText: string) {
+    if (!mountedRef.current) return;
+    setMessages((prev) => [
+      ...prev.map((m) => (m.id === userMsgId ? { ...m, failed: true } : m)),
+      { id: makeId(), sender: "bot", text: errorText },
+    ]);
+  }
+
+  async function performSend(rawText: string, retryId?: string) {
+    const text = rawText.trim();
+    if (!text || sending) return;
+
+    let userMsgId: string;
+    if (retryId) {
+      userMsgId = retryId;
+      setMessages((prev) => prev.map((m) => (m.id === retryId ? { ...m, failed: false } : m)));
+    } else {
+      userMsgId = makeId();
+      setMessages((prev) => [...prev, { id: userMsgId, sender: "user", text }]);
+      setInput("");
+    }
+
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      markFailed(userMsgId, "You're not signed in. Please sign in again to use AptBot.");
+      return;
+    }
+
+    setSending(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const history = messages
+        .filter((m) => m.id !== WELCOME_ID && m.id !== userMsgId)
+        .slice(-MAX_HISTORY_MESSAGES)
+        .map((m) => ({ sender: m.sender, text: m.text }));
+
+      const response = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ message: text, history }),
+        signal: controller.signal,
+      });
+
+      if (response.status === 401) {
+        markFailed(userMsgId, "Your session expired. Please sign in again.");
+        return;
       }
-      setMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
-    }, 500);
+
+      let data: { ok?: boolean; reply?: string; error?: string } | null = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (response.ok && data && data.ok === true && typeof data.reply === "string") {
+        if (mountedRef.current) {
+          setMessages((prev) => [...prev, { id: makeId(), sender: "bot", text: data!.reply as string }]);
+        }
+        return;
+      }
+
+      const serverMessage =
+        response.ok && data && data.ok === false && typeof data.error === "string" && data.error.trim()
+          ? data.error.trim().slice(0, 300)
+          : "AptBot couldn't respond right now. Please try again.";
+
+      markFailed(userMsgId, serverMessage);
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.name === "AbortError";
+      markFailed(
+        userMsgId,
+        isTimeout
+          ? "That took too long to respond. Please check your connection and try again."
+          : "Couldn't reach AptBot. Please check your connection and try again."
+      );
+    } finally {
+      clearTimeout(timeoutId);
+      if (mountedRef.current) setSending(false);
+    }
+  }
+
+  function handleSend(promptText?: string) {
+    void performSend(promptText ?? input);
+  }
+
+  function handleRetry(id: string) {
+    const target = messages.find((m) => m.id === id);
+    if (!target) return;
+    void performSend(target.text, id);
   }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView
+  style={styles.keyboardView}
+  behavior={Platform.OS === "ios" ? "padding" : "height"}
+  keyboardVerticalOffset={0}
+>
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ArrowLeft color={colors.text} size={24} />
@@ -73,26 +183,56 @@ export default function TenantAptBot() {
             </View>
             <View>
               <Text style={[styles.headerTitle, { color: colors.text }]}>AptBot</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textSub }]}>Demo assistant · not live AI</Text>
+              <Text style={[styles.headerSubtitle, { color: colors.textSub }]}>AI assistant · review responses</Text>
             </View>
           </View>
         </View>
 
-        <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
-          {messages.map((m, i) => (
-            <View key={i} style={[styles.messageWrapper, m.sender === "user" ? styles.messageRight : styles.messageLeft]}>
-              <View
-                style={[
-                  styles.messageBubble,
-                  m.sender === "user"
-                    ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
-                    : { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
-                ]}
-              >
-                <Text style={[styles.messageText, { color: m.sender === "user" ? "#ffffff" : colors.text }]}>{m.text}</Text>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.chatArea}
+          contentContainerStyle={styles.chatContent}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          {messages.map((m) => (
+            <View key={m.id} style={[styles.messageWrapper, m.sender === "user" ? styles.messageRight : styles.messageLeft]}>
+              <View style={styles.messageColumn}>
+                <View
+                  style={[
+                    styles.messageBubble,
+                    m.sender === "user"
+                      ? { backgroundColor: colors.primary, borderBottomRightRadius: 4, opacity: m.failed ? 0.6 : 1 }
+                      : { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
+                  ]}
+                >
+                  <Text style={[styles.messageText, { color: m.sender === "user" ? "#ffffff" : colors.text }]}>{m.text}</Text>
+                </View>
+                {m.failed && (
+                  <TouchableOpacity style={styles.retryRow} onPress={() => handleRetry(m.id)} disabled={sending}>
+                    <Text style={[styles.retryText, { color: colors.primary }]}>Failed to send · Tap to retry</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           ))}
+
+          {sending && (
+            <View style={[styles.messageWrapper, styles.messageLeft]}>
+              <View style={styles.messageColumn}>
+                <View
+                  style={[
+                    styles.messageBubble,
+                    styles.thinkingBubble,
+                    { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 4 },
+                  ]}
+                >
+                  <ActivityIndicator size="small" color={colors.textSub} />
+                  <Text style={[styles.messageText, { color: colors.textSub, marginLeft: 8 }]}>AptBot is thinking…</Text>
+                </View>
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         <View style={[styles.quickPrompts, { backgroundColor: colors.background }]}>
@@ -100,8 +240,9 @@ export default function TenantAptBot() {
             {["When is rent due?", "How to submit repair?", "Guest parking rules"].map((p) => (
               <TouchableOpacity
                 key={p}
-                style={[styles.promptBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[styles.promptBtn, { backgroundColor: colors.card, borderColor: colors.border }, sending && styles.disabled]}
                 onPress={() => handleSend(p)}
+                disabled={sending}
               >
                 <Text style={[styles.promptText, { color: colors.primary }]}>{p}</Text>
               </TouchableOpacity>
@@ -109,18 +250,28 @@ export default function TenantAptBot() {
           </ScrollView>
         </View>
 
-        <View style={[styles.inputArea, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
-            placeholder="Message AptBot..."
-            placeholderTextColor={colors.textSub}
-            value={input}
-            onChangeText={setInput}
-            onSubmitEditing={() => handleSend()}
-          />
-          <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={() => handleSend()}>
-            <Send color="#ffffff" size={20} />
-          </TouchableOpacity>
+        <View style={[styles.inputContainer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <View style={styles.inputArea}>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+              placeholder="Message AptBot..."
+              placeholderTextColor={colors.textSub}
+              value={input}
+              onChangeText={setInput}
+              onSubmitEditing={() => handleSend()}
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[styles.sendBtn, { backgroundColor: colors.primary }, (sending || !input.trim()) && styles.disabled]}
+              onPress={() => handleSend()}
+              disabled={sending || !input.trim()}
+            >
+              {sending ? <ActivityIndicator color="#ffffff" size="small" /> : <Send color="#ffffff" size={20} />}
+            </TouchableOpacity>
+          </View>
+          <Text style={[styles.disclaimer, { color: colors.textSub }]}>
+            AI responses may be inaccurate. Verify important information.
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -145,15 +296,22 @@ const styles = StyleSheet.create({
   messageWrapper: { flexDirection: "row", width: "100%" },
   messageLeft: { justifyContent: "flex-start" },
   messageRight: { justifyContent: "flex-end" },
-  messageBubble: { maxWidth: "80%", padding: 12, borderRadius: 20 },
+  messageColumn: { maxWidth: "80%" },
+  messageBubble: { padding: 12, borderRadius: 20 },
   messageText: { fontSize: 15, lineHeight: 22 },
+  thinkingBubble: { flexDirection: "row", alignItems: "center" },
+  retryRow: { marginTop: 4, alignSelf: "flex-end" },
+  retryText: { fontSize: 12, fontWeight: "600", textDecorationLine: "underline" },
 
   quickPrompts: { paddingVertical: 12 },
   promptsContent: { paddingHorizontal: 16, gap: 8 },
   promptBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   promptText: { fontSize: 13, fontWeight: "600" },
+  disabled: { opacity: 0.5 },
 
-  inputArea: { flexDirection: "row", padding: 16, borderTopWidth: 1, gap: 12, alignItems: "center" },
+  inputContainer: { borderTopWidth: 1, paddingHorizontal: 16, paddingTop: 16, paddingBottom: Platform.OS === "ios" ? 8 : 12 },
+  inputArea: { flexDirection: "row", gap: 12, alignItems: "center" },
   input: { flex: 1, borderWidth: 1, borderRadius: 24, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center" },
+  disclaimer: { fontSize: 11, textAlign: "center", marginTop: 8 },
 });

@@ -402,6 +402,16 @@ export async function handleInitiate(request: Request): Promise<Response> {
   }
 
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
+  if (payload["status"] === "SUCCESS" && !validateGatewayPageUrl(gatewayUrl)) {
+    // Never hand an unrecognised checkout URL to the browser. The raw URL is
+    // discarded; only the bounded reason is persisted.
+    await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({ status: "failed", failure_reason: "invalid_gateway_url" })
+      .eq("tran_id", tranId)
+      .eq("status", "pending");
+    return jsonResponse({ ok: false, error: "Could not start the payment." }, 422, cors);
+  }
   if (payload["status"] !== "SUCCESS" || !gatewayUrl) {
     // Only the bounded category is persisted; raw upstream text is discarded.
     const category = classifySessionRejection(payload["failedreason"]);
@@ -426,7 +436,11 @@ export async function handleInitiate(request: Request): Promise<Response> {
       .eq("tran_id", tranId);
   }
 
-  return jsonResponse({ ok: true, transactionId: tranId, gatewayUrl, amount }, 200, cors);
+  return jsonResponse(
+    { ok: true, transactionId: tranId, gatewayUrl: gatewayUrl.trim(), amount, gatewayUrlValidated: true },
+    200,
+    cors,
+  );
 }
 
 /* ------------------------------------------------------------------ */

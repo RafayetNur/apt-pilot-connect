@@ -44,18 +44,25 @@ export function isOnlineAmountEligible(remainingDue: number): boolean {
   return remainingDue >= MIN_ONLINE_AMOUNT_BDT && remainingDue <= MAX_ONLINE_AMOUNT_BDT;
 }
 
-/** Exact hostname this integration is allowed to hand the browser to. */
-const ALLOWED_GATEWAY_HOST = "securepay.sslcommerz.com";
+/**
+ * Exact hostnames this integration is allowed to hand the browser to.
+ * Both are official SSLCOMMERZ live hosts: the v4 gateway process host and the
+ * hosted checkout host that live GatewayPageURL links point at. Sandbox hosts
+ * are deliberately absent. Exact equality only — no wildcards, no suffixes.
+ */
+const ALLOWED_GATEWAY_HOSTS = ["securepay.sslcommerz.com", "seamless-epay.sslcommerz.com"];
 
 export function isAllowedGatewayUrl(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0) return false;
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return false;
   let url: URL;
   try {
-    url = new URL(value);
+    url = new URL(trimmed);
   } catch {
     return false;
   }
-  return url.protocol === "https:" && url.hostname === ALLOWED_GATEWAY_HOST;
+  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname.toLowerCase());
 }
 
 export class SessionExpiredError extends Error {
@@ -108,7 +115,7 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
 
   return {
     transactionId,
-    gatewayUrl,
+    gatewayUrl: gatewayUrl.trim(),
     amount: typeof payload["amount"] === "number" ? payload["amount"] : 0,
   };
 }

@@ -83,13 +83,13 @@ export default function ManagerProfile() {
     .toUpperCase();
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.scrollContent}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={[styles.avatar, { backgroundColor: colors.surface }]}>
           <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
         </View>
-        <Text style={[styles.name, { color: colors.text }]}>{profile?.full_name || "Manager"}</Text>
-        <Text style={[styles.role, { color: colors.textSub }]}>Property manager</Text>
+        <Text style={[styles.name, { color: colors.text }]} maxFontSizeMultiplier={1.3}>{profile?.full_name || "Manager"}</Text>
+        <Text style={[styles.role, { color: colors.textSub }]} maxFontSizeMultiplier={1.3}>Property manager</Text>
       </View>
 
       <View style={styles.section}>
@@ -151,6 +151,7 @@ export default function ManagerProfile() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
   header: { padding: 40, alignItems: "center", borderBottomWidth: 1 },
   avatar: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   avatarText: { fontSize: 28, fontWeight: "800" },

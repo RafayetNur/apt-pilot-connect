@@ -45,7 +45,7 @@ export default function ManagerNotices() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Notices</Text>
+        <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Notices</Text>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>Announcements for your buildings</Text>
       </View>
 
@@ -53,6 +53,7 @@ export default function ManagerNotices() {
 
       <ScrollView
         style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => refresh()} tintColor={colors.primary} />}
       >
         {loading ? (
@@ -243,6 +244,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
 
   list: { padding: 20, gap: 16, paddingBottom: 100 },
   card: { padding: 16, borderRadius: 16, borderWidth: 1 },

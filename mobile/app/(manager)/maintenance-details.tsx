@@ -103,7 +103,7 @@ export default function ManagerMaintenanceDetails() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft color={colors.text} size={22} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{request?.request_number ?? "Request"}</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]} maxFontSizeMultiplier={1.3} numberOfLines={1}>{request?.request_number ?? "Request"}</Text>
       </View>
 
       {loading ? (
@@ -113,7 +113,7 @@ export default function ManagerMaintenanceDetails() {
       ) : !request ? (
         <Text style={[styles.emptyText, { color: colors.textSub }]}>Request not found.</Text>
       ) : (
-        <ScrollView style={styles.content}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentScroll}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.badgeRow}>
               <View style={[styles.badge, { backgroundColor: colors.warningBg }]}>
@@ -414,6 +414,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "800", marginLeft: 4 },
 
   content: { flex: 1, padding: 20 },
+  contentScroll: { paddingBottom: 80 },
   emptyText: { textAlign: "center", marginTop: 40, fontSize: 14 },
 
   card: { borderRadius: 20, padding: 18, borderWidth: 1, marginBottom: 20 },

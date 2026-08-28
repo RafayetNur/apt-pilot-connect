@@ -22,6 +22,12 @@ export default function ManagerLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSub,
+        // Caps the 5 bottom-tab labels so they don't grow (and
+        // truncate/wrap) under Android's larger accessibility font
+        // settings — matches app/(owner)/_layout.tsx's fix for the same
+        // tab bar shape. Only this compact nav element is capped; every
+        // screen's own content still scales normally.
+        tabBarAllowFontScaling: false,
         headerShown: true,
       }}
     >

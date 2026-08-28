@@ -384,11 +384,14 @@ export async function handleInitiate(request: Request): Promise<Response> {
 
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
   if (payload["status"] !== "SUCCESS" || !gatewayUrl) {
+    // Only the bounded category is persisted; raw upstream text is discarded.
+    const category = classifySessionRejection(payload["failedreason"]);
     await supabaseAdmin
       .from("sslcommerz_transactions")
-      .update({ status: "failed", failure_reason: "session_rejected" })
+      .update({ status: "failed", failure_reason: category })
       .eq("tran_id", tranId)
       .eq("status", "pending");
+
     return jsonResponse({ ok: false, error: "Could not start the payment." }, 502, cors);
   }
 

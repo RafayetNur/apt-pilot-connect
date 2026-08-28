@@ -301,7 +301,28 @@ export async function handleInitiate(request: Request): Promise<Response> {
     .eq("id", auth.userId)
     .maybeSingle();
 
+  // Customer identity comes only from server-side sources: the tenant's own
+  // profile, falling back to the verified email on the authenticated user.
+  const customerEmail =
+    normalizeCustomerEmail(profile?.email) ?? normalizeCustomerEmail(auth.authEmail);
+  if (!customerEmail) {
+    return jsonResponse(
+      { ok: false, error: "Add a valid email to your profile before paying online." },
+      400,
+      cors,
+    );
+  }
+  const customerPhone = normalizeBdMobile(profile?.phone);
+  if (!customerPhone) {
+    return jsonResponse(
+      { ok: false, error: "Add a valid mobile number to your profile before paying online." },
+      400,
+      cors,
+    );
+  }
+
   const tranId = newTransactionId();
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // Store the pending attempt BEFORE contacting the gateway.

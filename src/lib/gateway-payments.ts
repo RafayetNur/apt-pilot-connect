@@ -128,7 +128,6 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
   };
 }
 
-
 /** GET /api/public/payments/sslcommerz/status?transactionId=… (authenticated). */
 export async function fetchGatewayStatus(transactionId: string): Promise<GatewayStatus> {
   const { data } = await supabase.auth.getSession();

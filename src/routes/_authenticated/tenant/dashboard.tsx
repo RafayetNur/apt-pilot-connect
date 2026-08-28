@@ -8,7 +8,9 @@ import { closuresQueryOptions } from "@/lib/closings";
 
 import { DashboardSection, EmptyState, StatCard } from "@/components/dashboard/parts";
 import { TenantMaintenanceSummary } from "@/components/maintenance/maintenance-dashboard-section";
+import { BillPaymentOptions } from "@/components/payments/bill-payment-options";
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
+
 import {
   SubmitPaymentDialog,
   type SubmitPaymentValues,
@@ -350,16 +352,17 @@ function TenantDashboard() {
             <span className="text-sm text-muted-foreground">
               Advance credit available: {formatRent(availableCredit)}
             </span>
-            {current.remaining_due > 0 && !hasPending ? (
-              <Button size="sm" onClick={() => setSubmitFor(current)}>
-                Submit payment
-              </Button>
-            ) : hasPending ? (
-              <span className="text-sm text-muted-foreground">
-                A submission is pending verification.
-              </span>
-            ) : null}
           </div>
+
+          <div className="mt-4">
+            <BillPaymentOptions
+              rentRecordId={current.id}
+              remainingDue={current.remaining_due}
+              manualPending={hasPending}
+              onManual={() => setSubmitFor(current)}
+            />
+          </div>
+
 
           {isFinalized(current.building_id, current.billing_month) ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
@@ -420,19 +423,23 @@ function TenantDashboard() {
                     {isFinalized(bill.building_id, bill.billing_month) ? (
                       <Badge variant="outline">Finalized</Badge>
                     ) : null}
-
-                    {bill.remaining_due > 0 &&
-                    !payments.some(
-                      (payment) =>
-                        payment.rent_record_id === bill.id &&
-                        payment.verification_status === "pending",
-                    ) ? (
-                      <Button size="sm" variant="outline" onClick={() => setSubmitFor(bill)}>
-                        Submit payment
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
+                {bill.remaining_due > 0 ? (
+                  <div className="mt-3">
+                    <BillPaymentOptions
+                      rentRecordId={bill.id}
+                      remainingDue={bill.remaining_due}
+                      manualPending={payments.some(
+                        (payment) =>
+                          payment.rent_record_id === bill.id &&
+                          payment.verification_status === "pending",
+                      )}
+                      onManual={() => setSubmitFor(bill)}
+                    />
+                  </div>
+                ) : null}
+
                 <div className="mt-3">
                   <BillBreakdown bill={bill} />
                 </div>

@@ -86,7 +86,8 @@ export function BillPaymentOptions({
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             You will be redirected to SSLCOMMERZ&rsquo;s secure checkout, where cards, mobile
             banking and internet banking channels may be offered. Availability depends on the
-            gateway. Amount to pay now: <span className="font-medium">{formatRent(remainingDue)}</span>.
+            gateway. Amount to pay now:{" "}
+            <span className="font-medium">{formatRent(remainingDue)}</span>.
           </p>
           {eligible ? null : (
             <p className="mt-2 text-xs text-muted-foreground">

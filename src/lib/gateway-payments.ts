@@ -139,7 +139,9 @@ export function myGatewayTransactionsQueryOptions() {
     queryFn: async (): Promise<GatewayTransaction[]> => {
       const { data, error } = await supabase
         .from("sslcommerz_transactions")
-        .select("id, tran_id, rent_record_id, status, expected_amount, currency, created_at, finalized_at")
+        .select(
+          "id, tran_id, rent_record_id, status, expected_amount, currency, created_at, finalized_at",
+        )
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw new Error(error.message);

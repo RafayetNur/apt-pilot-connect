@@ -88,7 +88,7 @@ export default function ManagerBills() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Bills</Text>
+        <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Bills</Text>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>Enter flat bills and shared charges</Text>
       </View>
 
@@ -104,7 +104,7 @@ export default function ManagerBills() {
           {monthClosed ? (
             <View style={[styles.lockedBanner, { backgroundColor: colors.warningBg, borderColor: colors.warning }]}>
               <Lock color={colors.warning} size={16} />
-              <Text style={[styles.lockedText, { color: colors.warning }]}>
+              <Text style={[styles.lockedText, { color: colors.warning }]} maxFontSizeMultiplier={1.3}>
                 This billing month is closed. Ask the building owner to reopen it before changing bills.
               </Text>
             </View>
@@ -112,6 +112,7 @@ export default function ManagerBills() {
 
           <ScrollView
             style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshAll} tintColor={colors.primary} />}
           >
             <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Flat bills</Text>
@@ -398,6 +399,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
 
   lockedBanner: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 20, marginBottom: 12, padding: 12, borderRadius: 12, borderWidth: 1 },
   lockedText: { flex: 1, fontSize: 12, fontWeight: "600" },

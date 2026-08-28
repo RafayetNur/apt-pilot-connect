@@ -52,7 +52,7 @@ export default function ManagerExpenses() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Expenses</Text>
+        <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Expenses</Text>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>Building expenses for your assigned buildings</Text>
       </View>
 
@@ -61,6 +61,7 @@ export default function ManagerExpenses() {
 
       <ScrollView
         style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => refresh()} tintColor={colors.primary} />}
       >
         {loading ? (
@@ -313,13 +314,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
 
   list: { padding: 20, gap: 12, paddingBottom: 100 },
   card: { borderRadius: 16, padding: 16, borderWidth: 1 },
   cardHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   category: { fontSize: 15, fontWeight: "800" },
   buildingName: { fontSize: 12, marginTop: 2 },
-  amount: { fontSize: 15, fontWeight: "800" },
+  amount: { fontSize: 15, fontWeight: "800", flexShrink: 0 },
   description: { fontSize: 13, marginBottom: 12 },
   footerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   metaText: { fontSize: 11 },

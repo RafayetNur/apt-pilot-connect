@@ -58,38 +58,54 @@ export default function ManagerPayments() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Payments</Text>
-        <Text style={[styles.subtitle, { color: colors.textSub }]}>Tenant submissions for your buildings</Text>
-      </View>
-
-      {buildingsLoading ? null : <ManagerBuildingPicker buildings={buildings} selected={buildingId} onSelect={setBuildingId} includeAll />}
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-        {statusFilters.map((option) => {
-          const active = option === status;
-          return (
-            <TouchableOpacity
-              key={option}
-              style={[
-                styles.filterPill,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-                active && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => setStatus(option)}
-            >
-              <Text style={[styles.filterPillText, { color: colors.text }, active && { color: "#ffffff" }]}>
-                {statusFilterLabel[option]}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
+      {/*
+        Single root ScrollView: the header, building selector, status
+        filters, and the loading/error/empty/list content all live inside
+        this one vertical scroll surface, so a swipe starting anywhere on
+        the screen — not just over the card list — scrolls the whole page.
+        Previously the header/picker/filter row sat outside a second,
+        separate ScrollView that only wrapped the card list, which is what
+        made the screen appear to scroll "only in the bottom half" (matches
+        the same fix applied to app/(owner)/payments.tsx).
+      */}
       <ScrollView
         style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => refresh()} tintColor={colors.primary} />}
       >
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
+          <Text style={[styles.title, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Payments</Text>
+          <Text style={[styles.subtitle, { color: colors.textSub }]}>Tenant submissions for your buildings</Text>
+        </View>
+
+        {buildingsLoading ? null : <ManagerBuildingPicker buildings={buildings} selected={buildingId} onSelect={setBuildingId} includeAll />}
+
+        <ScrollView
+          horizontal
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {statusFilters.map((option) => {
+            const active = option === status;
+            return (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.filterPill,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  active && { backgroundColor: colors.primary, borderColor: colors.primary },
+                ]}
+                onPress={() => setStatus(option)}
+              >
+                <Text style={[styles.filterPillText, { color: colors.text }, active && { color: "#ffffff" }]} maxFontSizeMultiplier={1.3} numberOfLines={1}>
+                  {statusFilterLabel[option]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : error ? (
@@ -299,8 +315,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
 
-  filterRow: { paddingHorizontal: 20, gap: 8, paddingVertical: 12, alignItems: "center" },
+  // Explicit paddingLeft/paddingRight (rather than the paddingHorizontal
+  // shorthand) so the leading chip reliably starts fully on-screen instead
+  // of being partly clipped by the horizontal ScrollView's edge on Android.
+  filterRow: { paddingLeft: 20, paddingRight: 20, gap: 8, paddingVertical: 12, alignItems: "center" },
   filterPill: { paddingHorizontal: 14, minHeight: 36, justifyContent: "center", borderRadius: 12, borderWidth: 1 },
   filterPillText: { fontSize: 12, fontWeight: "700" },
 
@@ -310,7 +330,7 @@ const styles = StyleSheet.create({
   flatText: { fontSize: 15, fontWeight: "800" },
   tenantName: { fontSize: 13, marginTop: 2 },
   metaText: { fontSize: 11, marginTop: 2 },
-  amountText: { fontSize: 16, fontWeight: "800" },
+  amountText: { fontSize: 16, fontWeight: "800", flexShrink: 0 },
 
   statusBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   statusText: { fontSize: 11, fontWeight: "700" },

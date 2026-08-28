@@ -46,11 +46,12 @@ export default function ManagerDashboard() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
     >
       <View style={[styles.header, { backgroundColor: colors.card }]}>
-        <Text style={[styles.greeting, { color: colors.textSub }]}>Manager workspace</Text>
-        <Text style={[styles.name, { color: colors.text }]}>{profile?.full_name || "there"}</Text>
+        <Text style={[styles.greeting, { color: colors.textSub }]} maxFontSizeMultiplier={1.3}>Manager workspace</Text>
+        <Text style={[styles.name, { color: colors.text }]} maxFontSizeMultiplier={1.3}>{profile?.full_name || "there"}</Text>
         <Text style={[styles.subtitle, { color: colors.textSub }]}>Everything below covers only your assigned buildings</Text>
       </View>
 
@@ -112,7 +113,7 @@ export default function ManagerDashboard() {
                 <View style={[styles.iconBox, { backgroundColor: colors.surface }]}>
                   <action.icon color={colors.primary} size={22} />
                 </View>
-                <Text style={[styles.actionText, { color: colors.text }]}>{action.label}</Text>
+                <Text style={[styles.actionText, { color: colors.text }]} numberOfLines={2}>{action.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -174,9 +175,9 @@ function Stat({ label, value, hint, colors, tone }: { label: string; value: stri
   const valueColor = tone === "success" ? colors.success : tone === "danger" ? colors.danger : colors.text;
   return (
     <View style={[styles.statBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-      <Text style={[styles.statLabel, { color: colors.textSub }]}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSub }]} maxFontSizeMultiplier={1.3} numberOfLines={1}>{label}</Text>
       <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
-      {hint ? <Text style={[styles.statHint, { color: colors.textSub }]}>{hint}</Text> : null}
+      {hint ? <Text style={[styles.statHint, { color: colors.textSub }]} maxFontSizeMultiplier={1.3}>{hint}</Text> : null}
     </View>
   );
 }
@@ -184,7 +185,7 @@ function Stat({ label, value, hint, colors, tone }: { label: string; value: stri
 function BuildingStat({ label, value, colors, tone }: { label: string; value: string; colors: ReturnType<typeof useThemeColors>; tone?: "danger" }) {
   return (
     <View style={styles.buildingStat}>
-      <Text style={[styles.buildingStatLabel, { color: colors.textSub }]}>{label}</Text>
+      <Text style={[styles.buildingStatLabel, { color: colors.textSub }]} maxFontSizeMultiplier={1.3} numberOfLines={1}>{label}</Text>
       <Text style={[styles.buildingStatValue, { color: tone === "danger" ? colors.danger : colors.text }]}>{value}</Text>
     </View>
   );
@@ -200,6 +201,7 @@ function EmptyRow({ colors, text }: { colors: ReturnType<typeof useThemeColors>;
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
   header: { padding: 24, paddingTop: Platform.OS === "android" ? 40 : 24, paddingBottom: 16 },
   greeting: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
   name: { fontSize: 24, fontWeight: "800", marginTop: 4 },
@@ -223,7 +225,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: "800", marginBottom: 16 },
 
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 16 },
-  statBox: { width: "47%", padding: 14, borderRadius: 16, borderWidth: 1 },
+  // minWidth + flexGrow (instead of a fixed width) lets a box widen past
+  // 47% — up to the full row — when enlarged text can't fit two per row,
+  // instead of clipping the currency value inside a fixed-width box.
+  statBox: { minWidth: 140, flexGrow: 1, flexBasis: "47%", padding: 14, borderRadius: 16, borderWidth: 1 },
   statLabel: { fontSize: 12, fontWeight: "500" },
   statValue: { fontSize: 16, fontWeight: "800", marginTop: 4 },
   statHint: { fontSize: 11, marginTop: 2 },
@@ -234,7 +239,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: "700", paddingHorizontal: 20, marginTop: 12, marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 20, gap: 12, marginBottom: 16 },
-  actionCard: { flexGrow: 1, flexBasis: "30%", padding: 14, borderRadius: 18, alignItems: "flex-start", gap: 10, borderWidth: 1 },
+  actionCard: { flexGrow: 1, flexBasis: "30%", minWidth: 96, padding: 14, borderRadius: 18, alignItems: "flex-start", gap: 10, borderWidth: 1 },
   iconBox: { padding: 9, borderRadius: 12 },
   actionText: { fontSize: 12, fontWeight: "700" },
 

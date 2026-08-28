@@ -223,6 +223,26 @@ export function isTranId(value: unknown): value is string {
   return typeof value === "string" && TRAN_ID_RE.test(value);
 }
 
+/**
+ * Authoritative server-side checkout URL validation. Exact lowercase hostname
+ * equality against the two official SSLCOMMERZ live hosts over https only —
+ * no wildcards, suffix matching, sandbox or arbitrary redirects.
+ */
+const ALLOWED_GATEWAY_HOSTS = ["securepay.sslcommerz.com", "seamless-epay.sslcommerz.com"];
+
+export function validateGatewayPageUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return false;
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname);
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);

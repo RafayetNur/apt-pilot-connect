@@ -109,16 +109,25 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
 
   const gatewayUrl = payload["gatewayUrl"];
   const transactionId = payload["transactionId"];
-  if (!isAllowedGatewayUrl(gatewayUrl) || typeof transactionId !== "string") {
+
+  // Distinct branches so a future failure is never ambiguous.
+  if (typeof transactionId !== "string" || transactionId.trim().length === 0) {
+    throw new Error("The payment reference was missing, so checkout was stopped.");
+  }
+  if (typeof gatewayUrl !== "string" || gatewayUrl.trim().length === 0) {
+    throw new Error("The payment link was missing, so checkout was stopped.");
+  }
+  if (!isAllowedGatewayUrl(gatewayUrl)) {
     throw new Error("The payment link was not recognised, so it was blocked for your safety.");
   }
 
   return {
-    transactionId,
+    transactionId: transactionId.trim(),
     gatewayUrl: gatewayUrl.trim(),
     amount: typeof payload["amount"] === "number" ? payload["amount"] : 0,
   };
 }
+
 
 /** GET /api/public/payments/sslcommerz/status?transactionId=… (authenticated). */
 export async function fetchGatewayStatus(transactionId: string): Promise<GatewayStatus> {

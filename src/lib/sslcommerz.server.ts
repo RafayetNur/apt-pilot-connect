@@ -218,6 +218,26 @@ export async function handleInitiate(request: Request): Promise<Response> {
   if (!(amount > 0)) {
     return jsonResponse({ ok: false, error: "This bill has nothing due." }, 400, cors);
   }
+  if (amount < MIN_GATEWAY_AMOUNT_BDT) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: `Online payment needs at least BDT ${MIN_GATEWAY_AMOUNT_BDT.toFixed(2)}. Please use another payment method.`,
+      },
+      400,
+      cors,
+    );
+  }
+  if (amount > MAX_GATEWAY_AMOUNT_BDT) {
+    return jsonResponse(
+      {
+        ok: false,
+        error: `Online payment supports at most BDT ${MAX_GATEWAY_AMOUNT_BDT.toFixed(2)} per transaction. Please use another payment method.`,
+      },
+      400,
+      cors,
+    );
+  }
 
   const { data: profile } = await auth.supabase
     .from("profiles")

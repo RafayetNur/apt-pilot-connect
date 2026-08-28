@@ -350,16 +350,17 @@ function TenantDashboard() {
             <span className="text-sm text-muted-foreground">
               Advance credit available: {formatRent(availableCredit)}
             </span>
-            {current.remaining_due > 0 && !hasPending ? (
-              <Button size="sm" onClick={() => setSubmitFor(current)}>
-                Submit payment
-              </Button>
-            ) : hasPending ? (
-              <span className="text-sm text-muted-foreground">
-                A submission is pending verification.
-              </span>
-            ) : null}
           </div>
+
+          <div className="mt-4">
+            <BillPaymentOptions
+              rentRecordId={current.id}
+              remainingDue={current.remaining_due}
+              manualPending={hasPending}
+              onManual={() => setSubmitFor(current)}
+            />
+          </div>
+
 
           {isFinalized(current.building_id, current.billing_month) ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">

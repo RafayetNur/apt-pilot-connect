@@ -437,7 +437,13 @@ export async function handleInitiate(request: Request): Promise<Response> {
   }
 
   return jsonResponse(
-    { ok: true, transactionId: tranId, gatewayUrl: gatewayUrl.trim(), amount, gatewayUrlValidated: true },
+    {
+      ok: true,
+      transactionId: tranId,
+      gatewayUrl: gatewayUrl.trim(),
+      amount,
+      gatewayUrlValidated: true,
+    },
     200,
     cors,
   );

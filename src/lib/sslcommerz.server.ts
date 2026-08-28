@@ -510,22 +510,11 @@ export async function handleRedirectLanding(
   request: Request,
   kind: "success" | "fail" | "cancel",
 ): Promise<Response> {
-  // Redirect data is never trusted. Mark only the non-financial outcomes.
-  if (kind !== "success") {
-    const form = request.method === "POST" ? await readForm(request) : null;
-    const tranId = form?.["tran_id"] ?? new URL(request.url).searchParams.get("tran_id") ?? "";
-    if (isTranId(tranId)) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("sslcommerz_transactions")
-        .update({
-          status: kind === "cancel" ? "cancelled" : "failed",
-          failure_reason: kind === "cancel" ? "cancelled_by_user" : "gateway_reported_failure",
-        })
-        .eq("tran_id", tranId)
-        .eq("status", "pending");
-    }
-  }
+  // Browser redirects are informational only: they are fully read-only with
+  // respect to transaction status. Only the server-validated IPN path decides
+  // whether a gateway attempt is paid, failed, cancelled or review_required.
+  if (request.method === "POST") await readForm(request);
+
 
   const message =
     kind === "success"

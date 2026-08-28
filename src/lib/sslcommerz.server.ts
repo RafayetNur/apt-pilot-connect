@@ -158,11 +158,62 @@ export async function authenticate(request: Request) {
   });
   const { data, error } = await supabase.auth.getClaims(token);
   if (error || !data?.claims?.sub) return { error: "Authentication required." };
-  return { userId: data.claims.sub as string, supabase };
+  const claimEmail = data.claims["email"];
+  return {
+    userId: data.claims.sub as string,
+    authEmail: typeof claimEmail === "string" ? claimEmail : null,
+    supabase,
+  };
+
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TRAN_ID_RE = /^[A-Z0-9]{6,30}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+
+/** Normalizes a real, already-stored email. Never accepts client input. */
+export function normalizeCustomerEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  if (email.length < 6 || email.length > 100) return null;
+  return EMAIL_RE.test(email) ? email : null;
+}
+
+/** Normalizes a real Bangladeshi mobile number to +8801XXXXXXXXX. */
+export function normalizeBdMobile(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const raw = value.replace(/[\s()-]/g, "");
+  let digits: string;
+  if (/^\+8801[3-9]\d{8}$/.test(raw)) digits = raw.slice(1);
+  else if (/^8801[3-9]\d{8}$/.test(raw)) digits = raw;
+  else if (/^01[3-9]\d{8}$/.test(raw)) digits = `88${raw}`;
+  else return null;
+  return `+${digits}`;
+}
+
+/**
+ * Maps upstream rejection text to a bounded internal category. The raw
+ * gateway text is never stored, logged or returned.
+ */
+export function classifySessionRejection(rawReason: unknown): string {
+  const text = typeof rawReason === "string" ? rawReason.toLowerCase() : "";
+  if (!text) return "session_rejected";
+  const mentionsInvalid = text.includes("invalid") || text.includes("valid");
+  if (text.includes("email")) return mentionsInvalid ? "invalid_customer_email" : "session_rejected";
+  if (text.includes("phone") || text.includes("mobile")) {
+    return mentionsInvalid ? "invalid_customer_phone" : "session_rejected";
+  }
+  if (text.includes("customer") || text.includes("cus_")) return "invalid_customer_information";
+  if (
+    text.includes("store") ||
+    text.includes("merchant") ||
+    text.includes("credential") ||
+    text.includes("inactive")
+  ) {
+    return "merchant_configuration_rejected";
+  }
+  return "session_rejected";
+}
 
 export function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_RE.test(value);
@@ -171,6 +222,7 @@ export function isUuid(value: unknown): value is string {
 export function isTranId(value: unknown): value is string {
   return typeof value === "string" && TRAN_ID_RE.test(value);
 }
+
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();

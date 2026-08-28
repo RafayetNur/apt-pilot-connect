@@ -44,8 +44,8 @@ export function isOnlineAmountEligible(remainingDue: number): boolean {
   return remainingDue >= MIN_ONLINE_AMOUNT_BDT && remainingDue <= MAX_ONLINE_AMOUNT_BDT;
 }
 
-/** Exact hostnames this integration is allowed to hand the browser to. */
-const ALLOWED_GATEWAY_HOSTS = new Set(["securepay.sslcommerz.com", "sandbox.sslcommerz.com"]);
+/** Exact hostname this integration is allowed to hand the browser to. */
+const ALLOWED_GATEWAY_HOST = "securepay.sslcommerz.com";
 
 export function isAllowedGatewayUrl(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0) return false;
@@ -55,7 +55,7 @@ export function isAllowedGatewayUrl(value: unknown): value is string {
   } catch {
     return false;
   }
-  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.has(url.hostname);
+  return url.protocol === "https:" && url.hostname === ALLOWED_GATEWAY_HOST;
 }
 
 export class SessionExpiredError extends Error {

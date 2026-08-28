@@ -357,8 +357,9 @@ export async function handleInitiate(request: Request): Promise<Response> {
     product_profile: "non-physical-goods",
     num_of_item: "1",
     cus_name: (profile?.full_name ?? "AptPilot tenant").slice(0, 100),
-    cus_email: (profile?.email ?? "").slice(0, 100),
-    cus_phone: (profile?.phone ?? "").slice(0, 20),
+    cus_email: customerEmail,
+    cus_phone: customerPhone,
+
     cus_add1: "N/A",
     cus_city: "N/A",
     cus_country: "Bangladesh",

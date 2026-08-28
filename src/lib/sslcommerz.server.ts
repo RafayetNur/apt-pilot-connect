@@ -334,14 +334,28 @@ export async function handleInitiate(request: Request): Promise<Response> {
 
 type ValidationResult =
   | { outcome: "valid"; amount: number; currency: string; bankTranId: string; risky: boolean }
+  /** Money did not match exactly — never credited, held for human review. */
+  | { outcome: "review"; reason: string; amount: number | null; bankTranId: string }
   | { outcome: "invalid"; reason: string };
+
+/** Two-decimal money parser: rejects missing, non-numeric or over-precise values. */
+export function parseMoneyToCents(value: unknown): number | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const raw = String(value).trim();
+  if (!/^\d{1,9}(\.\d{1,2})?$/.test(raw)) return null;
+  const cents = Math.round(Number(raw) * 100);
+  if (!Number.isFinite(cents) || cents <= 0) return null;
+  return cents;
+}
 
 export async function validateWithGateway(
   valId: string,
   tranId: string,
+  expectedAmount: number,
 ): Promise<ValidationResult> {
   const creds = credentials();
   if (!creds) return { outcome: "invalid", reason: "unconfigured" };
+
 
   const url = new URL(validationUrl());
   url.searchParams.set("val_id", valId);

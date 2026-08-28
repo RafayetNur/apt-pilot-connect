@@ -115,7 +115,7 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
 
   return {
     transactionId,
-    gatewayUrl,
+    gatewayUrl: gatewayUrl.trim(),
     amount: typeof payload["amount"] === "number" ? payload["amount"] : 0,
   };
 }

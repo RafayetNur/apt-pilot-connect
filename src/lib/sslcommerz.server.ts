@@ -24,6 +24,10 @@ const SANDBOX_VALIDATION_URL =
 const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_BODY_BYTES = 16_384;
 
+/** Documented live SSLCOMMERZ BDT bounds. */
+export const MIN_GATEWAY_AMOUNT_BDT = 10;
+export const MAX_GATEWAY_AMOUNT_BDT = 500000;
+
 const ALLOWED_ORIGIN_SUFFIXES = [".lovable.app", ".lovableproject.com"];
 const ALLOWED_ORIGIN_EXACT = ["http://localhost:8080", "http://localhost:8081"];
 

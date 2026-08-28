@@ -8,7 +8,9 @@ import { closuresQueryOptions } from "@/lib/closings";
 
 import { DashboardSection, EmptyState, StatCard } from "@/components/dashboard/parts";
 import { TenantMaintenanceSummary } from "@/components/maintenance/maintenance-dashboard-section";
+import { BillPaymentOptions } from "@/components/payments/bill-payment-options";
 import { ReceiptDialog } from "@/components/payments/receipt-dialog";
+
 import {
   SubmitPaymentDialog,
   type SubmitPaymentValues,

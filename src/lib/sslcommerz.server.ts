@@ -223,6 +223,26 @@ export function isTranId(value: unknown): value is string {
   return typeof value === "string" && TRAN_ID_RE.test(value);
 }
 
+/**
+ * Authoritative server-side checkout URL validation. Exact lowercase hostname
+ * equality against the two official SSLCOMMERZ live hosts over https only —
+ * no wildcards, suffix matching, sandbox or arbitrary redirects.
+ */
+const ALLOWED_GATEWAY_HOSTS = ["securepay.sslcommerz.com", "seamless-epay.sslcommerz.com"];
+
+export function validateGatewayPageUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return false;
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname);
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -382,6 +402,16 @@ export async function handleInitiate(request: Request): Promise<Response> {
   }
 
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
+  if (payload["status"] === "SUCCESS" && !validateGatewayPageUrl(gatewayUrl)) {
+    // Never hand an unrecognised checkout URL to the browser. The raw URL is
+    // discarded; only the bounded reason is persisted.
+    await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({ status: "failed", failure_reason: "invalid_gateway_url" })
+      .eq("tran_id", tranId)
+      .eq("status", "pending");
+    return jsonResponse({ ok: false, error: "Could not start the payment." }, 422, cors);
+  }
   if (payload["status"] !== "SUCCESS" || !gatewayUrl) {
     // Only the bounded category is persisted; raw upstream text is discarded.
     const category = classifySessionRejection(payload["failedreason"]);
@@ -406,7 +436,17 @@ export async function handleInitiate(request: Request): Promise<Response> {
       .eq("tran_id", tranId);
   }
 
-  return jsonResponse({ ok: true, transactionId: tranId, gatewayUrl, amount }, 200, cors);
+  return jsonResponse(
+    {
+      ok: true,
+      transactionId: tranId,
+      gatewayUrl: gatewayUrl.trim(),
+      amount,
+      gatewayUrlValidated: true,
+    },
+    200,
+    cors,
+  );
 }
 
 /* ------------------------------------------------------------------ */

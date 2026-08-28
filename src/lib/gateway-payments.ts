@@ -45,14 +45,12 @@ export function isOnlineAmountEligible(remainingDue: number): boolean {
 }
 
 /**
- * Exact hostnames this integration is allowed to hand the browser to.
- * Both are official SSLCOMMERZ live hosts: the v4 gateway process host and the
- * hosted checkout host that live GatewayPageURL links point at. Sandbox hosts
- * are deliberately absent. Exact equality only — no wildcards, no suffixes.
+ * Defense-in-depth only: the server already validates the exact checkout
+ * hostname before responding (see `gatewayUrlValidated`). The client keeps a
+ * bare HTTPS parse so a malformed or non-HTTPS string can never reach
+ * navigation, but maintains no independent hostname list.
  */
-const ALLOWED_GATEWAY_HOSTS = ["securepay.sslcommerz.com", "seamless-epay.sslcommerz.com"];
-
-export function isAllowedGatewayUrl(value: unknown): value is string {
+export function isHttpsUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const trimmed = value.trim();
   if (trimmed.length === 0) return false;
@@ -62,7 +60,7 @@ export function isAllowedGatewayUrl(value: unknown): value is string {
   } catch {
     return false;
   }
-  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname.toLowerCase());
+  return url.protocol === "https:";
 }
 
 export class SessionExpiredError extends Error {
@@ -110,6 +108,11 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
   const gatewayUrl = payload["gatewayUrl"];
   const transactionId = payload["transactionId"];
 
+  // The server's hostname validation is authoritative. Never navigate when
+  // the explicit validation marker is absent or false.
+  if (payload["gatewayUrlValidated"] !== true) {
+    throw new Error("The payment link was not verified, so it was blocked for your safety.");
+  }
   // Distinct branches so a future failure is never ambiguous.
   if (typeof transactionId !== "string" || transactionId.trim().length === 0) {
     throw new Error("The payment reference was missing, so checkout was stopped.");
@@ -117,7 +120,7 @@ export async function initiateOnlinePayment(rentRecordId: string): Promise<Initi
   if (typeof gatewayUrl !== "string" || gatewayUrl.trim().length === 0) {
     throw new Error("The payment link was missing, so checkout was stopped.");
   }
-  if (!isAllowedGatewayUrl(gatewayUrl)) {
+  if (!isHttpsUrl(gatewayUrl)) {
     throw new Error("The payment link was not recognised, so it was blocked for your safety.");
   }
 

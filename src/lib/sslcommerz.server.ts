@@ -356,7 +356,6 @@ export async function validateWithGateway(
   const creds = credentials();
   if (!creds) return { outcome: "invalid", reason: "unconfigured" };
 
-
   const url = new URL(validationUrl());
   url.searchParams.set("val_id", valId);
   url.searchParams.set("store_id", creds.storeId);
@@ -514,7 +513,6 @@ export async function handleRedirectLanding(
   // respect to transaction status. Only the server-validated IPN path decides
   // whether a gateway attempt is paid, failed, cancelled or review_required.
   if (request.method === "POST") await readForm(request);
-
 
   const message =
     kind === "success"

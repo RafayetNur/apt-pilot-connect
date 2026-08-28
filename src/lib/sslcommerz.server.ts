@@ -370,13 +370,14 @@ export async function validateWithGateway(
   } catch {
     return { outcome: "invalid", reason: "validation_unreachable" };
   }
-  return interpretValidation(payload, tranId);
+  return interpretValidation(payload, tranId, expectedAmount);
 }
 
 /** Pure comparison step — unit-testable without touching the gateway. */
 export function interpretValidation(
   payload: Record<string, unknown>,
   tranId: string,
+  expectedAmount: number,
 ): ValidationResult {
   const status = typeof payload["status"] === "string" ? payload["status"] : "";
   if (status !== "VALID" && status !== "VALIDATED") {
@@ -388,14 +389,54 @@ export function interpretValidation(
   const currency = typeof payload["currency"] === "string" ? payload["currency"] : "";
   if (currency !== "BDT") return { outcome: "invalid", reason: "currency_mismatch" };
 
-  const amount = Number(payload["amount"] ?? payload["store_amount"] ?? NaN);
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return { outcome: "invalid", reason: "amount_missing" };
-  }
-  const risky = String(payload["risk_level"] ?? "0") !== "0";
   const bankTranId = typeof payload["bank_tran_id"] === "string" ? payload["bank_tran_id"] : tranId;
+  const expectedCents = parseMoneyToCents(expectedAmount.toFixed(2));
+  if (expectedCents === null) {
+    return { outcome: "review", reason: "expected_amount_invalid", amount: null, bankTranId };
+  }
 
-  return { outcome: "valid", amount, currency, bankTranId, risky };
+  // `amount` is the customer's gross payment. `store_amount` is the merchant's
+  // net settlement after commission and must never be used as the rent amount.
+  const grossCents = parseMoneyToCents(payload["amount"]);
+  if (grossCents === null) {
+    return { outcome: "review", reason: "gross_amount_invalid", amount: null, bankTranId };
+  }
+  if (grossCents !== expectedCents) {
+    return {
+      outcome: "review",
+      reason: "amount_mismatch",
+      amount: grossCents / 100,
+      bankTranId,
+    };
+  }
+
+  // Optional settlement-currency fields must agree when present.
+  const currencyType = payload["currency_type"];
+  if (currencyType !== undefined && currencyType !== null && currencyType !== "") {
+    if (currencyType !== "BDT") {
+      return {
+        outcome: "review",
+        reason: "currency_type_mismatch",
+        amount: grossCents / 100,
+        bankTranId,
+      };
+    }
+    const currencyAmount = payload["currency_amount"];
+    if (currencyAmount !== undefined && currencyAmount !== null && currencyAmount !== "") {
+      const currencyCents = parseMoneyToCents(currencyAmount);
+      if (currencyCents === null || currencyCents !== expectedCents) {
+        return {
+          outcome: "review",
+          reason: "currency_amount_mismatch",
+          amount: grossCents / 100,
+          bankTranId,
+        };
+      }
+    }
+  }
+
+  const risky = String(payload["risk_level"] ?? "0").trim() !== "0";
+  return { outcome: "valid", amount: grossCents / 100, currency, bankTranId, risky };
 }
 
 export async function handleIpn(request: Request): Promise<Response> {
@@ -412,22 +453,40 @@ export async function handleIpn(request: Request): Promise<Response> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: txn } = await supabaseAdmin
     .from("sslcommerz_transactions")
-    .select("tran_id, status")
+    .select("tran_id, status, expected_amount")
     .eq("tran_id", tranId)
     .maybeSingle();
 
   if (!txn) return jsonResponse({ ok: false, error: "Unknown transaction." }, 404, cors);
-  // Idempotent: an already finalized transaction is simply acknowledged.
-  if (txn.status !== "pending") return jsonResponse({ ok: true, status: txn.status }, 200, cors);
+  // Terminal states only. A `failed`/`cancelled` row came from an informational
+  // redirect, so a late server-validated IPN must still be able to settle it.
+  if (txn.status === "paid" || txn.status === "review_required") {
+    return jsonResponse({ ok: true, status: txn.status }, 200, cors);
+  }
 
-  const result = await validateWithGateway(valId, tranId);
+  const result = await validateWithGateway(valId, tranId, Number(txn.expected_amount));
   if (result.outcome === "invalid") {
     await supabaseAdmin
       .from("sslcommerz_transactions")
       .update({ status: "failed", failure_reason: result.reason, val_id: valId })
       .eq("tran_id", tranId)
-      .eq("status", "pending");
+      .in("status", ["pending", "failed", "cancelled"]);
     return jsonResponse({ ok: true, status: "failed" }, 200, cors);
+  }
+  if (result.outcome === "review") {
+    await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({
+        status: "review_required",
+        failure_reason: result.reason,
+        val_id: valId,
+        bank_tran_id: result.bankTranId,
+        validated_amount: result.amount,
+        finalized_at: new Date().toISOString(),
+      })
+      .eq("tran_id", tranId)
+      .in("status", ["pending", "failed", "cancelled"]);
+    return jsonResponse({ ok: true, status: "review_required" }, 200, cors);
   }
 
   const { data: status, error } = await supabaseAdmin.rpc("finalize_sslcommerz_payment", {

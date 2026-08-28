@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const PROOF_BUCKET = "payment-proofs";
 
-export type PaymentMethod = "bkash" | "nagad" | "bank_transfer" | "cash";
+export type PaymentMethod = "bkash" | "nagad" | "bank_transfer" | "cash" | "sslcommerz";
 export type VerificationStatus =
   "pending" | "verified" | "rejected" | "correction_requested" | "withdrawn" | "cancelled";
 
@@ -13,6 +13,8 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   nagad: "Nagad",
   bank_transfer: "Bank transfer",
   cash: "Cash",
+  // Online gateway payments (verified automatically after gateway validation).
+  sslcommerz: "Online (SSLCOMMERZ)",
 };
 
 export const verificationStatusLabel: Record<VerificationStatus, string> = {

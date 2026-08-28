@@ -38,6 +38,12 @@ import { Route as ApiPublicAptbotRouteImport } from './routes/api/public/aptbot'
 import { Route as AuthenticatedOwnerBuildingsIndexRouteImport } from './routes/_authenticated/owner/buildings/index'
 import { Route as AuthenticatedOwnerBuildingsBuildingIdRouteImport } from './routes/_authenticated/owner/buildings/$buildingId'
 import { Route as AuthenticatedOwnerFlatsBuildingIdRouteImport } from './routes/_authenticated/owner/flats/$buildingId'
+import { Route as ApiPublicPaymentsSslcommerzCancelRouteImport } from './routes/api/public/payments/sslcommerz/cancel'
+import { Route as ApiPublicPaymentsSslcommerzFailRouteImport } from './routes/api/public/payments/sslcommerz/fail'
+import { Route as ApiPublicPaymentsSslcommerzInitiateRouteImport } from './routes/api/public/payments/sslcommerz/initiate'
+import { Route as ApiPublicPaymentsSslcommerzIpnRouteImport } from './routes/api/public/payments/sslcommerz/ipn'
+import { Route as ApiPublicPaymentsSslcommerzStatusRouteImport } from './routes/api/public/payments/sslcommerz/status'
+import { Route as ApiPublicPaymentsSslcommerzSuccessRouteImport } from './routes/api/public/payments/sslcommerz/success'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -202,6 +208,42 @@ const AuthenticatedOwnerFlatsBuildingIdRoute =
     path: '/owner/flats/$buildingId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicPaymentsSslcommerzCancelRoute =
+  ApiPublicPaymentsSslcommerzCancelRouteImport.update({
+    id: '/api/public/payments/sslcommerz/cancel',
+    path: '/api/public/payments/sslcommerz/cancel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsSslcommerzFailRoute =
+  ApiPublicPaymentsSslcommerzFailRouteImport.update({
+    id: '/api/public/payments/sslcommerz/fail',
+    path: '/api/public/payments/sslcommerz/fail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsSslcommerzInitiateRoute =
+  ApiPublicPaymentsSslcommerzInitiateRouteImport.update({
+    id: '/api/public/payments/sslcommerz/initiate',
+    path: '/api/public/payments/sslcommerz/initiate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsSslcommerzIpnRoute =
+  ApiPublicPaymentsSslcommerzIpnRouteImport.update({
+    id: '/api/public/payments/sslcommerz/ipn',
+    path: '/api/public/payments/sslcommerz/ipn',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsSslcommerzStatusRoute =
+  ApiPublicPaymentsSslcommerzStatusRouteImport.update({
+    id: '/api/public/payments/sslcommerz/status',
+    path: '/api/public/payments/sslcommerz/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsSslcommerzSuccessRoute =
+  ApiPublicPaymentsSslcommerzSuccessRouteImport.update({
+    id: '/api/public/payments/sslcommerz/success',
+    path: '/api/public/payments/sslcommerz/success',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -232,6 +274,12 @@ export interface FileRoutesByFullPath {
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
+  '/api/public/payments/sslcommerz/cancel': typeof ApiPublicPaymentsSslcommerzCancelRoute
+  '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
+  '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
+  '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
+  '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -262,6 +310,12 @@ export interface FileRoutesByTo {
   '/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/owner/buildings': typeof AuthenticatedOwnerBuildingsIndexRoute
+  '/api/public/payments/sslcommerz/cancel': typeof ApiPublicPaymentsSslcommerzCancelRoute
+  '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
+  '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
+  '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
+  '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -294,6 +348,12 @@ export interface FileRoutesById {
   '/_authenticated/owner/buildings/$buildingId': typeof AuthenticatedOwnerBuildingsBuildingIdRoute
   '/_authenticated/owner/flats/$buildingId': typeof AuthenticatedOwnerFlatsBuildingIdRoute
   '/_authenticated/owner/buildings/': typeof AuthenticatedOwnerBuildingsIndexRoute
+  '/api/public/payments/sslcommerz/cancel': typeof ApiPublicPaymentsSslcommerzCancelRoute
+  '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
+  '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
+  '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
+  '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -326,6 +386,12 @@ export interface FileRouteTypes {
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings/'
+    | '/api/public/payments/sslcommerz/cancel'
+    | '/api/public/payments/sslcommerz/fail'
+    | '/api/public/payments/sslcommerz/initiate'
+    | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/status'
+    | '/api/public/payments/sslcommerz/success'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -356,6 +422,12 @@ export interface FileRouteTypes {
     | '/owner/buildings/$buildingId'
     | '/owner/flats/$buildingId'
     | '/owner/buildings'
+    | '/api/public/payments/sslcommerz/cancel'
+    | '/api/public/payments/sslcommerz/fail'
+    | '/api/public/payments/sslcommerz/initiate'
+    | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/status'
+    | '/api/public/payments/sslcommerz/success'
   id:
     | '__root__'
     | '/'
@@ -387,6 +459,12 @@ export interface FileRouteTypes {
     | '/_authenticated/owner/buildings/$buildingId'
     | '/_authenticated/owner/flats/$buildingId'
     | '/_authenticated/owner/buildings/'
+    | '/api/public/payments/sslcommerz/cancel'
+    | '/api/public/payments/sslcommerz/fail'
+    | '/api/public/payments/sslcommerz/initiate'
+    | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/status'
+    | '/api/public/payments/sslcommerz/success'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -398,6 +476,12 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiAptbotRoute: typeof ApiAptbotRoute
   ApiPublicAptbotRoute: typeof ApiPublicAptbotRoute
+  ApiPublicPaymentsSslcommerzCancelRoute: typeof ApiPublicPaymentsSslcommerzCancelRoute
+  ApiPublicPaymentsSslcommerzFailRoute: typeof ApiPublicPaymentsSslcommerzFailRoute
+  ApiPublicPaymentsSslcommerzInitiateRoute: typeof ApiPublicPaymentsSslcommerzInitiateRoute
+  ApiPublicPaymentsSslcommerzIpnRoute: typeof ApiPublicPaymentsSslcommerzIpnRoute
+  ApiPublicPaymentsSslcommerzStatusRoute: typeof ApiPublicPaymentsSslcommerzStatusRoute
+  ApiPublicPaymentsSslcommerzSuccessRoute: typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -605,6 +689,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOwnerFlatsBuildingIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/payments/sslcommerz/cancel': {
+      id: '/api/public/payments/sslcommerz/cancel'
+      path: '/api/public/payments/sslcommerz/cancel'
+      fullPath: '/api/public/payments/sslcommerz/cancel'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/sslcommerz/fail': {
+      id: '/api/public/payments/sslcommerz/fail'
+      path: '/api/public/payments/sslcommerz/fail'
+      fullPath: '/api/public/payments/sslcommerz/fail'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzFailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/sslcommerz/initiate': {
+      id: '/api/public/payments/sslcommerz/initiate'
+      path: '/api/public/payments/sslcommerz/initiate'
+      fullPath: '/api/public/payments/sslcommerz/initiate'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzInitiateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/sslcommerz/ipn': {
+      id: '/api/public/payments/sslcommerz/ipn'
+      path: '/api/public/payments/sslcommerz/ipn'
+      fullPath: '/api/public/payments/sslcommerz/ipn'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzIpnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/sslcommerz/status': {
+      id: '/api/public/payments/sslcommerz/status'
+      path: '/api/public/payments/sslcommerz/status'
+      fullPath: '/api/public/payments/sslcommerz/status'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/sslcommerz/success': {
+      id: '/api/public/payments/sslcommerz/success'
+      path: '/api/public/payments/sslcommerz/success'
+      fullPath: '/api/public/payments/sslcommerz/success'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -671,6 +797,16 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiAptbotRoute: ApiAptbotRoute,
   ApiPublicAptbotRoute: ApiPublicAptbotRoute,
+  ApiPublicPaymentsSslcommerzCancelRoute:
+    ApiPublicPaymentsSslcommerzCancelRoute,
+  ApiPublicPaymentsSslcommerzFailRoute: ApiPublicPaymentsSslcommerzFailRoute,
+  ApiPublicPaymentsSslcommerzInitiateRoute:
+    ApiPublicPaymentsSslcommerzInitiateRoute,
+  ApiPublicPaymentsSslcommerzIpnRoute: ApiPublicPaymentsSslcommerzIpnRoute,
+  ApiPublicPaymentsSslcommerzStatusRoute:
+    ApiPublicPaymentsSslcommerzStatusRoute,
+  ApiPublicPaymentsSslcommerzSuccessRoute:
+    ApiPublicPaymentsSslcommerzSuccessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1594,6 +1594,108 @@ export type Database = {
           },
         ]
       }
+      sslcommerz_transactions: {
+        Row: {
+          bank_tran_id: string | null
+          building_id: string
+          created_at: string
+          currency: string
+          expected_amount: number
+          failure_reason: string | null
+          finalized_at: string | null
+          flat_id: string
+          id: string
+          rent_payment_id: string | null
+          rent_record_id: string
+          risk_level: string | null
+          sessionkey: string | null
+          status: Database["public"]["Enums"]["gateway_txn_status"]
+          tenant_id: string
+          tran_id: string
+          updated_at: string
+          val_id: string | null
+          validated_amount: number | null
+        }
+        Insert: {
+          bank_tran_id?: string | null
+          building_id: string
+          created_at?: string
+          currency?: string
+          expected_amount: number
+          failure_reason?: string | null
+          finalized_at?: string | null
+          flat_id: string
+          id?: string
+          rent_payment_id?: string | null
+          rent_record_id: string
+          risk_level?: string | null
+          sessionkey?: string | null
+          status?: Database["public"]["Enums"]["gateway_txn_status"]
+          tenant_id: string
+          tran_id: string
+          updated_at?: string
+          val_id?: string | null
+          validated_amount?: number | null
+        }
+        Update: {
+          bank_tran_id?: string | null
+          building_id?: string
+          created_at?: string
+          currency?: string
+          expected_amount?: number
+          failure_reason?: string | null
+          finalized_at?: string | null
+          flat_id?: string
+          id?: string
+          rent_payment_id?: string | null
+          rent_record_id?: string
+          risk_level?: string | null
+          sessionkey?: string | null
+          status?: Database["public"]["Enums"]["gateway_txn_status"]
+          tenant_id?: string
+          tran_id?: string
+          updated_at?: string
+          val_id?: string | null
+          validated_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sslcommerz_transactions_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sslcommerz_transactions_flat_id_fkey"
+            columns: ["flat_id"]
+            isOneToOne: false
+            referencedRelation: "flats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sslcommerz_transactions_rent_payment_id_fkey"
+            columns: ["rent_payment_id"]
+            isOneToOne: false
+            referencedRelation: "rent_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sslcommerz_transactions_rent_record_id_fkey"
+            columns: ["rent_record_id"]
+            isOneToOne: false
+            referencedRelation: "rent_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sslcommerz_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_credits: {
         Row: {
           amount: number
@@ -2094,6 +2196,17 @@ export type Database = {
           _tenant_ids: string[]
         }
         Returns: undefined
+      }
+      finalize_sslcommerz_payment: {
+        Args: {
+          _bank_tran_id: string
+          _currency: string
+          _risky?: boolean
+          _tran_id: string
+          _val_id: string
+          _validated_amount: number
+        }
+        Returns: string
       }
       is_month_closed: {
         Args: { _billing_month: string; _building_id: string }
@@ -2929,6 +3042,12 @@ export type Database = {
         | "internet"
         | "flat_repair"
         | "other"
+      gateway_txn_status:
+        | "pending"
+        | "paid"
+        | "failed"
+        | "cancelled"
+        | "review_required"
       maintenance_attachment_type:
         | "issue_photo"
         | "issue_video"
@@ -2985,7 +3104,12 @@ export type Database = {
         | "payment_update"
         | "general"
       occupancy_status: "vacant" | "occupied"
-      payment_method: "bkash" | "nagad" | "bank_transfer" | "cash"
+      payment_method:
+        | "bkash"
+        | "nagad"
+        | "bank_transfer"
+        | "cash"
+        | "sslcommerz"
       payment_status: "unpaid" | "paid" | "overdue" | "partially_paid"
       shared_charge_category:
         | "guard_salary"
@@ -3205,6 +3329,13 @@ export const Constants = {
         "flat_repair",
         "other",
       ],
+      gateway_txn_status: [
+        "pending",
+        "paid",
+        "failed",
+        "cancelled",
+        "review_required",
+      ],
       maintenance_attachment_type: [
         "issue_photo",
         "issue_video",
@@ -3267,7 +3398,7 @@ export const Constants = {
         "general",
       ],
       occupancy_status: ["vacant", "occupied"],
-      payment_method: ["bkash", "nagad", "bank_transfer", "cash"],
+      payment_method: ["bkash", "nagad", "bank_transfer", "cash", "sslcommerz"],
       payment_status: ["unpaid", "paid", "overdue", "partially_paid"],
       shared_charge_category: [
         "guard_salary",

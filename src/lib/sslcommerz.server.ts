@@ -164,7 +164,6 @@ export async function authenticate(request: Request) {
     authEmail: typeof claimEmail === "string" ? claimEmail : null,
     supabase,
   };
-
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -199,7 +198,8 @@ export function classifySessionRejection(rawReason: unknown): string {
   const text = typeof rawReason === "string" ? rawReason.toLowerCase() : "";
   if (!text) return "session_rejected";
   const mentionsInvalid = text.includes("invalid") || text.includes("valid");
-  if (text.includes("email")) return mentionsInvalid ? "invalid_customer_email" : "session_rejected";
+  if (text.includes("email"))
+    return mentionsInvalid ? "invalid_customer_email" : "session_rejected";
   if (text.includes("phone") || text.includes("mobile")) {
     return mentionsInvalid ? "invalid_customer_phone" : "session_rejected";
   }
@@ -222,7 +222,6 @@ export function isUuid(value: unknown): value is string {
 export function isTranId(value: unknown): value is string {
   return typeof value === "string" && TRAN_ID_RE.test(value);
 }
-
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();

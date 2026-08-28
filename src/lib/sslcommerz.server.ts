@@ -391,7 +391,12 @@ export async function handleInitiate(request: Request): Promise<Response> {
       .eq("tran_id", tranId)
       .eq("status", "pending");
 
-    return jsonResponse({ ok: false, error: "Could not start the payment." }, 502, cors);
+    // A structured FAILED response is an expected gateway decline, not a
+    // transport/runtime failure. Keep the response generic, but use 422 so
+    // preview error instrumentation does not replace the tenant UI with a
+    // route-boundary error. Network, timeout and malformed-response failures
+    // above continue to use 502.
+    return jsonResponse({ ok: false, error: "Could not start the payment." }, 422, cors);
   }
 
   if (typeof payload["sessionkey"] === "string") {

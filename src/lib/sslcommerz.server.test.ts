@@ -3,13 +3,17 @@ import { validateGatewayPageUrl, extractGatewayHostname } from "./sslcommerz.ser
 
 describe("validateGatewayPageUrl", () => {
   it("accepts the three official live HTTPS hosts", () => {
-    expect(validateGatewayPageUrl("https://securepay.sslcommerz.com/gwprocess/v4/gw/index.php")).toBe(true);
+    expect(
+      validateGatewayPageUrl("https://securepay.sslcommerz.com/gwprocess/v4/gw/index.php"),
+    ).toBe(true);
     expect(validateGatewayPageUrl("https://seamless-epay.sslcommerz.com/pay?token=abc")).toBe(true);
     expect(validateGatewayPageUrl("https://epay-gw.sslcommerz.com/pay?token=abc")).toBe(true);
   });
 
   it("rejects HTTP for all allowed hosts", () => {
-    expect(validateGatewayPageUrl("http://securepay.sslcommerz.com/gwprocess/v4/api.php")).toBe(false);
+    expect(validateGatewayPageUrl("http://securepay.sslcommerz.com/gwprocess/v4/api.php")).toBe(
+      false,
+    );
     expect(validateGatewayPageUrl("http://seamless-epay.sslcommerz.com/pay")).toBe(false);
     expect(validateGatewayPageUrl("http://epay-gw.sslcommerz.com/pay")).toBe(false);
   });
@@ -26,7 +30,9 @@ describe("validateGatewayPageUrl", () => {
   });
 
   it("rejects sandbox hostnames", () => {
-    expect(validateGatewayPageUrl("https://sandbox.sslcommerz.com/gwprocess/v4/api.php")).toBe(false);
+    expect(validateGatewayPageUrl("https://sandbox.sslcommerz.com/gwprocess/v4/api.php")).toBe(
+      false,
+    );
     expect(validateGatewayPageUrl("https://sandbox.sslcommerz.com/pay")).toBe(false);
   });
 
@@ -48,7 +54,9 @@ describe("validateGatewayPageUrl", () => {
 
 describe("extractGatewayHostname", () => {
   it("returns the normalized lowercase hostname for parseable URLs", () => {
-    expect(extractGatewayHostname("https://EPAY-GW.SSLCOMMERZ.COM/pay?token=abc")).toBe("epay-gw.sslcommerz.com");
+    expect(extractGatewayHostname("https://EPAY-GW.SSLCOMMERZ.COM/pay?token=abc")).toBe(
+      "epay-gw.sslcommerz.com",
+    );
     expect(extractGatewayHostname("https://epay-gw.sslcommerz.com")).toBe("epay-gw.sslcommerz.com");
   });
 

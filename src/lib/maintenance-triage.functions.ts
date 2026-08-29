@@ -32,13 +32,11 @@ export type TriageSuggestion = {
 };
 
 export type TriageResult =
-  | { ok: true; suggestion: TriageSuggestion }
-  | { ok: false; error: string };
+  { ok: true; suggestion: TriageSuggestion } | { ok: false; error: string };
 
 function validate(input: { title: unknown; description: unknown }) {
   const title = typeof input.title === "string" ? input.title.trim() : "";
-  const description =
-    typeof input.description === "string" ? input.description.trim() : "";
+  const description = typeof input.description === "string" ? input.description.trim() : "";
   if (title.length < 3 || title.length > 120) {
     throw new Error("Title must be between 3 and 120 characters.");
   }
@@ -108,11 +106,7 @@ export const triageMaintenanceRequest = createServerFn({ method: "POST" })
                   professionalSummary: { type: "STRING" },
                   safetyAdvice: { type: "STRING", nullable: true },
                 },
-                required: [
-                  "suggestedCategory",
-                  "suggestedPriority",
-                  "professionalSummary",
-                ],
+                required: ["suggestedCategory", "suggestedPriority", "professionalSummary"],
               },
             },
           }),

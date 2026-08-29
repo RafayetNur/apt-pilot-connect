@@ -203,11 +203,7 @@ export type ExpenseReport = {
   trend: Array<{ period: string; total: number }>;
 };
 
-export const expenseReportQueryOptions = (
-  fromMonth: string,
-  toMonth: string,
-  buildingId: string,
-) =>
+export const expenseReportQueryOptions = (fromMonth: string, toMonth: string, buildingId: string) =>
   queryOptions({
     queryKey: ["report-expenses", fromMonth, toMonth, buildingId],
     queryFn: async (): Promise<ExpenseReport> => {
@@ -397,7 +393,11 @@ export function formatPercent(value: number) {
 }
 
 /** CSV export. Never include receipt or payment-proof URLs here. */
-export function exportCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+export function exportCsv(
+  filename: string,
+  headers: string[],
+  rows: Array<Array<string | number>>,
+) {
   const escape = (value: string | number) => {
     const text = String(value ?? "");
     return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

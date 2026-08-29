@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { formatRent } from "@/lib/flats";
 import { formatDateTime } from "@/lib/payments";
 import {
+  DEFAULT_VISIBLE_ATTEMPTS,
   fetchGatewayStatus,
   gatewayStatusLabel,
   gatewayStatusVariant,
   initiateOnlinePayment,
   isOnlineAmountEligible,
+  latestPendingTransaction,
   myGatewayTransactionsQueryOptions,
   MAX_ONLINE_AMOUNT_BDT,
   MIN_ONLINE_AMOUNT_BDT,
@@ -32,13 +34,20 @@ export function BillPaymentOptions({
 }) {
   const queryClient = useQueryClient();
   const [checking, setChecking] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const transactionsQuery = useQuery(myGatewayTransactionsQueryOptions());
   const transactions = (transactionsQuery.data ?? []).filter(
     (item) => item.rent_record_id === rentRecordId,
   );
   const pending = recentPendingTransaction(transactions, rentRecordId);
+  const latestPending = latestPendingTransaction(transactions, rentRecordId);
   const eligible = isOnlineAmountEligible(remainingDue);
+
+  // Rapid double clicks must never create two gateway sessions. `isPending`
+  // from the mutation only flips after React re-renders, so a synchronous ref
+  // guard closes the gap between the two clicks.
+  const inFlight = useRef(false);
 
   const initiate = useMutation({
     mutationFn: () => initiateOnlinePayment(rentRecordId),
@@ -47,6 +56,7 @@ export function BillPaymentOptions({
       window.location.assign(result.gatewayUrl);
     },
     onError: (error: Error) => {
+      inFlight.current = false;
       toast.error(
         error instanceof SessionExpiredError
           ? "Your session has expired. Please sign in again."
@@ -55,28 +65,50 @@ export function BillPaymentOptions({
     },
   });
 
-  const checkStatus = async (tranId: string) => {
+  const startCheckout = () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    initiate.mutate();
+  };
+
+  const refreshStatus = async (tranId: string, silent = false) => {
     setChecking(true);
     try {
       const status = await fetchGatewayStatus(tranId);
-      toast.success(`Payment status: ${gatewayStatusLabel[status]}`);
+      if (!silent) toast.success(`Payment status: ${gatewayStatusLabel[status]}`);
       await queryClient.invalidateQueries({ queryKey: ["gateway-transactions"] });
       await queryClient.invalidateQueries({ queryKey: ["my-monthly-bills"] });
       await queryClient.invalidateQueries({ queryKey: ["my-payments"] });
     } catch (error) {
-      toast.error(
-        error instanceof SessionExpiredError
-          ? "Your session has expired. Please sign in again."
-          : "Could not check the payment status right now.",
-      );
+      if (!silent) {
+        toast.error(
+          error instanceof SessionExpiredError
+            ? "Your session has expired. Please sign in again."
+            : "Could not check the payment status right now.",
+        );
+      }
     } finally {
       setChecking(false);
     }
   };
 
+  // On load, re-check the newest pending attempt once. A stale one is cancelled
+  // server-side, which re-enables Pay online without any tenant action.
+  const autoChecked = useRef<string | null>(null);
+  const latestPendingId = latestPending?.tran_id ?? null;
+  useEffect(() => {
+    if (!latestPendingId) return;
+    if (autoChecked.current === latestPendingId) return;
+    autoChecked.current = latestPendingId;
+    void refreshStatus(latestPendingId, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestPendingId]);
+
   if (remainingDue <= 0) {
     return <Badge variant="default">Paid</Badge>;
   }
+
+  const visible = showAll ? transactions : transactions.slice(0, DEFAULT_VISIBLE_ATTEMPTS);
 
   return (
     <div className="w-full max-w-full space-y-3">
@@ -104,7 +136,7 @@ export function BillPaymentOptions({
           <Button
             className="mt-3 min-h-11 w-full"
             disabled={!eligible || initiate.isPending || Boolean(pending)}
-            onClick={() => initiate.mutate()}
+            onClick={startCheckout}
           >
             {initiate.isPending ? "Opening secure checkout…" : "Pay online with SSLCOMMERZ"}
           </Button>
@@ -137,34 +169,56 @@ export function BillPaymentOptions({
       </p>
 
       {transactions.length > 0 ? (
-        <ul className="grid gap-2">
-          {transactions.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2 text-xs"
+        <div className="space-y-2">
+          <ul className="grid gap-2">
+            {visible.map((item) => {
+              const settled = item.status === "paid" || item.status === "review_required";
+              const active = pending?.tran_id === item.tran_id;
+              return (
+                <li
+                  key={item.id}
+                  className={
+                    settled
+                      ? "flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/60 bg-card px-3 py-2.5 text-sm"
+                      : "flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface px-3 py-1.5 text-xs text-muted-foreground"
+                  }
+                >
+                  <span>
+                    {formatDateTime(item.created_at)} · {formatRent(item.expected_amount)}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Badge variant={gatewayStatusVariant[item.status]}>
+                      {gatewayStatusLabel[item.status]}
+                    </Badge>
+                    {active ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="min-h-9"
+                        disabled={checking}
+                        onClick={() => void refreshStatus(item.tran_id)}
+                      >
+                        {checking ? "Checking…" : "Check payment status"}
+                      </Button>
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {transactions.length > DEFAULT_VISIBLE_ATTEMPTS ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="min-h-9 px-0 text-xs"
+              onClick={() => setShowAll((prev) => !prev)}
             >
-              <span className="text-muted-foreground">
-                {formatDateTime(item.created_at)} · {formatRent(item.expected_amount)}
-              </span>
-              <span className="flex items-center gap-2">
-                <Badge variant={gatewayStatusVariant[item.status]}>
-                  {gatewayStatusLabel[item.status]}
-                </Badge>
-                {item.status === "pending" ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="min-h-9"
-                    disabled={checking}
-                    onClick={() => void checkStatus(item.tran_id)}
-                  >
-                    {checking ? "Checking…" : "Check payment status"}
-                  </Button>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
+              {showAll
+                ? "Show fewer attempts"
+                : `Show all attempts (${String(transactions.length)})`}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

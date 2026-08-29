@@ -45,12 +45,7 @@ export const expenseCategoryLabel: Record<ExpenseCategory, string> = {
 export const expenseCategoryOptions = Object.keys(expenseCategoryLabel) as ExpenseCategory[];
 
 export type ExpensePaymentMethod =
-  | "cash"
-  | "bkash"
-  | "nagad"
-  | "bank_transfer"
-  | "cheque"
-  | "other";
+  "cash" | "bkash" | "nagad" | "bank_transfer" | "cheque" | "other";
 
 export const expenseMethodLabel: Record<ExpensePaymentMethod, string> = {
   cash: "Cash",

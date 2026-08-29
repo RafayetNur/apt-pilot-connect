@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { validateGatewayPageUrl, extractGatewayHostname } from "./sslcommerz.server";
+import {
+  validateGatewayPageUrl,
+  extractGatewayHostname,
+  isStaleCheckout,
+  CHECKOUT_ACTIVE_WINDOW_MS,
+  CHECKOUT_EXPIRED_REASON,
+} from "./sslcommerz.server";
 
 describe("validateGatewayPageUrl", () => {
   it("accepts the three official live HTTPS hosts", () => {

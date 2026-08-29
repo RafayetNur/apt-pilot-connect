@@ -691,6 +691,25 @@ h1{font-size:1.15rem;margin:0 0 .5rem;color:#5E8C6A}p{margin:0;line-height:1.5;f
 /* Status                                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * A gateway checkout session is considered active for 15 minutes after the
+ * ledger row was created. After that a still-`pending` row is stale: the tenant
+ * never completed checkout, so it is cancelled to unblock a fresh attempt.
+ * Cancelling is non-financial and reversible — a later genuine validated IPN
+ * still settles `cancelled` rows (see `handleIpn`).
+ */
+export const CHECKOUT_ACTIVE_WINDOW_MS = 15 * 60 * 1000;
+
+/** Bounded, non-sensitive reason recorded when a checkout session times out. */
+export const CHECKOUT_EXPIRED_REASON = "checkout_expired";
+
+export function isStaleCheckout(createdAt: unknown, now: number = Date.now()): boolean {
+  if (typeof createdAt !== "string") return false;
+  const started = new Date(createdAt).getTime();
+  if (!Number.isFinite(started)) return false;
+  return now - started >= CHECKOUT_ACTIVE_WINDOW_MS;
+}
+
 export async function handleStatus(request: Request): Promise<Response> {
   const cors = resolveCorsHeaders(request, "GET, OPTIONS");
   const auth = await authenticate(request);
@@ -704,24 +723,58 @@ export async function handleStatus(request: Request): Promise<Response> {
   // RLS restricts the row to the owning tenant (or an authorized reviewer).
   const { data, error } = await auth.supabase
     .from("sslcommerz_transactions")
-    .select("tran_id, status, expected_amount, currency, rent_record_id, finalized_at")
+    .select(
+      "tran_id, status, expected_amount, currency, rent_record_id, finalized_at, created_at, rent_payment_id",
+    )
     .eq("tran_id", tranId)
     .maybeSingle();
 
   if (error) return jsonResponse({ ok: false, error: "Could not load the payment." }, 500, cors);
   if (!data) return jsonResponse({ ok: false, error: "Transaction not found." }, 404, cors);
 
+  let status = data.status;
+  let finalizedAt = data.finalized_at;
+
+  // Ownership is already proven by the RLS read above. The write itself is a
+  // single guarded statement so a concurrent IPN can never be overwritten:
+  // it only matches a row that is still pending, unfinalized, unlinked to a
+  // rent payment, and older than the active window.
+  if (
+    status === "pending" &&
+    !data.rent_payment_id &&
+    !data.finalized_at &&
+    isStaleCheckout(data.created_at)
+  ) {
+    const cutoff = new Date(Date.now() - CHECKOUT_ACTIVE_WINDOW_MS).toISOString();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: expired } = await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({ status: "cancelled", failure_reason: CHECKOUT_EXPIRED_REASON })
+      .eq("tran_id", tranId)
+      .eq("status", "pending")
+      .is("rent_payment_id", null)
+      .is("finalized_at", null)
+      .lt("created_at", cutoff)
+      .select("status, finalized_at")
+      .maybeSingle();
+    if (expired) {
+      status = expired.status;
+      finalizedAt = expired.finalized_at;
+    }
+  }
+
   return jsonResponse(
     {
       ok: true,
       transactionId: data.tran_id,
-      status: data.status,
+      status,
       amount: Number(data.expected_amount),
       currency: data.currency,
       rentRecordId: data.rent_record_id,
-      finalizedAt: data.finalized_at,
+      finalizedAt,
     },
     200,
     cors,
   );
 }
+

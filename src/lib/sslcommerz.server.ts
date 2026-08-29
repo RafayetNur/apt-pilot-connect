@@ -240,7 +240,25 @@ export function validateGatewayPageUrl(value: unknown): value is string {
   } catch {
     return false;
   }
-  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname);
+  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname.toLowerCase());
+}
+
+/**
+ * Diagnostic-only helper: extracts the normalized lowercase hostname from a
+ * rejected GatewayPageURL so a rejected host can be identified without
+ * persisting the URL, path, query, fragment or any gateway data. Returns null
+ * when the value is absent, blank, or not parseable as a URL.
+ */
+export function extractGatewayHostname(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const hostname = new URL(trimmed).hostname.toLowerCase();
+    return hostname.length > 0 && hostname.length <= 253 ? hostname : null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
@@ -402,12 +420,21 @@ export async function handleInitiate(request: Request): Promise<Response> {
   }
 
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
+  const gatewayUrlRaw: string = gatewayUrl;
   if (payload["status"] === "SUCCESS" && !validateGatewayPageUrl(gatewayUrl)) {
     // Never hand an unrecognised checkout URL to the browser. The raw URL is
-    // discarded; only the bounded reason is persisted.
+    // discarded; only the bounded reason (and, for a parseable URL, the
+    // normalized lowercase hostname) is persisted for backend diagnosis. The
+    // hostname is never included in the browser response.
+    const missing = gatewayUrlRaw.trim().length === 0;
+    const hostname = missing ? null : extractGatewayHostname(gatewayUrlRaw);
     await supabaseAdmin
       .from("sslcommerz_transactions")
-      .update({ status: "failed", failure_reason: "invalid_gateway_url" })
+      .update({
+        status: "failed",
+        failure_reason: missing ? "gateway_url_missing" : "gateway_url_host_rejected",
+        gateway_hostname: hostname,
+      })
       .eq("tran_id", tranId)
       .eq("status", "pending");
     return jsonResponse({ ok: false, error: "Could not start the payment." }, 422, cors);

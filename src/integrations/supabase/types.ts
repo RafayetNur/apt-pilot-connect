@@ -1604,6 +1604,7 @@ export type Database = {
           failure_reason: string | null
           finalized_at: string | null
           flat_id: string
+          gateway_hostname: string | null
           id: string
           rent_payment_id: string | null
           rent_record_id: string
@@ -1625,6 +1626,7 @@ export type Database = {
           failure_reason?: string | null
           finalized_at?: string | null
           flat_id: string
+          gateway_hostname?: string | null
           id?: string
           rent_payment_id?: string | null
           rent_record_id: string
@@ -1646,6 +1648,7 @@ export type Database = {
           failure_reason?: string | null
           finalized_at?: string | null
           flat_id?: string
+          gateway_hostname?: string | null
           id?: string
           rent_payment_id?: string | null
           rent_record_id?: string

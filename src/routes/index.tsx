@@ -47,7 +47,11 @@ const roles = [
 
 const features = [
   { icon: ShieldCheck, title: "Secure by role", body: "Every account only sees what it should." },
-  { icon: Receipt, title: "Built for Bangladesh", body: "Designed around how buildings here work." },
+  {
+    icon: Receipt,
+    title: "Built for Bangladesh",
+    body: "Designed around how buildings here work.",
+  },
   { icon: Wrench, title: "Grows with you", body: "Operations modules arrive step by step." },
 ];
 

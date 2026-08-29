@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   CHECKOUT_ACTIVE_WINDOW_MS,
   DEFAULT_VISIBLE_ATTEMPTS,
+  isExpiredCloseable,
   latestPendingTransaction,
   recentPendingTransaction,
   type GatewayStatus,
@@ -70,5 +71,35 @@ describe("display constants", () => {
   it("mirrors the server window and shows five attempts by default", () => {
     expect(CHECKOUT_ACTIVE_WINDOW_MS).toBe(15 * 60 * 1000);
     expect(DEFAULT_VISIBLE_ATTEMPTS).toBe(5);
+  });
+});
+
+describe("isExpiredCloseable", () => {
+  const now = Date.now();
+  const row = (over: Partial<GatewayTransaction>) =>
+    ({
+      status: "pending",
+      created_at: new Date(now - 20 * 60 * 1000).toISOString(),
+      ...over,
+    }) as GatewayTransaction;
+
+  it("is closeable once a pending attempt passes the active window", () => {
+    expect(isExpiredCloseable(row({}), now)).toBe(true);
+  });
+
+  it("is not closeable while the checkout is still active", () => {
+    expect(
+      isExpiredCloseable(row({ created_at: new Date(now - 60 * 1000).toISOString() }), now),
+    ).toBe(false);
+  });
+
+  it("never offers to close a settled or terminal attempt", () => {
+    for (const status of ["paid", "review_required", "failed", "cancelled"] as const) {
+      expect(isExpiredCloseable(row({ status }), now)).toBe(false);
+    }
+  });
+
+  it("ignores an unparseable timestamp", () => {
+    expect(isExpiredCloseable(row({ created_at: "not-a-date" }), now)).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ import { ExpenseDashboardSection } from "@/components/expenses/expense-dashboard
 import { MaintenanceDashboardSection } from "@/components/maintenance/maintenance-dashboard-section";
 import { FinancialDashboardSection } from "@/components/reports/financial-dashboard-section";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { GatewayTransactionsSection } from "@/components/payments/gateway-transactions-section";
 
 import {
   DashboardSection,
@@ -90,11 +91,7 @@ function ManagerDashboard() {
               value={formatRent(totals.collected)}
               tone="positive"
             />
-            <StatCard
-              label="Remaining due"
-              value={formatRent(totals.remaining)}
-              tone="danger"
-            />
+            <StatCard label="Remaining due" value={formatRent(totals.remaining)} tone="danger" />
             <StatCard label="Overdue" value={formatRent(totals.overdue)} tone="danger" />
             <StatCard
               label="Pending verifications"
@@ -126,13 +123,10 @@ function ManagerDashboard() {
 
           <MaintenanceDashboardSection role="manager" />
 
-
-
           <DashboardSection
             title="Building-wise summary"
             description={`Assigned buildings for ${formatMonth(`${month}-01`)}.`}
           >
-
             {data.buildingSummaries.length === 0 ? (
               <EmptyState>No building has been assigned to you yet.</EmptyState>
             ) : (
@@ -231,6 +225,7 @@ function ManagerDashboard() {
           </DashboardSection>
         </>
       )}
+      <GatewayTransactionsSection />
     </DashboardShell>
   );
 }

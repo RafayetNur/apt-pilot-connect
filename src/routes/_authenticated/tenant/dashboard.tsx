@@ -222,7 +222,6 @@ function TenantDashboard() {
   const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id));
   const closuresQuery = useQuery(closuresQueryOptions());
 
-
   const [submitFor, setSubmitFor] = useState<TenantMonthlyBill | null>(null);
   const [receipt, setReceipt] = useState<PaymentRow | null>(null);
 
@@ -296,7 +295,6 @@ function TenantDashboard() {
         row.status === "closed",
     );
 
-
   return (
     <DashboardShell
       role="tenant"
@@ -363,7 +361,6 @@ function TenantDashboard() {
             />
           </div>
 
-
           {isFinalized(current.building_id, current.billing_month) ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm text-muted-foreground">
               This month has been finalized by your owner, so the charges no longer change. Any
@@ -371,7 +368,6 @@ function TenantDashboard() {
               adjustment.
             </p>
           ) : null}
-
 
           {lastReview?.reviewer_note ? (
             <p className="mt-3 rounded-xl border border-border/60 bg-card p-4 text-sm">
@@ -552,8 +548,7 @@ function TenantDashboard() {
       />
 
       <ReceiptDialog payment={receipt} onClose={() => setReceipt(null)} />
-          <TenantMaintenanceSummary />
-
+      <TenantMaintenanceSummary />
     </DashboardShell>
   );
 }

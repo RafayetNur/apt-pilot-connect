@@ -777,3 +777,279 @@ export async function handleStatus(request: Request): Promise<Response> {
     cors,
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Reviewer reconciliation (Transaction Query API)                     */
+/* ------------------------------------------------------------------ */
+
+const LIVE_TRANSACTION_QUERY_URL =
+  "https://securepay.sslcommerz.com/validator/api/merchantTransIDvalidationAPI.php";
+const SANDBOX_TRANSACTION_QUERY_URL =
+  "https://sandbox.sslcommerz.com/validator/api/merchantTransIDvalidationAPI.php";
+
+export function transactionQueryUrl(): string {
+  return isLive() ? LIVE_TRANSACTION_QUERY_URL : SANDBOX_TRANSACTION_QUERY_URL;
+}
+
+export type GatewayQueryOutcome =
+  /** Gateway reports the attempt as VALID/VALIDATED — money may have moved. */
+  | { outcome: "settled"; valId: string | null; element: Record<string, unknown> }
+  | { outcome: "pending" }
+  | { outcome: "failed" }
+  | { outcome: "cancelled" }
+  | { outcome: "not_found" }
+  | { outcome: "unavailable"; reason: string };
+
+function upperString(value: unknown): string {
+  return typeof value === "string" ? value.trim().toUpperCase() : "";
+}
+
+/**
+ * Pure interpretation of a Transaction Query API payload. Only elements whose
+ * `tran_id` exactly equals our ledger id are ever considered, so a mismatched
+ * or unrelated gateway record can never drive a status change.
+ */
+export function interpretTransactionQuery(payload: unknown, tranId: string): GatewayQueryOutcome {
+  if (payload === null || typeof payload !== "object" || Array.isArray(payload)) {
+    return { outcome: "unavailable", reason: "query_unreadable" };
+  }
+  const raw = (payload as Record<string, unknown>)["element"];
+  const list: unknown[] = Array.isArray(raw)
+    ? raw
+    : raw !== null && typeof raw === "object"
+      ? [raw]
+      : [];
+
+  const matches = list.filter(
+    (item): item is Record<string, unknown> =>
+      item !== null &&
+      typeof item === "object" &&
+      !Array.isArray(item) &&
+      (item as Record<string, unknown>)["tran_id"] === tranId,
+  );
+  if (matches.length === 0) return { outcome: "not_found" };
+
+  const settledElement = matches.find((item) => {
+    const status = upperString(item["status"]);
+    return status === "VALID" || status === "VALIDATED";
+  });
+  const element = settledElement ?? matches[0]!;
+  const status = upperString(element["status"]);
+
+  if (status === "VALID" || status === "VALIDATED") {
+    const valId = element["val_id"];
+    return {
+      outcome: "settled",
+      valId: typeof valId === "string" && valId.length >= 4 && valId.length <= 100 ? valId : null,
+      element,
+    };
+  }
+  if (
+    status === "PENDING" ||
+    status === "PROCESSING" ||
+    status === "INITIATED" ||
+    status === "UNATTEMPTED"
+  ) {
+    return { outcome: "pending" };
+  }
+  if (status === "FAILED") return { outcome: "failed" };
+  if (status === "CANCELLED" || status === "CANCELED" || status === "EXPIRED") {
+    return { outcome: "cancelled" };
+  }
+  return { outcome: "unavailable", reason: "query_status_unknown" };
+}
+
+/**
+ * Server-to-server Transaction Query. Credentials are read inside the call and
+ * never leave the server. The stored sessionkey is preferred; `tran_id` is the
+ * fallback when no session key was captured.
+ */
+export async function queryGatewayTransaction(
+  sessionKey: string | null,
+  tranId: string,
+): Promise<GatewayQueryOutcome> {
+  const creds = credentials();
+  if (!creds) return { outcome: "unavailable", reason: "unconfigured" };
+
+  const url = new URL(transactionQueryUrl());
+  if (typeof sessionKey === "string" && sessionKey.trim().length > 0) {
+    url.searchParams.set("sessionkey", sessionKey.trim());
+  } else {
+    url.searchParams.set("tran_id", tranId);
+  }
+  url.searchParams.set("store_id", creds.storeId);
+  url.searchParams.set("store_passwd", creds.storePassword);
+  url.searchParams.set("format", "json");
+
+  let payload: unknown;
+  try {
+    const response = await fetchWithTimeout(url.toString(), { method: "GET" });
+    payload = await response.json();
+  } catch {
+    return { outcome: "unavailable", reason: "query_unreachable" };
+  }
+  return interpretTransactionQuery(payload, tranId);
+}
+
+export const RECONCILE_ACTIONS = ["check", "close_expired"] as const;
+export type ReconcileAction = (typeof RECONCILE_ACTIONS)[number];
+
+export function isReconcileAction(value: unknown): value is ReconcileAction {
+  return typeof value === "string" && (RECONCILE_ACTIONS as readonly string[]).includes(value);
+}
+
+/** Roles allowed to reconcile. RLS additionally scopes them to their buildings. */
+const REVIEWER_ROLES = ["owner", "manager"];
+
+/**
+ * POST /api/public/payments/sslcommerz/reconcile
+ *
+ * Reviewer-only, server-only reconciliation. There is deliberately no manual
+ * "mark paid" path: the only way a row becomes `paid` here is the same
+ * row-locking, idempotent `finalize_sslcommerz_payment` routine the IPN uses,
+ * and only after the gateway itself reports VALID/VALIDATED with an exact
+ * amount and currency match.
+ */
+export async function handleReconcile(request: Request): Promise<Response> {
+  const cors = resolveCorsHeaders(request);
+
+  const auth = await authenticate(request);
+  if ("error" in auth) return jsonResponse({ ok: false, error: auth.error }, 401, cors);
+
+  const body = await readJson(request);
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return jsonResponse({ ok: false, error: "Invalid request body." }, 400, cors);
+  }
+  const tranId = (body as Record<string, unknown>)["transactionId"];
+  const action = (body as Record<string, unknown>)["action"] ?? "check";
+  if (!isTranId(tranId)) {
+    return jsonResponse({ ok: false, error: "A valid transaction id is required." }, 400, cors);
+  }
+  if (!isReconcileAction(action)) {
+    return jsonResponse({ ok: false, error: "Unsupported action." }, 400, cors);
+  }
+
+  // Authorization is two-layered: the caller must hold a reviewer role, and the
+  // RLS read below only returns rows for buildings they may review.
+  const { data: profile } = await auth.supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", auth.userId)
+    .maybeSingle();
+  if (!profile || !REVIEWER_ROLES.includes(profile.role)) {
+    return jsonResponse({ ok: false, error: "You cannot reconcile payments." }, 403, cors);
+  }
+
+  const { data: txn, error } = await auth.supabase
+    .from("sslcommerz_transactions")
+    .select(
+      "tran_id, status, expected_amount, currency, created_at, finalized_at, rent_payment_id, sessionkey",
+    )
+    .eq("tran_id", tranId)
+    .maybeSingle();
+  if (error) return jsonResponse({ ok: false, error: "Could not load the payment." }, 500, cors);
+  if (!txn) return jsonResponse({ ok: false, error: "Transaction not found." }, 404, cors);
+
+  // Settled rows are never re-processed or downgraded — reconciliation is
+  // idempotent by construction.
+  if (txn.status === "paid" || txn.status === "review_required" || txn.rent_payment_id) {
+    return jsonResponse({ ok: true, status: txn.status, changed: false }, 200, cors);
+  }
+
+  const stale = txn.status === "pending" && isStaleCheckout(txn.created_at);
+  if (action === "close_expired" && !stale) {
+    return jsonResponse(
+      { ok: false, error: "This attempt is not an expired pending checkout." },
+      400,
+      cors,
+    );
+  }
+
+  const query = await queryGatewayTransaction(txn.sessionkey, tranId);
+  if (query.outcome === "unavailable") {
+    return jsonResponse(
+      { ok: false, error: "SSLCOMMERZ could not be reached. Nothing was changed." },
+      503,
+      cors,
+    );
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  /** Guarded write: can only ever touch an unsettled, unlinked, unfinalized row. */
+  const markUnsettled = async (
+    status: "failed" | "cancelled" | "review_required",
+    reason: string,
+    extra: Record<string, unknown> = {},
+  ) => {
+    await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({ status, failure_reason: reason, ...extra })
+      .eq("tran_id", tranId)
+      .in("status", ["pending", "failed", "cancelled"])
+      .is("rent_payment_id", null)
+      .is("finalized_at", null);
+    return jsonResponse({ ok: true, status, changed: true }, 200, cors);
+  };
+
+  const cancelExpired = async () => {
+    const cutoff = new Date(Date.now() - CHECKOUT_ACTIVE_WINDOW_MS).toISOString();
+    const { data: expired } = await supabaseAdmin
+      .from("sslcommerz_transactions")
+      .update({ status: "cancelled", failure_reason: CHECKOUT_EXPIRED_REASON })
+      .eq("tran_id", tranId)
+      .eq("status", "pending")
+      .is("rent_payment_id", null)
+      .is("finalized_at", null)
+      .lt("created_at", cutoff)
+      .select("status")
+      .maybeSingle();
+    return jsonResponse(
+      { ok: true, status: expired?.status ?? txn.status, changed: Boolean(expired) },
+      200,
+      cors,
+    );
+  };
+
+  if (query.outcome === "settled") {
+    const result = interpretValidation(query.element, tranId, Number(txn.expected_amount));
+    const valId = query.valId ?? tranId;
+
+    if (result.outcome === "invalid") {
+      return markUnsettled("failed", result.reason, { val_id: query.valId });
+    }
+    if (result.outcome === "review") {
+      return markUnsettled("review_required", result.reason, {
+        val_id: query.valId,
+        bank_tran_id: result.bankTranId,
+        validated_amount: result.amount,
+        finalized_at: new Date().toISOString(),
+      });
+    }
+
+    // Exact match. The RPC re-locks the row, re-checks amount/currency, sends
+    // risky payments to review_required and is a no-op on already-settled rows.
+    const { data: status, error: rpcError } = await supabaseAdmin.rpc(
+      "finalize_sslcommerz_payment",
+      {
+        _tran_id: tranId,
+        _val_id: valId,
+        _bank_tran_id: result.bankTranId,
+        _validated_amount: result.amount,
+        _currency: result.currency,
+        _risky: result.risky,
+      },
+    );
+    if (rpcError) return jsonResponse({ ok: false, error: "Could not finalize." }, 500, cors);
+    return jsonResponse({ ok: true, status, changed: true }, 200, cors);
+  }
+
+  if (action === "close_expired") return cancelExpired();
+
+  if (query.outcome === "failed") return markUnsettled("failed", "gateway_reported_failed");
+  if (query.outcome === "cancelled") {
+    return markUnsettled("cancelled", "gateway_reported_cancelled");
+  }
+  // PENDING at the gateway, or no record yet — leave the row untouched.
+  return jsonResponse({ ok: true, status: txn.status, changed: false }, 200, cors);
+}

@@ -422,10 +422,18 @@ export async function handleInitiate(request: Request): Promise<Response> {
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
   if (payload["status"] === "SUCCESS" && !validateGatewayPageUrl(gatewayUrl)) {
     // Never hand an unrecognised checkout URL to the browser. The raw URL is
-    // discarded; only the bounded reason is persisted.
+    // discarded; only the bounded reason (and, for a parseable URL, the
+    // normalized lowercase hostname) is persisted for backend diagnosis. The
+    // hostname is never included in the browser response.
+    const missing = gatewayUrl.trim().length === 0;
+    const hostname = missing ? null : extractGatewayHostname(gatewayUrl);
     await supabaseAdmin
       .from("sslcommerz_transactions")
-      .update({ status: "failed", failure_reason: "invalid_gateway_url" })
+      .update({
+        status: "failed",
+        failure_reason: missing ? "gateway_url_missing" : "gateway_url_host_rejected",
+        gateway_hostname: hostname,
+      })
       .eq("tran_id", tranId)
       .eq("status", "pending");
     return jsonResponse({ ok: false, error: "Could not start the payment." }, 422, cors);

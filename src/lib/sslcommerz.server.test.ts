@@ -67,3 +67,31 @@ describe("extractGatewayHostname", () => {
     expect(extractGatewayHostname(undefined)).toBe(null);
   });
 });
+
+describe("isStaleCheckout", () => {
+  const now = Date.parse("2026-08-29T06:00:00.000Z");
+  const minutesAgo = (m: number) => new Date(now - m * 60_000).toISOString();
+
+  it("treats a pending checkout under 15 minutes old as active", () => {
+    expect(isStaleCheckout(minutesAgo(0), now)).toBe(false);
+    expect(isStaleCheckout(minutesAgo(14), now)).toBe(false);
+    expect(isStaleCheckout(minutesAgo(14.9), now)).toBe(false);
+  });
+
+  it("treats a pending checkout at or past 15 minutes as stale", () => {
+    expect(isStaleCheckout(minutesAgo(15), now)).toBe(true);
+    expect(isStaleCheckout(minutesAgo(60), now)).toBe(true);
+  });
+
+  it("never reports stale for unusable timestamps", () => {
+    expect(isStaleCheckout(null, now)).toBe(false);
+    expect(isStaleCheckout(undefined, now)).toBe(false);
+    expect(isStaleCheckout("not-a-date", now)).toBe(false);
+    expect(isStaleCheckout(12345, now)).toBe(false);
+  });
+
+  it("uses a 15 minute window and a bounded expiry reason", () => {
+    expect(CHECKOUT_ACTIVE_WINDOW_MS).toBe(15 * 60 * 1000);
+    expect(CHECKOUT_EXPIRED_REASON).toBe("checkout_expired");
+  });
+});

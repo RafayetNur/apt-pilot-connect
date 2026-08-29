@@ -32,8 +32,7 @@ const schema = z.object({
   email: z.string().trim().email({ message: "Enter a valid email address" }).max(255),
 });
 
-const GENERIC_MESSAGE =
-  "If an account exists for this email, a password reset link has been sent.";
+const GENERIC_MESSAGE = "If an account exists for this email, a password reset link has been sent.";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -88,8 +87,8 @@ function ForgotPasswordPage() {
                 {GENERIC_MESSAGE}
               </div>
               <p className="text-xs text-muted-foreground">
-                The link expires shortly for your security. Check your spam folder if it
-                doesn't arrive.
+                The link expires shortly for your security. Check your spam folder if it doesn't
+                arrive.
               </p>
               <Button
                 variant="outline"

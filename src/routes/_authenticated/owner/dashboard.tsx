@@ -143,13 +143,10 @@ function OwnerDashboard() {
 
           <MaintenanceDashboardSection role="owner" />
 
-
-
           <DashboardSection
             title="Building-wise summary"
             description={`Occupancy and collection for ${formatMonth(`${month}-01`)}.`}
           >
-
             {data.buildingSummaries.length === 0 ? (
               <EmptyState>No buildings yet. Add your first building to get started.</EmptyState>
             ) : (
@@ -267,8 +264,8 @@ function OwnerDashboard() {
                     <span>
                       {row.building_name} · Flat {row.flat_number} · {row.tenant_name}
                       <span className="block text-xs text-muted-foreground">
-                        Payable {formatRent(row.total_payable)} · Paid {formatRent(row.total_paid)} ·
-                        Due {formatDate(row.due_date)}
+                        Payable {formatRent(row.total_payable)} · Paid {formatRent(row.total_paid)}{" "}
+                        · Due {formatDate(row.due_date)}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">

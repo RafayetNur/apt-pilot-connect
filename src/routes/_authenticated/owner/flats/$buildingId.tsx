@@ -277,14 +277,12 @@ function ManageFlatsPage() {
                     <div>
                       <p className="font-display text-lg font-semibold">{flat.flat_number}</p>
                       <p className="text-sm text-muted-foreground">
-                        Floor {flat.floor_number} · {flat.bedroom_count} bed ·{" "}
-                        {flat.bathroom_count} bath
+                        Floor {flat.floor_number} · {flat.bedroom_count} bed · {flat.bathroom_count}{" "}
+                        bath
                       </p>
                       <p className="mt-1 text-sm font-medium">{formatRent(flat.monthly_rent)}</p>
                     </div>
-                    <Badge
-                      variant={flat.occupancy_status === "occupied" ? "default" : "secondary"}
-                    >
+                    <Badge variant={flat.occupancy_status === "occupied" ? "default" : "secondary"}>
                       {occupancyLabel[flat.occupancy_status]}
                     </Badge>
                   </div>

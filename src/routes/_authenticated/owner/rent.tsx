@@ -6,7 +6,10 @@ import { toast } from "sonner";
 
 import { MonthClosingSection } from "@/components/closings/month-closing-section";
 import { OwnerShell } from "@/components/owner-shell";
-import { GenerateRentDialog, type GenerateRentValues } from "@/components/rent/generate-rent-dialog";
+import {
+  GenerateRentDialog,
+  type GenerateRentValues,
+} from "@/components/rent/generate-rent-dialog";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,7 +105,7 @@ function OwnerRentPage() {
         toast.info("No occupied flats with an assigned tenant were found in this building.");
       } else {
         toast.success(
-          `${result.created} rent record${result.created === 1 ? "" : "s"} created, ${result.skipped} skipped (already billed).`
+          `${result.created} rent record${result.created === 1 ? "" : "s"} created, ${result.skipped} skipped (already billed).`,
         );
       }
       await queryClient.invalidateQueries({ queryKey: ["rent-records"] });
@@ -160,9 +163,7 @@ function OwnerRentPage() {
               id="filter-month"
               type="month"
               value={filters.month}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, month: event.target.value }))
-              }
+              onChange={(event) => setFilters((prev) => ({ ...prev, month: event.target.value }))}
             />
           </div>
           <div className="space-y-2">

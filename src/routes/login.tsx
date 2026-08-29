@@ -16,7 +16,8 @@ export const Route = createFileRoute("/login")({
       { title: "Log in — AptPilot" },
       {
         name: "description",
-        content: "Log in to AptPilot to manage your apartment building as an owner, manager or tenant.",
+        content:
+          "Log in to AptPilot to manage your apartment building as an owner, manager or tenant.",
       },
       { property: "og:title", content: "Log in — AptPilot" },
       { property: "og:description", content: "Access your AptPilot workspace." },

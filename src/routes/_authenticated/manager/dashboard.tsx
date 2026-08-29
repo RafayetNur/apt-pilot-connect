@@ -91,11 +91,7 @@ function ManagerDashboard() {
               value={formatRent(totals.collected)}
               tone="positive"
             />
-            <StatCard
-              label="Remaining due"
-              value={formatRent(totals.remaining)}
-              tone="danger"
-            />
+            <StatCard label="Remaining due" value={formatRent(totals.remaining)} tone="danger" />
             <StatCard label="Overdue" value={formatRent(totals.overdue)} tone="danger" />
             <StatCard
               label="Pending verifications"
@@ -127,13 +123,10 @@ function ManagerDashboard() {
 
           <MaintenanceDashboardSection role="manager" />
 
-
-
           <DashboardSection
             title="Building-wise summary"
             description={`Assigned buildings for ${formatMonth(`${month}-01`)}.`}
           >
-
             {data.buildingSummaries.length === 0 ? (
               <EmptyState>No building has been assigned to you yet.</EmptyState>
             ) : (

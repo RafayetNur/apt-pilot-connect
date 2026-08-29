@@ -160,10 +160,7 @@ function BuildingsPage() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button asChild variant="outline" size="sm">
-                      <Link
-                        to="/owner/flats/$buildingId"
-                        params={{ buildingId: building.id }}
-                      >
+                      <Link to="/owner/flats/$buildingId" params={{ buildingId: building.id }}>
                         <DoorOpen className="mr-2 h-3.5 w-3.5" />
                         Manage Flats
                       </Link>
@@ -231,7 +228,12 @@ function BuildingsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button asChild variant="ghost" size="icon" aria-label={`Manage flats for ${building.name}`}>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Manage flats for ${building.name}`}
+                          >
                             <Link
                               to="/owner/flats/$buildingId"
                               params={{ buildingId: building.id }}

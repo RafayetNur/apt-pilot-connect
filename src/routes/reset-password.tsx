@@ -175,11 +175,7 @@ function ResetPasswordPage() {
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
@@ -203,11 +199,7 @@ function ResetPasswordPage() {
                       aria-label={showConfirm ? "Hide password" : "Show password"}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                     >
-                      {showConfirm ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>

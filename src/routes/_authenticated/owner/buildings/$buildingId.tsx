@@ -139,10 +139,7 @@ function BuildingDetailPage() {
                   </Badge>
                 </dd>
               </div>
-              <Detail
-                label="Added on"
-                value={new Date(building.created_at).toLocaleDateString()}
-              />
+              <Detail label="Added on" value={new Date(building.created_at).toLocaleDateString()} />
             </dl>
           </section>
 

@@ -189,7 +189,6 @@ export const adjustmentTargetsQueryOptions = (buildingId: string, month: string)
     },
   });
 
-
 async function uploadSupportingDocument(userId: string, file: File) {
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/adjustments/${crypto.randomUUID()}.${extension}`;

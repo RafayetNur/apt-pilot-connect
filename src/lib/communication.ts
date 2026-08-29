@@ -36,10 +36,7 @@ export const noticeStatusLabel: Record<NoticeStatus, string> = {
 export const noticeStatusOptions = Object.keys(noticeStatusLabel) as NoticeStatus[];
 
 export type NoticeAudience =
-  | "all_tenants"
-  | "selected_flats"
-  | "selected_tenants"
-  | "owner_manager_only";
+  "all_tenants" | "selected_flats" | "selected_tenants" | "owner_manager_only";
 
 export const noticeAudienceLabel: Record<NoticeAudience, string> = {
   all_tenants: "All tenants in the building",
@@ -51,12 +48,7 @@ export const noticeAudienceLabel: Record<NoticeAudience, string> = {
 export const noticeAudienceOptions = Object.keys(noticeAudienceLabel) as NoticeAudience[];
 
 export type NoticeAction =
-  | "created"
-  | "edited"
-  | "published"
-  | "acknowledged"
-  | "archived"
-  | "cancelled";
+  "created" | "edited" | "published" | "acknowledged" | "archived" | "cancelled";
 
 export type Notice = {
   id: string;
@@ -310,11 +302,7 @@ export const documentCategoryLabel: Record<DocumentCategory, string> = {
 export const documentCategoryOptions = Object.keys(documentCategoryLabel) as DocumentCategory[];
 
 export type DocumentVisibility =
-  | "owner_only"
-  | "owner_manager"
-  | "all_building_tenants"
-  | "selected_flats"
-  | "selected_tenants";
+  "owner_only" | "owner_manager" | "all_building_tenants" | "selected_flats" | "selected_tenants";
 
 export const documentVisibilityLabel: Record<DocumentVisibility, string> = {
   owner_only: "Owner only",
@@ -609,7 +597,11 @@ export const occupiedTenantCountsQueryOptions = () =>
       if (error) throw error;
       const counts: Record<string, number> = {};
       for (const raw of data ?? []) {
-        const row = raw as { building_id: string; tenant_id: string | null; occupancy_status: string };
+        const row = raw as {
+          building_id: string;
+          tenant_id: string | null;
+          occupancy_status: string;
+        };
         if (row.occupancy_status !== "occupied" || !row.tenant_id) continue;
         counts[row.building_id] = (counts[row.building_id] ?? 0) + 1;
       }

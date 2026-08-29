@@ -777,4 +777,3 @@ export async function handleStatus(request: Request): Promise<Response> {
     cors,
   );
 }
-

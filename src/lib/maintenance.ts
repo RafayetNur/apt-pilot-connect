@@ -85,9 +85,7 @@ export const maintenanceStatusLabel: Record<MaintenanceStatus, string> = {
   reopened: "Reopened",
 };
 
-export const maintenanceStatusOptions = Object.keys(
-  maintenanceStatusLabel,
-) as MaintenanceStatus[];
+export const maintenanceStatusOptions = Object.keys(maintenanceStatusLabel) as MaintenanceStatus[];
 
 /** Mirrors public.maintenance_transition_allowed in the database. */
 export const allowedTransitions: Record<MaintenanceStatus, MaintenanceStatus[]> = {
@@ -536,7 +534,8 @@ export async function createMaintenanceRequest(input: CreateRequestInput) {
   };
   if (!input.isCommonArea && input.flatId) args["_flat_id"] = input.flatId;
   if (input.preferredVisitDate) args["_preferred_visit_date"] = input.preferredVisitDate;
-  if (input.accessInstructions.trim()) args["_access_instructions"] = input.accessInstructions.trim();
+  if (input.accessInstructions.trim())
+    args["_access_instructions"] = input.accessInstructions.trim();
 
   const { data, error } = await supabase.rpc("create_maintenance_request", args as never);
   if (error) throw new Error(describeMaintenanceError(error.message));

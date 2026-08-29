@@ -222,7 +222,9 @@ export const closingChecklistQueryOptions = (buildingId: string, month: string) 
       if (pendingAdjustments > 0)
         blockers.push(`${pendingAdjustments} bill adjustment(s) are still awaiting approval.`);
       if (unallocatedSharedCharges > 0)
-        blockers.push(`${unallocatedSharedCharges} shared charge(s) are not split among the flats.`);
+        blockers.push(
+          `${unallocatedSharedCharges} shared charge(s) are not split among the flats.`,
+        );
       if (flatsWithoutRent > 0)
         blockers.push(`${flatsWithoutRent} occupied flat(s) have no rent record for this month.`);
       if (inconsistentRecords > 0)
@@ -234,9 +236,7 @@ export const closingChecklistQueryOptions = (buildingId: string, month: string) 
         verifiedPaid: records.reduce((sum, row) => sum + num(row["total_paid"]), 0),
         remainingDue: records.reduce((sum, row) => sum + num(row["remaining_due"]), 0),
         overdue: records
-          .filter(
-            (row) => num(row["remaining_due"]) > 0 && (row["due_date"] as string) < today,
-          )
+          .filter((row) => num(row["remaining_due"]) > 0 && (row["due_date"] as string) < today)
           .reduce((sum, row) => sum + num(row["remaining_due"]), 0),
         pendingPayments,
         pendingAdjustments,

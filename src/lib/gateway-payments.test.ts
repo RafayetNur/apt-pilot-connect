@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   CHECKOUT_ACTIVE_WINDOW_MS,
   DEFAULT_VISIBLE_ATTEMPTS,
+  isExpiredCloseable,
   latestPendingTransaction,
   recentPendingTransaction,
   type GatewayStatus,

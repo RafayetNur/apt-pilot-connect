@@ -7,6 +7,7 @@ import { ExpenseDashboardSection } from "@/components/expenses/expense-dashboard
 import { MaintenanceDashboardSection } from "@/components/maintenance/maintenance-dashboard-section";
 import { FinancialDashboardSection } from "@/components/reports/financial-dashboard-section";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { GatewayTransactionsSection } from "@/components/payments/gateway-transactions-section";
 
 import {
   DashboardSection,
@@ -281,6 +282,7 @@ function OwnerDashboard() {
           </DashboardSection>
         </>
       )}
+      <GatewayTransactionsSection />
     </DashboardShell>
   );
 }

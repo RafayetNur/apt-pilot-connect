@@ -420,6 +420,7 @@ export async function handleInitiate(request: Request): Promise<Response> {
   }
 
   const gatewayUrl = typeof payload["GatewayPageURL"] === "string" ? payload["GatewayPageURL"] : "";
+  const gatewayUrlRaw: string = gatewayUrl;
   if (payload["status"] === "SUCCESS" && !validateGatewayPageUrl(gatewayUrl)) {
     // Never hand an unrecognised checkout URL to the browser. The raw URL is
     // discarded; only the bounded reason (and, for a parseable URL, the

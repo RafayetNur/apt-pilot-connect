@@ -168,20 +168,41 @@ export function myGatewayTransactionsQueryOptions() {
   });
 }
 
-const RECENT_PENDING_WINDOW_MS = 15 * 60 * 1000;
+/** Mirrors the server's checkout activity window; the server is authoritative. */
+export const CHECKOUT_ACTIVE_WINDOW_MS = 15 * 60 * 1000;
 
-/** A very recent pending attempt blocks a second one to avoid duplicate sessions. */
+/** How many gateway attempts are shown per bill before "Show all attempts". */
+export const DEFAULT_VISIBLE_ATTEMPTS = 5;
+
+/**
+ * A pending attempt younger than the active window still owns checkout, so it
+ * blocks a second session. Once it ages past the window the status endpoint
+ * cancels it and online payment becomes available again.
+ */
 export function recentPendingTransaction(
   transactions: GatewayTransaction[],
   rentRecordId: string,
+  now: number = Date.now(),
 ): GatewayTransaction | null {
-  const now = Date.now();
   return (
     transactions.find(
       (item) =>
         item.rent_record_id === rentRecordId &&
         item.status === "pending" &&
-        now - new Date(item.created_at).getTime() < RECENT_PENDING_WINDOW_MS,
+        now - new Date(item.created_at).getTime() < CHECKOUT_ACTIVE_WINDOW_MS,
     ) ?? null
   );
 }
+
+/** The newest pending row for a bill, regardless of age (may need re-checking). */
+export function latestPendingTransaction(
+  transactions: GatewayTransaction[],
+  rentRecordId: string,
+): GatewayTransaction | null {
+  return (
+    transactions.find(
+      (item) => item.rent_record_id === rentRecordId && item.status === "pending",
+    ) ?? null
+  );
+}
+

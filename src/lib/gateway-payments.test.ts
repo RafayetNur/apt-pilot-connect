@@ -14,12 +14,12 @@ const NOW = Date.parse("2026-08-29T06:00:00.000Z");
 function txn(
   overrides: Partial<GatewayTransaction> & { status: GatewayStatus; minutesAgo: number },
 ): GatewayTransaction {
-  const { minutesAgo, ...rest } = overrides;
+  const { minutesAgo, status, ...rest } = overrides;
   return {
-    id: `id-${String(minutesAgo)}-${overrides.status}`,
+    id: `id-${String(minutesAgo)}-${status}`,
     tran_id: `TRAN${String(minutesAgo)}`,
     rent_record_id: "bill-1",
-    status: overrides.status,
+    status,
     expected_amount: 25000,
     currency: "BDT",
     created_at: new Date(NOW - minutesAgo * 60_000).toISOString(),

@@ -1,5 +1,4 @@
-/// <reference types="bun" />
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { validateGatewayPageUrl, extractGatewayHostname } from "./sslcommerz.server";
 
 describe("validateGatewayPageUrl", () => {

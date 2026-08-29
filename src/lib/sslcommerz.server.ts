@@ -225,10 +225,14 @@ export function isTranId(value: unknown): value is string {
 
 /**
  * Authoritative server-side checkout URL validation. Exact lowercase hostname
- * equality against the two official SSLCOMMERZ live hosts over https only —
+ * equality against the three official SSLCOMMERZ live hosts over https only —
  * no wildcards, suffix matching, sandbox or arbitrary redirects.
  */
-const ALLOWED_GATEWAY_HOSTS = ["securepay.sslcommerz.com", "seamless-epay.sslcommerz.com"];
+const ALLOWED_GATEWAY_HOSTS = [
+  "securepay.sslcommerz.com",
+  "seamless-epay.sslcommerz.com",
+  "epay-gw.sslcommerz.com",
+];
 
 export function validateGatewayPageUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;

@@ -101,3 +101,115 @@ describe("isStaleCheckout", () => {
     expect(CHECKOUT_EXPIRED_REASON).toBe("checkout_expired");
   });
 });
+
+describe("interpretTransactionQuery", () => {
+  const TRAN = "APTTESTTRAN0001";
+  const el = (over: Record<string, unknown> = {}) => ({
+    tran_id: TRAN,
+    status: "VALID",
+    currency: "BDT",
+    amount: "1500.00",
+    val_id: "VAL1234567890",
+    bank_tran_id: "BANK123",
+    risk_level: "0",
+    ...over,
+  });
+
+  it("reports settled for a VALID element and exposes the val_id", () => {
+    const out = interpretTransactionQuery({ element: [el()] }, TRAN);
+    expect(out.outcome).toBe("settled");
+    if (out.outcome === "settled") expect(out.valId).toBe("VAL1234567890");
+  });
+
+  it("accepts VALIDATED and a single (non-array) element", () => {
+    expect(interpretTransactionQuery({ element: el({ status: "VALIDATED" }) }, TRAN).outcome).toBe(
+      "settled",
+    );
+  });
+
+  it("never matches an element for a different tran_id", () => {
+    expect(interpretTransactionQuery({ element: [el({ tran_id: "OTHER123" })] }, TRAN)).toEqual({
+      outcome: "not_found",
+    });
+  });
+
+  it("maps PENDING / FAILED / CANCELLED / EXPIRED to non-financial outcomes", () => {
+    expect(interpretTransactionQuery({ element: [el({ status: "PENDING" })] }, TRAN).outcome).toBe(
+      "pending",
+    );
+    expect(
+      interpretTransactionQuery({ element: [el({ status: "UNATTEMPTED" })] }, TRAN).outcome,
+    ).toBe("pending");
+    expect(interpretTransactionQuery({ element: [el({ status: "FAILED" })] }, TRAN).outcome).toBe(
+      "failed",
+    );
+    expect(
+      interpretTransactionQuery({ element: [el({ status: "CANCELLED" })] }, TRAN).outcome,
+    ).toBe("cancelled");
+    expect(interpretTransactionQuery({ element: [el({ status: "EXPIRED" })] }, TRAN).outcome).toBe(
+      "cancelled",
+    );
+  });
+
+  it("prefers a settled element when several rows share the tran_id", () => {
+    const out = interpretTransactionQuery(
+      { element: [el({ status: "FAILED", val_id: "VALFAILED11" }), el()] },
+      TRAN,
+    );
+    expect(out.outcome).toBe("settled");
+    if (out.outcome === "settled") expect(out.valId).toBe("VAL1234567890");
+  });
+
+  it("returns unavailable for unreadable or unknown payloads", () => {
+    expect(interpretTransactionQuery(null, TRAN).outcome).toBe("unavailable");
+    expect(interpretTransactionQuery("nope", TRAN).outcome).toBe("unavailable");
+    expect(interpretTransactionQuery({ element: [] }, TRAN).outcome).toBe("not_found");
+    expect(interpretTransactionQuery({ element: [el({ status: "WEIRD" })] }, TRAN).outcome).toBe(
+      "unavailable",
+    );
+  });
+});
+
+describe("reconciliation finalization guards (interpretValidation on query elements)", () => {
+  const TRAN = "APTTESTTRAN0002";
+  const base = {
+    tran_id: TRAN,
+    status: "VALID",
+    currency: "BDT",
+    amount: "1500.00",
+    bank_tran_id: "BANK9",
+    risk_level: "0",
+  };
+
+  it("finalizes an exact VALID payment", () => {
+    const out = interpretValidation({ ...base }, TRAN, 1500);
+    expect(out.outcome).toBe("valid");
+    if (out.outcome === "valid") expect(out.risky).toBe(false);
+  });
+
+  it("holds a risky payment for review instead of paying it", () => {
+    const out = interpretValidation({ ...base, risk_level: "1" }, TRAN, 1500);
+    expect(out.outcome).toBe("valid");
+    // `risky` is passed to finalize_sslcommerz_payment, which stores
+    // review_required rather than paid.
+    if (out.outcome === "valid") expect(out.risky).toBe(true);
+  });
+
+  it("never finalizes a wrong amount, wrong currency or wrong tran_id", () => {
+    expect(interpretValidation({ ...base, amount: "1499.99" }, TRAN, 1500).outcome).toBe("review");
+    expect(interpretValidation({ ...base, currency: "USD" }, TRAN, 1500).outcome).toBe("invalid");
+    expect(interpretValidation({ ...base }, "APTOTHER0003", 1500).outcome).toBe("invalid");
+    expect(interpretValidation({ ...base, currency_type: "USD" }, TRAN, 1500).outcome).toBe(
+      "review",
+    );
+  });
+});
+
+describe("isReconcileAction", () => {
+  it("accepts only the two bounded actions", () => {
+    expect(isReconcileAction("check")).toBe(true);
+    expect(isReconcileAction("close_expired")).toBe(true);
+    expect(isReconcileAction("mark_paid")).toBe(false);
+    expect(isReconcileAction(undefined)).toBe(false);
+  });
+});

@@ -426,8 +426,8 @@ export async function handleInitiate(request: Request): Promise<Response> {
     // discarded; only the bounded reason (and, for a parseable URL, the
     // normalized lowercase hostname) is persisted for backend diagnosis. The
     // hostname is never included in the browser response.
-    const missing = gatewayUrl.trim().length === 0;
-    const hostname = missing ? null : extractGatewayHostname(gatewayUrl);
+    const missing = gatewayUrlRaw.trim().length === 0;
+    const hostname = missing ? null : extractGatewayHostname(gatewayUrlRaw);
     await supabaseAdmin
       .from("sslcommerz_transactions")
       .update({

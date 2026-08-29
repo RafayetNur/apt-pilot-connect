@@ -72,3 +72,33 @@ describe("display constants", () => {
     expect(DEFAULT_VISIBLE_ATTEMPTS).toBe(5);
   });
 });
+
+describe("isExpiredCloseable", () => {
+  const now = Date.now();
+  const row = (over: Partial<GatewayTransaction>) =>
+    ({
+      status: "pending",
+      created_at: new Date(now - 20 * 60 * 1000).toISOString(),
+      ...over,
+    }) as GatewayTransaction;
+
+  it("is closeable once a pending attempt passes the active window", () => {
+    expect(isExpiredCloseable(row({}), now)).toBe(true);
+  });
+
+  it("is not closeable while the checkout is still active", () => {
+    expect(
+      isExpiredCloseable(row({ created_at: new Date(now - 60 * 1000).toISOString() }), now),
+    ).toBe(false);
+  });
+
+  it("never offers to close a settled or terminal attempt", () => {
+    for (const status of ["paid", "review_required", "failed", "cancelled"] as const) {
+      expect(isExpiredCloseable(row({ status }), now)).toBe(false);
+    }
+  });
+
+  it("ignores an unparseable timestamp", () => {
+    expect(isExpiredCloseable(row({ created_at: "not-a-date" }), now)).toBe(false);
+  });
+});

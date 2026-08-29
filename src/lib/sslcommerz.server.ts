@@ -240,7 +240,25 @@ export function validateGatewayPageUrl(value: unknown): value is string {
   } catch {
     return false;
   }
-  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname);
+  return url.protocol === "https:" && ALLOWED_GATEWAY_HOSTS.includes(url.hostname.toLowerCase());
+}
+
+/**
+ * Diagnostic-only helper: extracts the normalized lowercase hostname from a
+ * rejected GatewayPageURL so a rejected host can be identified without
+ * persisting the URL, path, query, fragment or any gateway data. Returns null
+ * when the value is absent, blank, or not parseable as a URL.
+ */
+export function extractGatewayHostname(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const hostname = new URL(trimmed).hostname.toLowerCase();
+    return hostname.length > 0 && hostname.length <= 253 ? hostname : null;
+  } catch {
+    return null;
+  }
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {

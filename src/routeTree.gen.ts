@@ -42,6 +42,7 @@ import { Route as ApiPublicPaymentsSslcommerzCancelRouteImport } from './routes/
 import { Route as ApiPublicPaymentsSslcommerzFailRouteImport } from './routes/api/public/payments/sslcommerz/fail'
 import { Route as ApiPublicPaymentsSslcommerzInitiateRouteImport } from './routes/api/public/payments/sslcommerz/initiate'
 import { Route as ApiPublicPaymentsSslcommerzIpnRouteImport } from './routes/api/public/payments/sslcommerz/ipn'
+import { Route as ApiPublicPaymentsSslcommerzReconcileRouteImport } from './routes/api/public/payments/sslcommerz/reconcile'
 import { Route as ApiPublicPaymentsSslcommerzStatusRouteImport } from './routes/api/public/payments/sslcommerz/status'
 import { Route as ApiPublicPaymentsSslcommerzSuccessRouteImport } from './routes/api/public/payments/sslcommerz/success'
 
@@ -232,6 +233,12 @@ const ApiPublicPaymentsSslcommerzIpnRoute =
     path: '/api/public/payments/sslcommerz/ipn',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPaymentsSslcommerzReconcileRoute =
+  ApiPublicPaymentsSslcommerzReconcileRouteImport.update({
+    id: '/api/public/payments/sslcommerz/reconcile',
+    path: '/api/public/payments/sslcommerz/reconcile',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaymentsSslcommerzStatusRoute =
   ApiPublicPaymentsSslcommerzStatusRouteImport.update({
     id: '/api/public/payments/sslcommerz/status',
@@ -278,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
   '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
   '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/reconcile': typeof ApiPublicPaymentsSslcommerzReconcileRoute
   '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
   '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
@@ -314,6 +322,7 @@ export interface FileRoutesByTo {
   '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
   '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
   '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/reconcile': typeof ApiPublicPaymentsSslcommerzReconcileRoute
   '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
   '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
@@ -352,6 +361,7 @@ export interface FileRoutesById {
   '/api/public/payments/sslcommerz/fail': typeof ApiPublicPaymentsSslcommerzFailRoute
   '/api/public/payments/sslcommerz/initiate': typeof ApiPublicPaymentsSslcommerzInitiateRoute
   '/api/public/payments/sslcommerz/ipn': typeof ApiPublicPaymentsSslcommerzIpnRoute
+  '/api/public/payments/sslcommerz/reconcile': typeof ApiPublicPaymentsSslcommerzReconcileRoute
   '/api/public/payments/sslcommerz/status': typeof ApiPublicPaymentsSslcommerzStatusRoute
   '/api/public/payments/sslcommerz/success': typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/sslcommerz/fail'
     | '/api/public/payments/sslcommerz/initiate'
     | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/reconcile'
     | '/api/public/payments/sslcommerz/status'
     | '/api/public/payments/sslcommerz/success'
   fileRoutesByTo: FileRoutesByTo
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/sslcommerz/fail'
     | '/api/public/payments/sslcommerz/initiate'
     | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/reconcile'
     | '/api/public/payments/sslcommerz/status'
     | '/api/public/payments/sslcommerz/success'
   id:
@@ -463,6 +475,7 @@ export interface FileRouteTypes {
     | '/api/public/payments/sslcommerz/fail'
     | '/api/public/payments/sslcommerz/initiate'
     | '/api/public/payments/sslcommerz/ipn'
+    | '/api/public/payments/sslcommerz/reconcile'
     | '/api/public/payments/sslcommerz/status'
     | '/api/public/payments/sslcommerz/success'
   fileRoutesById: FileRoutesById
@@ -480,6 +493,7 @@ export interface RootRouteChildren {
   ApiPublicPaymentsSslcommerzFailRoute: typeof ApiPublicPaymentsSslcommerzFailRoute
   ApiPublicPaymentsSslcommerzInitiateRoute: typeof ApiPublicPaymentsSslcommerzInitiateRoute
   ApiPublicPaymentsSslcommerzIpnRoute: typeof ApiPublicPaymentsSslcommerzIpnRoute
+  ApiPublicPaymentsSslcommerzReconcileRoute: typeof ApiPublicPaymentsSslcommerzReconcileRoute
   ApiPublicPaymentsSslcommerzStatusRoute: typeof ApiPublicPaymentsSslcommerzStatusRoute
   ApiPublicPaymentsSslcommerzSuccessRoute: typeof ApiPublicPaymentsSslcommerzSuccessRoute
 }
@@ -717,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsSslcommerzIpnRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/sslcommerz/reconcile': {
+      id: '/api/public/payments/sslcommerz/reconcile'
+      path: '/api/public/payments/sslcommerz/reconcile'
+      fullPath: '/api/public/payments/sslcommerz/reconcile'
+      preLoaderRoute: typeof ApiPublicPaymentsSslcommerzReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/sslcommerz/status': {
       id: '/api/public/payments/sslcommerz/status'
       path: '/api/public/payments/sslcommerz/status'
@@ -803,6 +824,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPaymentsSslcommerzInitiateRoute:
     ApiPublicPaymentsSslcommerzInitiateRoute,
   ApiPublicPaymentsSslcommerzIpnRoute: ApiPublicPaymentsSslcommerzIpnRoute,
+  ApiPublicPaymentsSslcommerzReconcileRoute:
+    ApiPublicPaymentsSslcommerzReconcileRoute,
   ApiPublicPaymentsSslcommerzStatusRoute:
     ApiPublicPaymentsSslcommerzStatusRoute,
   ApiPublicPaymentsSslcommerzSuccessRoute:

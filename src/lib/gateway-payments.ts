@@ -205,3 +205,104 @@ export function latestPendingTransaction(
     ) ?? null
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Reviewer reconciliation                                             */
+/* ------------------------------------------------------------------ */
+
+export type ReconcileAction = "check" | "close_expired";
+
+export type ReconcileResult = { status: GatewayStatus; changed: boolean };
+
+/**
+ * POST /api/public/payments/sslcommerz/reconcile — the browser sends nothing
+ * but a transaction id and an action. Amount, currency, tenant, flat, building
+ * and the resulting status are all decided server-side against the gateway.
+ */
+export async function reconcileGatewayTransaction(
+  transactionId: string,
+  action: ReconcileAction,
+): Promise<ReconcileResult> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new SessionExpiredError();
+
+  const response = await fetch("/api/public/payments/sslcommerz/reconcile", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+    body: JSON.stringify({ transactionId, action }),
+  });
+  if (response.status === 401) throw new SessionExpiredError();
+
+  const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok || payload["ok"] !== true || typeof payload["status"] !== "string") {
+    const message =
+      typeof payload["error"] === "string"
+        ? payload["error"]
+        : "Could not reconcile this attempt right now.";
+    throw new Error(message);
+  }
+  return {
+    status: payload["status"] as GatewayStatus,
+    changed: payload["changed"] === true,
+  };
+}
+
+export type ReviewGatewayTransaction = GatewayTransaction & {
+  tenant_name: string;
+  flat_number: string;
+  building_name: string;
+  billing_month: string | null;
+};
+
+/** A pending attempt older than the active window may be closed by a reviewer. */
+export function isExpiredCloseable(
+  transaction: Pick<GatewayTransaction, "status" | "created_at">,
+  now: number = Date.now(),
+): boolean {
+  if (transaction.status !== "pending") return false;
+  const started = new Date(transaction.created_at).getTime();
+  if (!Number.isFinite(started)) return false;
+  return now - started >= CHECKOUT_ACTIVE_WINDOW_MS;
+}
+
+/**
+ * Reviewer-scoped list. RLS returns only transactions for buildings the signed
+ * in owner/manager may review; no sessionkey, gateway payload or checkout URL
+ * is ever selected.
+ */
+export function reviewGatewayTransactionsQueryOptions() {
+  return queryOptions({
+    queryKey: ["review-gateway-transactions"],
+    queryFn: async (): Promise<ReviewGatewayTransaction[]> => {
+      const { data, error } = await supabase
+        .from("sslcommerz_transactions")
+        .select(
+          "id, tran_id, rent_record_id, status, expected_amount, currency, created_at, finalized_at, tenant:profiles!sslcommerz_transactions_tenant_id_fkey(full_name), flat:flats(flat_number), building:buildings(name), rent_record:rent_records(billing_month)",
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw new Error(error.message);
+      type Row = GatewayTransaction & {
+        tenant: { full_name: string } | null;
+        flat: { flat_number: string } | null;
+        building: { name: string } | null;
+        rent_record: { billing_month: string } | null;
+      };
+      return ((data ?? []) as unknown as Row[]).map((row) => ({
+        id: row.id,
+        tran_id: row.tran_id,
+        rent_record_id: row.rent_record_id,
+        status: row.status,
+        expected_amount: Number(row.expected_amount),
+        currency: row.currency,
+        created_at: row.created_at,
+        finalized_at: row.finalized_at,
+        tenant_name: row.tenant?.full_name ?? "Tenant",
+        flat_number: row.flat?.flat_number ?? "—",
+        building_name: row.building?.name ?? "—",
+        billing_month: row.rent_record?.billing_month ?? null,
+      }));
+    },
+  });
+}

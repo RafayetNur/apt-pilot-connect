@@ -53,10 +53,22 @@ export default function TenantDashboard() {
       else setLoading(true);
       setError(null);
 
+      // `.eq("tenant_id", ...)` alone assumes exactly one `flats` row can
+      // ever carry this tenant_id. Reassigning a tenant to a new flat
+      // (assignTenant() in lib/owner/flats.ts) only writes the new flat's
+      // row — it doesn't clear tenant_id off the tenant's previous flat —
+      // so a tenant who has ever been reassigned can have >1 matching row.
+      // `.maybeSingle()` tolerates zero matches (returns null) but throws
+      // "JSON object requested, multiple (or no) rows returned" on >1.
+      // Order by most-recently-updated and cap at 1, exactly like the
+      // rent_records query below, so the tenant's *current* flat resolves
+      // deterministically instead of erroring on a stale duplicate.
       const { data: flat, error: flatError } = await supabase
         .from("flats")
         .select("id, flat_number, building_id")
         .eq("tenant_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (flatError) {

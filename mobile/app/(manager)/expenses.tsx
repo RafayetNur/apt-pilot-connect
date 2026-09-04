@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   RefreshControl,
@@ -190,9 +191,12 @@ function AddExpenseModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Add expense</Text>
               <TouchableOpacity onPress={onClose}>
@@ -303,7 +307,7 @@ function AddExpenseModal({
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
 
   list: { padding: 20, gap: 12, paddingBottom: 100 },
   card: { borderRadius: 16, padding: 16, borderWidth: 1 },

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   RefreshControl,
@@ -214,9 +215,12 @@ function ReviewModal({ payment, onClose, onDone }: { payment: ManagerPayment | n
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Review payment</Text>
               <TouchableOpacity onPress={onClose}>
@@ -304,7 +308,7 @@ function ReviewModal({ payment, onClose, onDone }: { payment: ManagerPayment | n
             )}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
 
   // Explicit paddingLeft/paddingRight (rather than the paddingHorizontal
   // shorthand) so the leading chip reliably starts fully on-screen instead

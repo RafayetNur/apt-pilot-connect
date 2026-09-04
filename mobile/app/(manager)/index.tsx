@@ -201,7 +201,7 @@ function EmptyRow({ colors, text }: { colors: ReturnType<typeof useThemeColors>;
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
   header: { padding: 24, paddingTop: Platform.OS === "android" ? 40 : 24, paddingBottom: 16 },
   greeting: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
   name: { fontSize: 24, fontWeight: "800", marginTop: 4 },

@@ -3,7 +3,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -265,9 +267,12 @@ function StatusNoteModal({
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={handleClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={2}>
                 {maintenanceStatusLabel[status]} — {requestNumber}
@@ -301,7 +306,7 @@ function StatusNoteModal({
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -349,9 +354,12 @@ function WorkOrderModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.modalOverlay}
+      >
         <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>New work order</Text>
               <TouchableOpacity onPress={onClose}>
@@ -402,7 +410,7 @@ function WorkOrderModal({
             </TouchableOpacity>
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -414,7 +422,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "800", marginLeft: 4 },
 
   content: { flex: 1, padding: 20 },
-  contentScroll: { paddingBottom: 80 },
+  contentScroll: { flexGrow: 1, paddingBottom: 80 },
   emptyText: { textAlign: "center", marginTop: 40, fontSize: 14 },
 
   card: { borderRadius: 20, padding: 18, borderWidth: 1, marginBottom: 20 },

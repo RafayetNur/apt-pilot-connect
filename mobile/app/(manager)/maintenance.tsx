@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "800" },
   subtitle: { fontSize: 14, marginTop: 4 },
   scrollArea: { flex: 1 },
-  scrollContent: { paddingBottom: 100 },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
 
   // Explicit paddingLeft/paddingRight (rather than the paddingHorizontal
   // shorthand) so the leading chip reliably starts fully on-screen instead

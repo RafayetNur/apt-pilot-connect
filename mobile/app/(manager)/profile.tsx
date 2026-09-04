@@ -151,7 +151,7 @@ export default function ManagerProfile() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, paddingBottom: 40 },
   header: { padding: 40, alignItems: "center", borderBottomWidth: 1 },
   avatar: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   avatarText: { fontSize: 28, fontWeight: "800" },

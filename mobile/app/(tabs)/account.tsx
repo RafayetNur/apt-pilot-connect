@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Session } from "@supabase/supabase-js";
@@ -32,18 +32,7 @@ export default function AccountScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!session) {
-      setProfile(null);
-      setLocation(null);
-      setRole(null);
-      setLoading(false);
-      return;
-    }
-    loadProfile(session.user.id);
-  }, [session]);
-
-  async function loadProfile(userId: string) {
+  const loadProfile = useCallback(async (userId: string) => {
     setLoading(true);
     setError(null);
     const { data: profileRow, error: profileError } = await supabase
@@ -74,7 +63,18 @@ export default function AccountScreen() {
       }
     }
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setProfile(null);
+      setLocation(null);
+      setRole(null);
+      setLoading(false);
+      return;
+    }
+    loadProfile(session.user.id);
+  }, [session, loadProfile]);
 
   async function signOut() {
     await supabase.auth.signOut();

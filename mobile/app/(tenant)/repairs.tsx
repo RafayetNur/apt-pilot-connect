@@ -17,6 +17,8 @@ import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useTenantFlat } from "@/lib/tenant/flats";
+import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type Category = Database["public"]["Enums"]["maintenance_category"];
 type Priority = Database["public"]["Enums"]["maintenance_priority"];
@@ -40,7 +42,6 @@ type MaintenanceRequest = Pick<
   Database["public"]["Tables"]["maintenance_requests"]["Row"],
   "id" | "request_number" | "title" | "category" | "priority" | "status" | "created_at" | "assigned_to"
 >;
-type TenantLocation = { id: string; flat_number: string; building_id: string };
 
 /**
  * Ported from the Sanjida reference's app/(tenant)/repairs.tsx (list + FAB +
@@ -49,12 +50,17 @@ type TenantLocation = { id: string; flat_number: string; building_id: string };
  * mobile/app/(tabs)/explore.tsx. Categories/priorities use the real
  * `maintenance_category`/`maintenance_priority` enum values instead of the
  * reference's free-text mock list.
+ *
+ * The flat itself comes from the shared TenantFlatProvider — see
+ * lib/tenant/flats.tsx — not fetched here. Requests are scoped to
+ * `selectedFlat.id`, so switching flats never mixes repair requests across
+ * flats.
  */
 export default function TenantRepairs() {
   const colors = useThemeColors();
   const { session } = useAuth();
+  const { flats, selectedFlat, selectFlat, loading: flatsLoading, error: flatsError } = useTenantFlat();
 
-  const [location, setLocation] = useState<TenantLocation | null>(null);
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,30 +76,37 @@ export default function TenantRepairs() {
   const load = useCallback(
     async (isRefresh = false) => {
       if (!session) return;
+      if (!selectedFlat) {
+        setRequests([]);
+        setError(null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       const userId = session.user.id;
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
 
-      const [{ data: flat, error: flatError }, { data: requestRows, error: requestError }] = await Promise.all([
-        supabase.from("flats").select("id, flat_number, building_id").eq("tenant_id", userId).maybeSingle(),
-        supabase
-          .from("maintenance_requests")
-          .select("id, request_number, title, category, priority, status, created_at, assigned_to")
-          .eq("tenant_id", userId)
-          .order("created_at", { ascending: false }),
-      ]);
+      const { data: requestRows, error: requestError } = await supabase
+        .from("maintenance_requests")
+        .select("id, request_number, title, category, priority, status, created_at, assigned_to")
+        .eq("tenant_id", userId)
+        .eq("flat_id", selectedFlat.id)
+        .order("created_at", { ascending: false });
 
-      if (flatError || requestError) {
-        setError((flatError ?? requestError)?.message ?? "Unable to load repairs.");
+      if (requestError) {
+        // Never shown raw: report that something went wrong without
+        // leaking the underlying Supabase/PostgREST message text.
+        setError("Unable to load repairs right now. Pull down to try again.");
       } else {
-        setLocation(flat ? { id: flat.id, flat_number: flat.flat_number, building_id: flat.building_id } : null);
         setRequests(requestRows ?? []);
       }
       setLoading(false);
       setRefreshing(false);
     },
-    [session],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, selectedFlat?.id],
   );
 
   useEffect(() => {
@@ -101,7 +114,7 @@ export default function TenantRepairs() {
   }, [load]);
 
   async function handleSubmit() {
-    if (!location) {
+    if (!selectedFlat) {
       Alert.alert("No assigned flat", "A repair request needs an assigned flat.");
       return;
     }
@@ -111,13 +124,13 @@ export default function TenantRepairs() {
     }
     setSubmitting(true);
     const { error: submitError } = await supabase.rpc("create_maintenance_request", {
-      _building_id: location.building_id,
+      _building_id: selectedFlat.building_id,
       _category: category,
       _title: title.trim(),
       _description: description.trim(),
       _priority: priority,
       _is_common_area: false,
-      _flat_id: location.id,
+      _flat_id: selectedFlat.id,
     });
     setSubmitting(false);
     if (submitError) {
@@ -144,8 +157,22 @@ export default function TenantRepairs() {
           <Text style={[styles.subtitle, { color: colors.textSub }]}>Maintenance requests</Text>
         </View>
 
+        <TenantFlatSelector flats={flats} selectedId={selectedFlat?.id ?? null} onSelect={selectFlat} />
+
         <View style={styles.list}>
-          {loading ? (
+          {flatsLoading ? (
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+          ) : flatsError ? (
+            <Text style={[styles.emptyText, { color: colors.danger }]}>
+              Something went wrong loading your flats. Pull down to try again.
+            </Text>
+          ) : flats.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>No assigned flat.</Text>
+          ) : !selectedFlat ? (
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>
+              You&apos;re assigned to more than one flat — pick one above to see its repair requests.
+            </Text>
+          ) : loading ? (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : error ? (
             <Text style={[styles.emptyText, { color: colors.danger }]}>{error}</Text>
@@ -275,9 +302,9 @@ export default function TenantRepairs() {
               />
 
               <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: colors.primary }, (!location || submitting) && styles.disabled]}
+                style={[styles.submitBtn, { backgroundColor: colors.primary }, (!selectedFlat || submitting) && styles.disabled]}
                 onPress={handleSubmit}
-                disabled={!location || submitting}
+                disabled={!selectedFlat || submitting}
               >
                 {submitting ? (
                   <ActivityIndicator color="#ffffff" />
@@ -288,8 +315,12 @@ export default function TenantRepairs() {
                   </>
                 )}
               </TouchableOpacity>
-              {!location ? (
-                <Text style={[styles.hint, { color: colors.danger }]}>An assigned flat is required to submit a request.</Text>
+              {!selectedFlat ? (
+                <Text style={[styles.hint, { color: colors.danger }]}>
+                  {flats.length > 1
+                    ? "Choose a flat above before submitting a request."
+                    : "An assigned flat is required to submit a request."}
+                </Text>
               ) : null}
             </ScrollView>
           </View>

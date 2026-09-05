@@ -4,6 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -22,12 +23,13 @@ import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors, type ThemeColors } from "@/hooks/use-theme-colors";
+import { useTenantFlat } from "@/lib/tenant/flats";
+import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 type RentRecord = Database["public"]["Tables"]["rent_records"]["Row"];
 type RentPayment = Database["public"]["Tables"]["rent_payments"]["Row"];
 type Credit = Database["public"]["Tables"]["tenant_credits"]["Row"];
-type Flat = { id: string; building_id: string; flat_number: string; buildings?: { name: string } | null };
 
 const paymentMethods: PaymentMethod[] = ["bkash", "nagad", "bank_transfer"];
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -55,8 +57,8 @@ const verificationLabels: Record<Database["public"]["Enums"]["verification_statu
 export default function TenantBills() {
   const colors = useThemeColors();
   const { session } = useAuth();
+  const { flats, selectedFlat, selectFlat, loading: flatsLoading, error: flatsError } = useTenantFlat();
 
-  const [flat, setFlat] = useState<Flat | null>(null);
   const [records, setRecords] = useState<RentRecord[]>([]);
   const [payments, setPayments] = useState<RentPayment[]>([]);
   const [credits, setCredits] = useState<Credit[]>([]);
@@ -74,31 +76,58 @@ export default function TenantBills() {
   const [payModalVisible, setPayModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Scoped to `selectedFlat.id`, not just `tenant_id` — a tenant with more
+  // than one flat must never see rent records, payments or credits from a
+  // flat other than the one currently selected above.
   const load = useCallback(
     async (isRefresh = false) => {
       if (!session) return;
+      if (!selectedFlat) {
+        setRecords([]);
+        setPayments([]);
+        setCredits([]);
+        setError(null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       const userId = session.user.id;
+      const flatId = selectedFlat.id;
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
 
       const [
-        { data: flatRow, error: flatError },
         { data: rentRows, error: rentError },
         { data: paymentRows, error: paymentError },
         { data: creditRows, error: creditError },
       ] = await Promise.all([
-        supabase.from("flats").select("id, building_id, flat_number, buildings(name)").eq("tenant_id", userId).maybeSingle(),
-        supabase.from("rent_records").select("*").eq("tenant_id", userId).order("billing_month", { ascending: false }),
-        supabase.from("rent_payments").select("*").eq("tenant_id", userId).order("submitted_at", { ascending: false }),
-        supabase.from("tenant_credits").select("*").eq("tenant_id", userId).order("created_at", { ascending: false }),
+        supabase
+          .from("rent_records")
+          .select("*")
+          .eq("tenant_id", userId)
+          .eq("flat_id", flatId)
+          .order("billing_month", { ascending: false }),
+        supabase
+          .from("rent_payments")
+          .select("*")
+          .eq("tenant_id", userId)
+          .eq("flat_id", flatId)
+          .order("submitted_at", { ascending: false }),
+        supabase
+          .from("tenant_credits")
+          .select("*")
+          .eq("tenant_id", userId)
+          .eq("flat_id", flatId)
+          .order("created_at", { ascending: false }),
       ]);
 
-      const loadError = flatError ?? rentError ?? paymentError ?? creditError;
+      const loadError = rentError ?? paymentError ?? creditError;
       if (loadError) {
-        setError(loadError.message);
+        // Never shown raw: report that something went wrong without
+        // leaking the underlying Supabase/PostgREST message text.
+        setError("Unable to load your bills right now. Pull down to try again.");
       } else {
-        setFlat(flatRow as Flat | null);
         setRecords(rentRows ?? []);
         setPayments(paymentRows ?? []);
         setCredits(creditRows ?? []);
@@ -106,7 +135,8 @@ export default function TenantBills() {
       setLoading(false);
       setRefreshing(false);
     },
-    [session],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, selectedFlat?.id],
   );
 
   useEffect(() => {
@@ -137,7 +167,7 @@ export default function TenantBills() {
   }
 
   async function submitPayment() {
-    if (!session || !flat || !selectedRecord) return;
+    if (!session || !selectedFlat || !selectedRecord) return;
     const amountPaid = Number(amount);
     if (!Number.isFinite(amountPaid) || amountPaid <= 0) {
       Alert.alert("Invalid amount", "Enter an amount greater than zero.");
@@ -197,11 +227,38 @@ export default function TenantBills() {
         <Text style={[styles.subtitle, { color: colors.textSub }]}>Your rent balances, submissions and receipts</Text>
       </View>
 
+      <TenantFlatSelector flats={flats} selectedId={selectedFlat?.id ?? null} onSelect={selectFlat} />
+
       <ScrollView
         style={styles.scrollArea}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />}
       >
-        {loading ? (
+        {flatsLoading ? (
+          <View style={styles.stateBox}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : flatsError ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Unable to load bills</Text>
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>
+              Something went wrong loading your flats. Pull down to try again.
+            </Text>
+          </View>
+        ) : flats.length === 0 ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No assigned flat</Text>
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>
+              A rent record and payment submission need an assigned flat.
+            </Text>
+          </View>
+        ) : !selectedFlat ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Choose a flat</Text>
+            <Text style={[styles.emptyText, { color: colors.textSub }]}>
+              You&apos;re assigned to more than one flat — pick one above to see its bills.
+            </Text>
+          </View>
+        ) : loading ? (
           <View style={styles.stateBox}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
@@ -210,18 +267,11 @@ export default function TenantBills() {
             <Text style={[styles.emptyTitle, { color: colors.text }]}>Unable to load bills</Text>
             <Text style={[styles.emptyText, { color: colors.textSub }]}>{error}</Text>
           </View>
-        ) : !flat ? (
-          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No assigned flat</Text>
-            <Text style={[styles.emptyText, { color: colors.textSub }]}>
-              A rent record and payment submission need an assigned flat.
-            </Text>
-          </View>
         ) : (
           <>
             <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
               <Text style={[styles.summaryLabel, { color: colors.text }]}>
-                {flat.buildings?.name ?? "Your building"} · Flat {flat.flat_number}
+                {selectedFlat.building_name} · Flat {selectedFlat.flat_number}
               </Text>
               <Text style={[styles.creditLabel, { color: colors.textSub }]}>Available advance credit</Text>
               <Text style={[styles.creditValue, { color: colors.text }]}>৳ {availableCredit.toLocaleString()}</Text>
@@ -257,9 +307,17 @@ export default function TenantBills() {
       </ScrollView>
 
       <Modal visible={payModalVisible} animationType="slide" transparent onRequestClose={() => setPayModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+        {/* iOS: KeyboardAvoidingView pads the overlay so the flex-end sheet rises
+            above the keyboard. Android already resizes the window for the keyboard
+            via app.json's softwareKeyboardLayoutMode: "resize", so `behavior` is
+            left undefined there to avoid a double offset. */}
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+            <ScrollView
+              contentContainerStyle={[styles.modalScrollContent, { paddingBottom: Platform.OS === "ios" ? 40 : 24 }]}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+            >
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Submit a payment</Text>
                 <TouchableOpacity onPress={() => setPayModalVisible(false)}>
@@ -351,7 +409,7 @@ export default function TenantBills() {
               ) : null}
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -446,8 +504,24 @@ function PaymentCard({ payment, colors }: { payment: RentPayment; colors: ThemeC
   );
 }
 
-function formatMonth(value: string) {
-  return new Date(`${value}-01T00:00:00`).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+function formatMonth(value: string | null | undefined) {
+  // `billing_month` comes back from Supabase as a plain PostgreSQL date
+  // string ("YYYY-MM-DD"), not "YYYY-MM" — appending "-01" onto it (the
+  // previous logic) produced a malformed string and "Invalid Date". Parse
+  // the year/month numerically instead (ignoring any day component) and
+  // build the Date from local numeric parts, which also avoids any
+  // UTC-parsing timezone shift. Mirrors the tested formatMonth in
+  // app/(tenant)/index.tsx and src/lib/rent.ts (web app).
+  if (!value) return "—";
+  const [yearPart, monthPart] = value.split("-");
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  if (!yearPart || !monthPart || !Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return "—";
+  }
+  const date = new Date(year, month - 1, 1);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
 const styles = StyleSheet.create({
@@ -501,6 +575,7 @@ const styles = StyleSheet.create({
 
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: "88%" },
+  modalScrollContent: { flexGrow: 1 },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   modalTitle: { fontSize: 20, fontWeight: "800" },
   close: { fontSize: 14, fontWeight: "700" },

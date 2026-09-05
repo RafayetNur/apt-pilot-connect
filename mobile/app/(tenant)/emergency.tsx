@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -17,11 +17,11 @@ import { Ambulance, ArrowLeft, Bell, Home as HomeIcon, ShieldAlert, Wrench, Zap 
 
 import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useTenantFlat } from "@/lib/tenant/flats";
+import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type Category = Database["public"]["Enums"]["maintenance_category"];
-type TenantLocation = { id: string; building_id: string };
 
 const emergencyCategories: { value: Category; label: string }[] = [
   { value: "security", label: "Security" },
@@ -51,34 +51,17 @@ const emergencyContacts = [
 export default function TenantEmergency() {
   const router = useRouter();
   const colors = useThemeColors();
-  const { session } = useAuth();
+  const {
+    flats,
+    selectedFlat,
+    selectFlat,
+    loading: loadingLocation,
+    error: locationError,
+  } = useTenantFlat();
 
-  const [location, setLocation] = useState<TenantLocation | null>(null);
-  const [loadingLocation, setLoadingLocation] = useState(true);
   const [category, setCategory] = useState<Category>("security");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    if (!session) {
-      setLoadingLocation(false);
-      return;
-    }
-    supabase
-      .from("flats")
-      .select("id, building_id")
-      .eq("tenant_id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active) return;
-        setLocation(data ? { id: data.id, building_id: data.building_id } : null);
-        setLoadingLocation(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [session]);
 
   function call(phone: string) {
     Linking.openURL(`tel:${phone.replace(/\s+/g, "")}`).catch(() => {
@@ -87,7 +70,7 @@ export default function TenantEmergency() {
   }
 
   async function handleSend() {
-    if (!location) {
+    if (!selectedFlat) {
       Alert.alert("No assigned flat", "An emergency report needs an assigned flat.");
       return;
     }
@@ -98,13 +81,13 @@ export default function TenantEmergency() {
     setSubmitting(true);
     const categoryLabel = emergencyCategories.find((c) => c.value === category)?.label ?? "Emergency";
     const { error } = await supabase.rpc("create_maintenance_request", {
-      _building_id: location.building_id,
+      _building_id: selectedFlat.building_id,
       _category: category,
       _title: `Emergency — ${categoryLabel}`,
       _description: description.trim(),
       _priority: "emergency",
       _is_common_area: false,
-      _flat_id: location.id,
+      _flat_id: selectedFlat.id,
     });
     setSubmitting(false);
     if (error) {
@@ -125,6 +108,8 @@ export default function TenantEmergency() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Emergency Desk</Text>
       </View>
+
+      <TenantFlatSelector flats={flats} selectedId={selectedFlat?.id ?? null} onSelect={selectFlat} />
 
       <ScrollView style={styles.content}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -196,9 +181,13 @@ export default function TenantEmergency() {
             <ActivityIndicator color={colors.danger} style={{ marginTop: 16 }} />
           ) : (
             <TouchableOpacity
-              style={[styles.dispatchBtn, { backgroundColor: colors.danger, shadowColor: colors.danger }, (!location || submitting) && styles.disabled]}
+              style={[
+                styles.dispatchBtn,
+                { backgroundColor: colors.danger, shadowColor: colors.danger },
+                (!selectedFlat || submitting) && styles.disabled,
+              ]}
               onPress={handleSend}
-              disabled={!location || submitting}
+              disabled={!selectedFlat || submitting}
             >
               {submitting ? (
                 <ActivityIndicator color="#ffffff" />
@@ -207,7 +196,17 @@ export default function TenantEmergency() {
               )}
             </TouchableOpacity>
           )}
-          {!loadingLocation && !location ? (
+          {!loadingLocation && locationError ? (
+            // Never shown raw: report that something went wrong without
+            // leaking the underlying Supabase/PostgREST message text.
+            <Text style={[styles.label, { color: colors.danger, marginTop: 12 }]}>
+              Something went wrong loading your flats. Call a contact above instead.
+            </Text>
+          ) : !loadingLocation && flats.length > 1 && !selectedFlat ? (
+            <Text style={[styles.label, { color: colors.danger, marginTop: 12 }]}>
+              Choose a flat above before sending a report.
+            </Text>
+          ) : !loadingLocation && !selectedFlat ? (
             <Text style={[styles.label, { color: colors.danger, marginTop: 12 }]}>
               An assigned flat is required to send a report. Call a contact above instead.
             </Text>

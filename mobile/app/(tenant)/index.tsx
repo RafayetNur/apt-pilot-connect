@@ -15,12 +15,13 @@ import type { Database } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useTenantFlat } from "@/lib/tenant/flats";
+import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type RentRow = Pick<
   Database["public"]["Tables"]["rent_records"]["Row"],
   "billing_month" | "total_payable" | "total_paid" | "remaining_due" | "payment_status" | "due_date"
 >;
-type FlatLocation = { id: string; flat_number: string; building_id: string; building_name: string };
 type NoticePreview = Pick<
   Database["public"]["Tables"]["building_notices"]["Row"],
   "id" | "title" | "content" | "priority" | "published_at"
@@ -30,15 +31,20 @@ type NoticePreview = Pick<
  * Ported from the Sanjida reference's app/(tenant)/index.tsx (dashboard
  * card, quick services row, notices list), driving its data from the exact
  * same live queries as the currently-tested mobile/app/(tabs)/index.tsx —
- * profile + flat + building + latest rent record — via Supabase, instead of
- * the reference's mock rentRecords/announcements store.
+ * profile + flat + latest rent record — via Supabase, instead of the
+ * reference's mock rentRecords/announcements store.
+ *
+ * The flat itself (and, when a tenant has more than one, which flat is
+ * currently selected) comes from the shared TenantFlatProvider — see
+ * lib/tenant/flats.tsx — not fetched here. Everything below is scoped to
+ * `selectedFlat.id`, so switching flats never mixes rent data across flats.
  */
 export default function TenantDashboard() {
   const router = useRouter();
   const colors = useThemeColors();
   const { session, profile } = useAuth();
+  const { flats, selectedFlat, selectFlat, loading: flatsLoading, error: flatsError } = useTenantFlat();
 
-  const [location, setLocation] = useState<FlatLocation | null>(null);
   const [rent, setRent] = useState<RentRow | null>(null);
   const [notices, setNotices] = useState<NoticePreview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,80 +54,48 @@ export default function TenantDashboard() {
   const load = useCallback(
     async (isRefresh = false) => {
       if (!session) return;
-      const userId = session.user.id;
+      if (!selectedFlat) {
+        setRent(null);
+        setNotices([]);
+        setError(null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
 
-      // `.eq("tenant_id", ...)` alone assumes exactly one `flats` row can
-      // ever carry this tenant_id. Reassigning a tenant to a new flat
-      // (assignTenant() in lib/owner/flats.ts) only writes the new flat's
-      // row — it doesn't clear tenant_id off the tenant's previous flat —
-      // so a tenant who has ever been reassigned can have >1 matching row.
-      // `.maybeSingle()` tolerates zero matches (returns null) but throws
-      // "JSON object requested, multiple (or no) rows returned" on >1.
-      // Order by most-recently-updated and cap at 1, exactly like the
-      // rent_records query below, so the tenant's *current* flat resolves
-      // deterministically instead of erroring on a stale duplicate.
-      const { data: flat, error: flatError } = await supabase
-        .from("flats")
-        .select("id, flat_number, building_id")
-        .eq("tenant_id", userId)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const [{ data: rentRow, error: rentError }, { data: noticeRows, error: noticeError }] = await Promise.all([
+        supabase
+          .from("rent_records")
+          .select("billing_month, total_payable, total_paid, remaining_due, payment_status, due_date")
+          .eq("tenant_id", session.user.id)
+          .eq("flat_id", selectedFlat.id)
+          .order("billing_month", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("building_notices")
+          .select("id, title, content, priority, published_at")
+          .order("published_at", { ascending: false })
+          .limit(3),
+      ]);
 
-      if (flatError) {
-        setError(flatError.message);
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
-
-      if (!flat) {
-        setLocation(null);
-        setRent(null);
-        setNotices([]);
-        setLoading(false);
-        setRefreshing(false);
-        return;
-      }
-
-      const [{ data: building, error: buildingError }, { data: rentRow, error: rentError }, { data: noticeRows, error: noticeError }] =
-        await Promise.all([
-          supabase.from("buildings").select("name").eq("id", flat.building_id).single(),
-          supabase
-            .from("rent_records")
-            .select("billing_month, total_payable, total_paid, remaining_due, payment_status, due_date")
-            .eq("tenant_id", userId)
-            .eq("flat_id", flat.id)
-            .order("billing_month", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from("building_notices")
-            .select("id, title, content, priority, published_at")
-            .order("published_at", { ascending: false })
-            .limit(3),
-        ]);
-
-      const loadError = buildingError ?? rentError ?? noticeError;
+      const loadError = rentError ?? noticeError;
       if (loadError) {
-        setError(loadError.message);
+        // Never shown raw: report that something went wrong without
+        // leaking the underlying Supabase/PostgREST message text.
+        setError("Unable to load your dashboard right now. Pull down to try again.");
       } else {
-        setLocation({
-          id: flat.id,
-          flat_number: flat.flat_number,
-          building_id: flat.building_id,
-          building_name: building?.name ?? "Your building",
-        });
         setRent(rentRow ?? null);
         setNotices(noticeRows ?? []);
       }
       setLoading(false);
       setRefreshing(false);
     },
-    [session],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, selectedFlat?.id],
   );
 
   useEffect(() => {
@@ -140,7 +114,7 @@ export default function TenantDashboard() {
           <Text style={[styles.greeting, { color: colors.textSub }]}>Welcome back</Text>
           <Text style={[styles.name, { color: colors.text }]}>{profile?.full_name || "there"}</Text>
           <Text style={[styles.subtitle, { color: colors.textSub }]}>
-            {location ? `Unit ${location.flat_number}` : "No assigned flat"}
+            {selectedFlat ? `Unit ${selectedFlat.flat_number}` : flats.length > 1 ? "Choose a flat" : "No assigned flat"}
           </Text>
         </View>
         <TouchableOpacity
@@ -151,7 +125,34 @@ export default function TenantDashboard() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
+      <TenantFlatSelector flats={flats} selectedId={selectedFlat?.id ?? null} onSelect={selectFlat} />
+
+      {flatsLoading ? (
+        <View style={styles.stateBox}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : flatsError ? (
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.stateTitle, { color: colors.text }]}>Unable to load dashboard</Text>
+          <Text style={[styles.stateText, { color: colors.textSub }]}>
+            Something went wrong loading your flats. Pull down to try again.
+          </Text>
+        </View>
+      ) : flats.length === 0 ? (
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.stateTitle, { color: colors.text }]}>No assigned flat</Text>
+          <Text style={[styles.stateText, { color: colors.textSub }]}>
+            Your assigned flat will appear here once a manager or owner links your account.
+          </Text>
+        </View>
+      ) : !selectedFlat ? (
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.stateTitle, { color: colors.text }]}>Choose a flat</Text>
+          <Text style={[styles.stateText, { color: colors.textSub }]}>
+            You&apos;re assigned to more than one flat — pick one above to see its dashboard.
+          </Text>
+        </View>
+      ) : loading ? (
         <View style={styles.stateBox}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -159,13 +160,6 @@ export default function TenantDashboard() {
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.stateTitle, { color: colors.text }]}>Unable to load dashboard</Text>
           <Text style={[styles.stateText, { color: colors.textSub }]}>{error}</Text>
-        </View>
-      ) : !location ? (
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.stateTitle, { color: colors.text }]}>No assigned flat</Text>
-          <Text style={[styles.stateText, { color: colors.textSub }]}>
-            Your assigned flat will appear here once a manager or owner links your account.
-          </Text>
         </View>
       ) : (
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>

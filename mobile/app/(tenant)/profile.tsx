@@ -6,9 +6,10 @@ import { Home, LogOut, Mail, Phone, User } from "lucide-react-native";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useThemeColors } from "@/hooks/use-theme-colors";
+import { useTenantFlat } from "@/lib/tenant/flats";
+import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type BuildingInfo = { name: string; address: string; managerName: string | null; managerPhone: string | null };
-type FlatInfo = { flat_number: string };
 
 /**
  * Ported from the Sanjida reference's app/(tenant)/profile.tsx, backed by
@@ -23,44 +24,36 @@ type FlatInfo = { flat_number: string };
 export default function TenantProfile() {
   const colors = useThemeColors();
   const { session, profile, signOut } = useAuth();
+  const { flats, selectedFlat, selectFlat, loading: flatsLoading, error: flatsError } = useTenantFlat();
 
-  const [flat, setFlat] = useState<FlatInfo | null>(null);
   const [building, setBuilding] = useState<BuildingInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // The flats list (and which one is selected — a tenant may legitimately
+  // have more than one) comes from the shared TenantFlatProvider; this
+  // only fetches the selected flat's building/manager details.
   const load = useCallback(async () => {
     if (!session) return;
+    if (!selectedFlat) {
+      setBuilding(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
-
-    const { data: flatRow, error: flatError } = await supabase
-      .from("flats")
-      .select("flat_number, building_id")
-      .eq("tenant_id", session.user.id)
-      .maybeSingle();
-
-    if (flatError) {
-      setError(flatError.message);
-      setLoading(false);
-      return;
-    }
-    if (!flatRow) {
-      setFlat(null);
-      setBuilding(null);
-      setLoading(false);
-      return;
-    }
-    setFlat({ flat_number: flatRow.flat_number });
 
     const { data: buildingRow, error: buildingError } = await supabase
       .from("buildings")
       .select("name, address, assigned_manager")
-      .eq("id", flatRow.building_id)
+      .eq("id", selectedFlat.building_id)
       .maybeSingle();
 
     if (buildingError) {
-      setError(buildingError.message);
+      // Never shown raw: report that something went wrong without leaking
+      // the underlying Supabase/PostgREST message text.
+      setError("Unable to load your building details right now.");
       setLoading(false);
       return;
     }
@@ -84,7 +77,8 @@ export default function TenantProfile() {
 
     setBuilding({ name: buildingRow.name, address: buildingRow.address, managerName, managerPhone });
     setLoading(false);
-  }, [session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, selectedFlat?.id]);
 
   useEffect(() => {
     load();
@@ -133,38 +127,58 @@ export default function TenantProfile() {
           <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
         </View>
         <Text style={[styles.name, { color: colors.text }]}>{profile?.full_name || "Tenant"}</Text>
-        <Text style={[styles.role, { color: colors.textSub }]}>
-          Tenant{flat ? ` · Unit ${flat.flat_number}` : ""}
-        </Text>
+        <Text style={[styles.role, { color: colors.textSub }]}>Tenant</Text>
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 32 }} />
-      ) : error ? (
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Contact Info</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Phone color={colors.textSub} size={20} />
+            <Text style={[styles.rowText, { color: colors.text }]}>{profile?.phone || "Not provided"}</Text>
+          </View>
+          <View style={[styles.row, styles.borderTop, { borderTopColor: colors.border }]}>
+            <Mail color={colors.textSub} size={20} />
+            <Text style={[styles.rowText, { color: colors.text }]}>{profile?.email || "Not provided"}</Text>
+          </View>
+        </View>
+      </View>
+
+      {flatsLoading ? (
+        <View style={styles.section}>
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 12 }} />
+        </View>
+      ) : flatsError ? (
         <View style={styles.section}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
-            <Text style={{ color: colors.danger }}>{error}</Text>
+            <Text style={{ color: colors.danger }}>Unable to load your flats right now. Pull down to try again.</Text>
           </View>
         </View>
       ) : (
         <>
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Contact Info</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.row}>
-                <Phone color={colors.textSub} size={20} />
-                <Text style={[styles.rowText, { color: colors.text }]}>{profile?.phone || "Not provided"}</Text>
-              </View>
-              <View style={[styles.row, styles.borderTop, { borderTopColor: colors.border }]}>
-                <Mail color={colors.textSub} size={20} />
-                <Text style={[styles.rowText, { color: colors.text }]}>{profile?.email || "Not provided"}</Text>
-              </View>
+          {flats.length > 0 ? (
+            <View style={styles.selectorSpacing}>
+              <TenantFlatSelector flats={flats} selectedId={selectedFlat?.id ?? null} onSelect={selectFlat} />
             </View>
-          </View>
+          ) : null}
 
-          {building ? (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Building Details</Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Building Details</Text>
+            {flats.length === 0 ? (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
+                <Text style={{ color: colors.textSub }}>No assigned flat yet.</Text>
+              </View>
+            ) : !selectedFlat ? (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
+                <Text style={{ color: colors.textSub }}>Choose a flat above to see its building details.</Text>
+              </View>
+            ) : loading ? (
+              <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 12 }} />
+            ) : error ? (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
+                <Text style={{ color: colors.danger }}>{error}</Text>
+              </View>
+            ) : building ? (
               <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.row}>
                   <Home color={colors.textSub} size={20} />
@@ -185,15 +199,12 @@ export default function TenantProfile() {
                   </View>
                 ) : null}
               </View>
-            </View>
-          ) : (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textSub }]}>Building Details</Text>
+            ) : (
               <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
-                <Text style={{ color: colors.textSub }}>No assigned flat yet.</Text>
+                <Text style={{ color: colors.textSub }}>Building details unavailable.</Text>
               </View>
-            </View>
-          )}
+            )}
+          </View>
         </>
       )}
 
@@ -217,6 +228,7 @@ const styles = StyleSheet.create({
   role: { fontSize: 14, marginTop: 4, fontWeight: "500" },
 
   section: { marginTop: 24, paddingHorizontal: 20 },
+  selectorSpacing: { marginTop: 24 },
   sectionTitle: { fontSize: 13, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, paddingHorizontal: 4 },
   card: { borderRadius: 20, paddingHorizontal: 16, borderWidth: 1 },
   row: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 16 },

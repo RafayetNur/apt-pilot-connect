@@ -582,6 +582,7 @@ export type Database = {
           address: string
           area: string
           assigned_manager: string
+          assigned_manager_id: string | null
           created_at: string
           floors: number
           id: string
@@ -595,6 +596,7 @@ export type Database = {
           address: string
           area?: string
           assigned_manager?: string
+          assigned_manager_id?: string | null
           created_at?: string
           floors?: number
           id?: string
@@ -608,6 +610,7 @@ export type Database = {
           address?: string
           area?: string
           assigned_manager?: string
+          assigned_manager_id?: string | null
           created_at?: string
           floors?: number
           id?: string
@@ -617,7 +620,15 @@ export type Database = {
           total_flats?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "buildings_assigned_manager_id_fkey"
+            columns: ["assigned_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       document_recipients: {
         Row: {
@@ -1934,6 +1945,10 @@ export type Database = {
       allocate_shared_charge: {
         Args: { _shared_charge_id: string }
         Returns: number
+      }
+      assign_building_manager: {
+        Args: { _building_id: string; _manager_id: string }
+        Returns: undefined
       }
       assign_user_role: {
         Args: {

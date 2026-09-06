@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -17,6 +17,13 @@ import {
 } from "@/components/payments/submit-payment-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import {
   flatChargeLabel,
@@ -24,7 +31,13 @@ import {
   sharedCategoryLabel,
   type TenantMonthlyBill,
 } from "@/lib/charges";
-import { formatRent, myFlatQueryOptions, occupancyLabel } from "@/lib/flats";
+import {
+  formatRent,
+  myTenantFlatsQueryOptions,
+  occupancyLabel,
+  useSelectedTenantFlat,
+  type TenantFlatSummary,
+} from "@/lib/flats";
 import {
   createProofSignedUrl,
   formatDateTime,
@@ -211,15 +224,57 @@ function PaymentHistoryItem({
   );
 }
 
+/**
+ * Compact "Selected flat" control for tenants assigned to more than one
+ * flat — same behaviour as the mobile `TenantFlatSelector`: renders nothing
+ * for zero or exactly one flat (nothing to choose from there), and a
+ * dropdown listing every flat by building name + flat number otherwise.
+ */
+function TenantFlatPicker({
+  flats,
+  selectedId,
+  onSelect,
+}: {
+  flats: TenantFlatSummary[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  if (flats.length <= 1) return null;
+
+  return (
+    <div className="mt-4 max-w-xs">
+      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Selected flat
+      </label>
+      <Select value={selectedId} onValueChange={onSelect}>
+        <SelectTrigger>
+          <SelectValue placeholder="Choose a flat" />
+        </SelectTrigger>
+        <SelectContent>
+          {flats.map((flat) => (
+            <SelectItem key={flat.id} value={flat.id}>
+              {flat.building_name} · Flat {flat.flat_number}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function TenantDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const flatQuery = useQuery(myFlatQueryOptions(user?.id));
-  const billsQuery = useQuery(myMonthlyBillsQueryOptions(user?.id));
-  const paymentsQuery = useQuery(myPaymentsQueryOptions(user?.id));
-  const creditsQuery = useQuery(myCreditsQueryOptions(user?.id));
-  const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id));
+  const flatsQuery = useQuery(myTenantFlatsQueryOptions(user?.id));
+  const flats = useMemo(() => flatsQuery.data ?? [], [flatsQuery.data]);
+  const { selectedFlat, selectFlat } = useSelectedTenantFlat(flats);
+  const selectedFlatId = selectedFlat?.id;
+
+  const billsQuery = useQuery(myMonthlyBillsQueryOptions(user?.id, selectedFlatId));
+  const paymentsQuery = useQuery(myPaymentsQueryOptions(user?.id, selectedFlatId));
+  const creditsQuery = useQuery(myCreditsQueryOptions(user?.id, selectedFlatId));
+  const adjustmentsQuery = useQuery(myAdjustmentsQueryOptions(user?.id, selectedFlatId));
   const closuresQuery = useQuery(closuresQueryOptions());
 
   const [submitFor, setSubmitFor] = useState<TenantMonthlyBill | null>(null);
@@ -284,7 +339,6 @@ function TenantDashboard() {
   });
 
   const adjustments = adjustmentsQuery.data ?? [];
-  const flat = flatQuery.data;
 
   const closures = closuresQuery.data ?? [];
   const isFinalized = (buildingId: string, billingMonth: string) =>
@@ -300,20 +354,29 @@ function TenantDashboard() {
       role="tenant"
       title="Your monthly bill"
       intro={
-        flat
-          ? `${flat.building?.name ?? "Your building"} · Flat ${flat.flat.flat_number}`
+        selectedFlat
+          ? `${selectedFlat.building_name} · Flat ${selectedFlat.flat_number}`
           : "Your flat, bills, payments and receipts live here."
       }
     >
-      {flatQuery.isLoading ? (
-        <p className="mt-6 text-sm text-muted-foreground">Loading your flat…</p>
-      ) : !flat ? (
+      {flatsQuery.isLoading ? (
+        <p className="mt-6 text-sm text-muted-foreground">Loading your flats…</p>
+      ) : flats.length === 0 ? (
         <EmptyState>
           No flat has been assigned to your account yet. Your owner or manager will assign one.
         </EmptyState>
-      ) : null}
+      ) : (
+        <>
+          <TenantFlatPicker flats={flats} selectedId={selectedFlatId ?? ""} onSelect={selectFlat} />
+          {flats.length > 1 && !selectedFlat ? (
+            <EmptyState>
+              You are assigned to more than one flat. Choose a flat above to see its bills.
+            </EmptyState>
+          ) : null}
+        </>
+      )}
 
-      {current ? (
+      {!selectedFlat ? null : current ? (
         <>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
@@ -338,9 +401,11 @@ function TenantDashboard() {
             <Badge variant={statusVariant[current.payment_status as PaymentStatus]}>
               {paymentStatusLabel[current.payment_status as PaymentStatus]}
             </Badge>
-            {flat ? (
-              <Badge variant={flat.flat.occupancy_status === "occupied" ? "default" : "secondary"}>
-                {occupancyLabel[flat.flat.occupancy_status]}
+            {selectedFlat ? (
+              <Badge
+                variant={selectedFlat.occupancy_status === "occupied" ? "default" : "secondary"}
+              >
+                {occupancyLabel[selectedFlat.occupancy_status]}
               </Badge>
             ) : null}
             {isFinalized(current.building_id, current.billing_month) ? (
@@ -445,93 +510,103 @@ function TenantDashboard() {
         </DashboardSection>
       ) : null}
 
-      <DashboardSection
-        title="Payment history & receipts"
-        description="Every submission you made, with reviewer notes and receipts."
-      >
-        {payments.length === 0 ? (
-          <EmptyState>You have not submitted a payment yet.</EmptyState>
-        ) : (
-          <ul className="grid gap-2">
-            {payments.map((payment) => (
-              <PaymentHistoryItem
-                key={payment.id}
-                payment={payment}
-                onReceipt={setReceipt}
-                onWithdraw={(row) => withdrawMutation.mutate(row)}
-                withdrawing={
-                  withdrawMutation.isPending && withdrawMutation.variables?.id === payment.id
-                }
-              />
-            ))}
-          </ul>
-        )}
-      </DashboardSection>
+      {selectedFlat ? (
+        <>
+          <DashboardSection
+            title="Payment history & receipts"
+            description="Every submission you made, with reviewer notes and receipts."
+          >
+            {payments.length === 0 ? (
+              <EmptyState>You have not submitted a payment yet.</EmptyState>
+            ) : (
+              <ul className="grid gap-2">
+                {payments.map((payment) => (
+                  <PaymentHistoryItem
+                    key={payment.id}
+                    payment={payment}
+                    onReceipt={setReceipt}
+                    onWithdraw={(row) => withdrawMutation.mutate(row)}
+                    withdrawing={
+                      withdrawMutation.isPending && withdrawMutation.variables?.id === payment.id
+                    }
+                  />
+                ))}
+              </ul>
+            )}
+          </DashboardSection>
 
-      <DashboardSection
-        title="Bill adjustments"
-        description="Late or corrected charges. Only approved adjustments change what you owe."
-      >
-        {adjustments.length === 0 ? (
-          <EmptyState>No adjustment has been made to your bills.</EmptyState>
-        ) : (
-          <ul className="grid gap-2">
-            {adjustments.map((row) => (
-              <li key={row.id} className="rounded-xl border border-border/60 bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {row.adjustment_type === "debit" ? "+" : "−"}
-                      {formatRent(row.amount)} · {adjustmentCategoryLabel[row.category]} (
-                      {adjustmentTypeLabel[row.adjustment_type]})
+          <DashboardSection
+            title="Bill adjustments"
+            description="Late or corrected charges. Only approved adjustments change what you owe."
+          >
+            {adjustments.length === 0 ? (
+              <EmptyState>No adjustment has been made to your bills.</EmptyState>
+            ) : (
+              <ul className="grid gap-2">
+                {adjustments.map((row) => (
+                  <li key={row.id} className="rounded-xl border border-border/60 bg-card p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {row.adjustment_type === "debit" ? "+" : "−"}
+                          {formatRent(row.amount)} · {adjustmentCategoryLabel[row.category]} (
+                          {adjustmentTypeLabel[row.adjustment_type]})
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatMonth(row.original_billing_month)} bill · posted to{" "}
+                          {formatMonth(row.posted_billing_month)}
+                        </p>
+                      </div>
+                      <Badge variant={approvalVariant[row.approval_status]}>
+                        {approvalStatusLabel[row.approval_status]}
+                      </Badge>
+                    </div>
+                    <p className="mt-3 rounded-lg bg-surface p-3 text-sm">
+                      <span className="text-muted-foreground">Reason: </span>
+                      {row.reason}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatMonth(row.original_billing_month)} bill · posted to{" "}
-                      {formatMonth(row.posted_billing_month)}
-                    </p>
-                  </div>
-                  <Badge variant={approvalVariant[row.approval_status]}>
-                    {approvalStatusLabel[row.approval_status]}
-                  </Badge>
-                </div>
-                <p className="mt-3 rounded-lg bg-surface p-3 text-sm">
-                  <span className="text-muted-foreground">Reason: </span>
-                  {row.reason}
-                </p>
-                {row.reviewer_note ? (
-                  <p className="mt-2 rounded-lg bg-surface p-3 text-sm">
-                    <span className="text-muted-foreground">Reviewer note: </span>
-                    {row.reviewer_note}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </DashboardSection>
+                    {row.reviewer_note ? (
+                      <p className="mt-2 rounded-lg bg-surface p-3 text-sm">
+                        <span className="text-muted-foreground">Reviewer note: </span>
+                        {row.reviewer_note}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DashboardSection>
 
-      <DashboardSection
-        title="Advance credit"
-        description="From overpayments. It is not applied to a future month automatically yet."
-      >
-        {credits.length === 0 ? (
-          <EmptyState>You have no advance credit.</EmptyState>
-        ) : (
-          <ul className="grid gap-2 text-sm">
-            {credits.map((credit) => (
-              <li
-                key={credit.id}
-                className="flex items-center justify-between rounded-xl bg-surface px-4 py-2"
-              >
-                <span className="text-muted-foreground">{formatDateTime(credit.created_at)}</span>
-                <span className="font-medium">
-                  {formatRent(credit.remaining_amount)} of {formatRent(credit.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </DashboardSection>
+          <DashboardSection
+            title="Advance credit"
+            description="From overpayments. It is not applied to a future month automatically yet."
+          >
+            {credits.length === 0 ? (
+              <EmptyState>You have no advance credit.</EmptyState>
+            ) : (
+              <ul className="grid gap-2 text-sm">
+                {credits.map((credit) => (
+                  <li
+                    key={credit.id}
+                    className="flex items-center justify-between rounded-xl bg-surface px-4 py-2"
+                  >
+                    <span className="text-muted-foreground">
+                      {formatDateTime(credit.created_at)}
+                    </span>
+                    <span className="font-medium">
+                      {formatRent(credit.remaining_amount)} of {formatRent(credit.amount)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DashboardSection>
+        </>
+      ) : flats.length > 1 ? (
+        <EmptyState>
+          Choose a flat above to see its payment history, adjustments and advance credit.
+        </EmptyState>
+      ) : null}
 
       <SubmitPaymentDialog
         open={Boolean(submitFor)}

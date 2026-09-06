@@ -432,10 +432,19 @@ export type TenantMonthlyBill = {
   sharedShares: TenantSharedShare[];
 };
 
-export const myMonthlyBillsQueryOptions = (userId: string | undefined) =>
+/**
+ * `flatId` scopes the result to one of the tenant's flats — required for
+ * tenants who occupy more than one flat, so one flat's bills, totals and
+ * balances never appear mixed in with another's. Pass the tenant's
+ * currently selected flat (see `useSelectedTenantFlat` in `@/lib/flats`).
+ */
+export const myMonthlyBillsQueryOptions = (
+  userId: string | undefined,
+  flatId: string | undefined,
+) =>
   queryOptions({
-    queryKey: ["my-monthly-bills", userId ?? "none"],
-    enabled: Boolean(userId),
+    queryKey: ["my-monthly-bills", userId ?? "none", flatId ?? "none"],
+    enabled: Boolean(userId) && Boolean(flatId),
     queryFn: async (): Promise<TenantMonthlyBill[]> => {
       const { data, error } = await supabase
         .from("rent_records")
@@ -443,6 +452,7 @@ export const myMonthlyBillsQueryOptions = (userId: string | undefined) =>
           "id, building_id, flat_id, tenant_id, billing_month, due_date, base_rent, individual_charges_total, shared_charges_total, total_payable, total_paid, remaining_due, payment_status, buildings(name), flats(flat_number), flat_bill_charges(id, charge_type, amount, description), shared_charge_allocations(id, allocated_amount, shared_building_charges(category, description))",
         )
         .eq("tenant_id", userId!)
+        .eq("flat_id", flatId!)
         .order("billing_month", { ascending: false });
       if (error) throw error;
 

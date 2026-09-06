@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -136,25 +137,87 @@ export async function removeTenant(flatId: string) {
   if (error) throw friendlyError(error.message);
 }
 
-export type MyFlat = {
-  flat: Flat;
-  building: { name: string; address: string } | null;
+/**
+ * A tenant may legitimately occupy more than one flat — this is normal
+ * business state, not a data-integrity problem, so this is a plural list
+ * (never `.single()`/`.maybeSingle()`). Mirrors the mobile
+ * `TenantFlatProvider` (mobile/lib/tenant/flats.tsx): 0, 1 or many rows are
+ * all valid outcomes here.
+ */
+export type TenantFlatSummary = {
+  id: string;
+  flat_number: string;
+  building_id: string;
+  building_name: string;
+  occupancy_status: OccupancyStatus;
 };
 
-export const myFlatQueryOptions = (userId: string | undefined) =>
+export const myTenantFlatsQueryOptions = (userId: string | undefined) =>
   queryOptions({
-    queryKey: ["my-flat", userId ?? "none"],
+    queryKey: ["my-flats", userId ?? "none"],
     enabled: Boolean(userId),
-    queryFn: async (): Promise<MyFlat | null> => {
+    queryFn: async (): Promise<TenantFlatSummary[]> => {
       const { data, error } = await supabase
         .from("flats")
-        .select("*, buildings(name, address)")
+        .select("id, flat_number, building_id, occupancy_status, buildings(name)")
         .eq("tenant_id", userId!)
-        .maybeSingle();
+        .order("flat_number", { ascending: true });
       if (error) throw error;
-      if (!data) return null;
-      const row = data as Record<string, unknown>;
-      const building = (row["buildings"] as { name: string; address: string } | null) ?? null;
-      return { flat: normalizeRow(row), building };
+      return (data ?? []).map((row) => {
+        const r = row as Record<string, unknown> & { buildings?: { name: string } | null };
+        return {
+          id: r["id"] as string,
+          flat_number: r["flat_number"] as string,
+          building_id: r["building_id"] as string,
+          building_name: r.buildings?.name ?? "Your building",
+          occupancy_status: r["occupancy_status"] as OccupancyStatus,
+        };
+      });
     },
   });
+
+const SELECTED_FLAT_STORAGE_KEY = "aptpilot.tenant.selectedFlatId";
+
+function readStoredFlatId(): string | null {
+  try {
+    return localStorage.getItem(SELECTED_FLAT_STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable (private browsing, disabled site data). The
+    // selection still works for the rest of this session.
+    return null;
+  }
+}
+
+function writeStoredFlatId(id: string) {
+  try {
+    localStorage.setItem(SELECTED_FLAT_STORAGE_KEY, id);
+  } catch {
+    // Best-effort persistence only.
+  }
+}
+
+/**
+ * Resolves which of the tenant's flats is "selected", the same rules the
+ * mobile selector uses: zero flats → no selection; exactly one → it is
+ * auto-selected, no picker needed; more than one → the tenant's last choice
+ * (persisted in localStorage) if it is still among their current flats,
+ * otherwise no selection until they pick one. A stale persisted id (the
+ * tenant was removed from that flat since) is simply not found and falls
+ * back to "no selection" rather than being used.
+ */
+export function useSelectedTenantFlat(flats: TenantFlatSummary[]) {
+  const [selectedId, setSelectedId] = useState<string | null>(() => readStoredFlatId());
+
+  const selectedFlat = useMemo<TenantFlatSummary | null>(() => {
+    if (flats.length === 0) return null;
+    if (flats.length === 1) return flats[0] ?? null;
+    return flats.find((flat) => flat.id === selectedId) ?? null;
+  }, [flats, selectedId]);
+
+  const selectFlat = useCallback((id: string) => {
+    setSelectedId(id);
+    writeStoredFlatId(id);
+  }, []);
+
+  return { selectedFlat, selectFlat };
+}

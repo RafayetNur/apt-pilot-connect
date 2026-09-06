@@ -137,30 +137,43 @@ export const reviewPaymentsQueryOptions = (filters: PaymentFilters) =>
     },
   });
 
-export const myPaymentsQueryOptions = (userId: string | undefined) =>
+/**
+ * `flatId` scopes payment history to one of the tenant's flats — required
+ * for tenants who occupy more than one flat, so payments never mix across
+ * flats. Pass the tenant's currently selected flat (see
+ * `useSelectedTenantFlat` in `@/lib/flats`).
+ */
+export const myPaymentsQueryOptions = (userId: string | undefined, flatId: string | undefined) =>
   queryOptions({
-    queryKey: ["my-rent-payments", userId ?? "none"],
-    enabled: Boolean(userId),
+    queryKey: ["my-rent-payments", userId ?? "none", flatId ?? "none"],
+    enabled: Boolean(userId) && Boolean(flatId),
     queryFn: async (): Promise<PaymentRow[]> => {
       const { data, error } = await supabase
         .from("rent_payments")
         .select(SELECT_WITH_JOINS)
         .eq("tenant_id", userId!)
+        .eq("flat_id", flatId!)
         .order("submitted_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => normalize(row as RawPaymentRow));
     },
   });
 
-export const myCreditsQueryOptions = (userId: string | undefined) =>
+/**
+ * `flatId` scopes the tenant's advance-credit balance to one flat —
+ * `tenant_credits` is a per-flat balance (it carries its own `flat_id`), so
+ * this must never be summed across a multi-flat tenant's other flats.
+ */
+export const myCreditsQueryOptions = (userId: string | undefined, flatId: string | undefined) =>
   queryOptions({
-    queryKey: ["my-tenant-credits", userId ?? "none"],
-    enabled: Boolean(userId),
+    queryKey: ["my-tenant-credits", userId ?? "none", flatId ?? "none"],
+    enabled: Boolean(userId) && Boolean(flatId),
     queryFn: async (): Promise<TenantCredit[]> => {
       const { data, error } = await supabase
         .from("tenant_credits")
         .select("*")
         .eq("tenant_id", userId!)
+        .eq("flat_id", flatId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => ({

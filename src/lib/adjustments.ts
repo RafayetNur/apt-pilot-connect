@@ -115,15 +115,22 @@ export const adjustmentsQueryOptions = (buildingId: string, month: string) =>
     },
   });
 
-export const myAdjustmentsQueryOptions = (userId: string | undefined) =>
+/**
+ * `flatId` scopes the tenant's own adjustment history to one of their flats
+ * — required for tenants who occupy more than one flat, so adjustments
+ * never mix across flats. Pass the tenant's currently selected flat (see
+ * `useSelectedTenantFlat` in `@/lib/flats`).
+ */
+export const myAdjustmentsQueryOptions = (userId: string | undefined, flatId: string | undefined) =>
   queryOptions({
-    queryKey: ["my-bill-adjustments", userId ?? "none"],
-    enabled: Boolean(userId),
+    queryKey: ["my-bill-adjustments", userId ?? "none", flatId ?? "none"],
+    enabled: Boolean(userId) && Boolean(flatId),
     queryFn: async (): Promise<AdjustmentRow[]> => {
       const { data, error } = await supabase
         .from("bill_adjustments")
         .select(SELECT_WITH_JOINS)
         .eq("tenant_id", userId!)
+        .eq("flat_id", flatId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => normalize(row as RawAdjustment));

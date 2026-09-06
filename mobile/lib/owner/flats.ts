@@ -115,33 +115,61 @@ export function useOwnerFlatDetail(flatId: string | null) {
       else state.setLoading(true);
       state.setError(null);
 
+      // There is no declared foreign key from flats.tenant_id to profiles
+      // (see database.types.ts's `flats` Relationships array — it only
+      // lists the building FK), so PostgREST cannot embed `profiles(...)`
+      // directly on this table: it fails at request time with "Could not
+      // find a relationship between 'flats' and 'profiles' in the schema
+      // cache". `buildings(name)` stays embedded — flats_building_id_fkey
+      // does exist. The tenant is resolved with a separate lookup below,
+      // same as the web app's src/lib/flats.ts does not attempt this join.
       const { data, error } = await supabase
         .from("flats")
-        .select("*, buildings(name), profiles(id, full_name, email, phone)")
+        .select("*, buildings(name)")
         .eq("id", flatId)
         .maybeSingle();
       if (!state.mountedRef.current) return;
       if (error) {
         state.setError(error.message);
-      } else if (!data) {
-        state.setData(null);
-      } else {
-        // Supabase's generated types don't carry an explicit FK relationship
-        // between flats.tenant_id and profiles (see database.types.ts's
-        // `flats` Relationships array — it only lists the building FK), so
-        // it can't infer a to-one join and types `profiles` as an array;
-        // cast through `unknown` the same way the web app's src/lib/*.ts
-        // normalizers do for the same reason.
-        const row = data as unknown as Record<string, unknown> & {
-          buildings?: { name: string } | null;
-          profiles?: TenantProfile | null;
-        };
-        state.setData({
-          flat: normalizeFlat(row),
-          buildingName: row.buildings?.name ?? "—",
-          tenant: row.profiles ?? null,
-        });
+        state.setLoading(false);
+        state.setRefreshing(false);
+        return;
       }
+      if (!data) {
+        state.setData(null);
+        state.setLoading(false);
+        state.setRefreshing(false);
+        return;
+      }
+
+      const row = data as unknown as Record<string, unknown> & {
+        buildings?: { name: string } | null;
+      };
+      const flat = normalizeFlat(row);
+
+      // Vacant flats (tenant_id null) need no second fetch, and never error.
+      let tenant: TenantProfile | null = null;
+      if (flat.tenant_id) {
+        const { data: profileRow, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, phone")
+          .eq("id", flat.tenant_id)
+          .maybeSingle();
+        if (profileError) {
+          // The flat itself loaded fine; do not fail the whole screen over
+          // a tenant profile lookup (e.g. a stale/dangling tenant_id).
+          console.warn("Could not load the assigned tenant's profile:", profileError.message);
+        } else {
+          tenant = (profileRow as TenantProfile | null) ?? null;
+        }
+      }
+
+      if (!state.mountedRef.current) return;
+      state.setData({
+        flat,
+        buildingName: row.buildings?.name ?? "—",
+        tenant,
+      });
       state.setLoading(false);
       state.setRefreshing(false);
     },

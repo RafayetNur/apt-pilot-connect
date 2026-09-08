@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
+// Not re-exported from the public `expo-router`/`expo-router/react-navigation`
+// entry points (only `useHeaderHeight` is), but this vendored copy of
+// react-navigation is what `<Tabs>` itself renders from, so the hook is
+// backed by the same live tab-bar context this screen sits under.
+import { useBottomTabBarHeight } from "expo-router/build/react-navigation/bottom-tabs";
 import {
   ActivityIndicator,
   Keyboard,
@@ -52,6 +57,10 @@ export default function TenantAptBot() {
   // at its top, so KeyboardAvoidingView can't "see" that header on its own —
   // this is the official react-navigation fix for keyboardVerticalOffset).
   const headerHeight = useHeaderHeight();
+  // Height of the bottom tab bar rendered below this screen, safe-area inset
+  // already included — the equivalent "bottom chrome" React Navigation
+  // doesn't know about on its own either.
+  const tabBarHeight = useBottomTabBarHeight();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -188,14 +197,16 @@ export default function TenantAptBot() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        // iOS has no OS-level window resize, so KeyboardAvoidingView must pad
-        // itself — offset by the native header height (see the comment by
-        // useHeaderHeight() above). Android already resizes the window via
-        // app.json's `android.softwareKeyboardLayoutMode: "resize"`, so no
-        // behavior/offset here lets that handle it without double-adjusting
-        // (same pattern as login.tsx and the bills.tsx payment sheet).
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
+        // iOS pads itself below the keyboard; Android resizes its own height
+        // instead (matches Android's usual keyboard affordance). Either way,
+        // react-native-screens resets this screen's own layout coordinates
+        // to 0 at its top — KeyboardAvoidingView can't "see" the native
+        // header above it or the tab bar below it on its own — so both are
+        // fed in explicitly via keyboardVerticalOffset (headerHeight above,
+        // tabBarHeight below, whichever applies on this platform) to keep
+        // the composer fully clear of the keyboard on both platforms.
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : tabBarHeight}
       >
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

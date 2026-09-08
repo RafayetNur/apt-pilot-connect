@@ -24,6 +24,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors, type ThemeColors } from "@/hooks/use-theme-colors";
 import { useTenantFlat } from "@/lib/tenant/flats";
+import { deriveTenantRentStatus, type RentStatusTone } from "@/lib/tenant/rent-status";
 import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
@@ -415,6 +416,13 @@ export default function TenantBills() {
   );
 }
 
+/** Maps a derived rent-status tone to this app's amber/green/red badge colors. */
+function rentStatusColors(tone: RentStatusTone, colors: ThemeColors) {
+  if (tone === "success") return { bg: colors.successBg, border: colors.success, text: colors.success };
+  if (tone === "pending") return { bg: colors.warningBg, border: colors.warning, text: colors.warning };
+  return { bg: colors.dangerBg, border: colors.danger, text: colors.danger };
+}
+
 function RentCard({
   record,
   payments,
@@ -426,8 +434,9 @@ function RentCard({
   colors: ThemeColors;
   onPay: () => void;
 }) {
-  const isPaid = record.payment_status === "paid";
   const pending = payments.some((payment) => payment.rent_record_id === record.id && payment.verification_status === "pending");
+  const status = deriveTenantRentStatus(record, payments);
+  const statusColors = rentStatusColors(status.tone, colors);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -436,11 +445,11 @@ function RentCard({
         <View
           style={[
             styles.statusBadge,
-            isPaid ? { backgroundColor: colors.successBg, borderColor: colors.success } : { backgroundColor: colors.dangerBg, borderColor: colors.danger },
+            { backgroundColor: statusColors.bg, borderColor: statusColors.border },
           ]}
         >
-          <Text style={[styles.statusText, { color: isPaid ? colors.success : colors.danger }]}>
-            {record.payment_status.replaceAll("_", " ").toUpperCase()}
+          <Text style={[styles.statusText, { color: statusColors.text }]}>
+            {status.label.toUpperCase()}
           </Text>
         </View>
       </View>

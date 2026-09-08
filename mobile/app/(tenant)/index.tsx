@@ -16,16 +16,34 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/hooks/use-theme-colors";
 import { useTenantFlat } from "@/lib/tenant/flats";
+import { deriveTenantRentStatus, type RentStatusTone } from "@/lib/tenant/rent-status";
 import { TenantFlatSelector } from "@/components/tenant-flat-selector";
 
 type RentRow = Pick<
   Database["public"]["Tables"]["rent_records"]["Row"],
-  "billing_month" | "total_payable" | "total_paid" | "remaining_due" | "payment_status" | "due_date"
+  | "id"
+  | "billing_month"
+  | "total_payable"
+  | "total_paid"
+  | "remaining_due"
+  | "payment_status"
+  | "due_date"
+>;
+type RentPaymentRow = Pick<
+  Database["public"]["Tables"]["rent_payments"]["Row"],
+  "rent_record_id" | "verification_status"
 >;
 type NoticePreview = Pick<
   Database["public"]["Tables"]["building_notices"]["Row"],
   "id" | "title" | "content" | "priority" | "published_at"
 >;
+
+/** Maps a derived rent-status tone to this app's amber/green/red badge colors. */
+function rentStatusColors(tone: RentStatusTone, colors: ReturnType<typeof useThemeColors>) {
+  if (tone === "success") return { bg: colors.successBg, border: colors.success, text: colors.success };
+  if (tone === "pending") return { bg: colors.warningBg, border: colors.warning, text: colors.warning };
+  return { bg: colors.dangerBg, border: colors.danger, text: colors.danger };
+}
 
 /**
  * Ported from the Sanjida reference's app/(tenant)/index.tsx (dashboard
@@ -46,6 +64,7 @@ export default function TenantDashboard() {
   const { flats, selectedFlat, selectFlat, loading: flatsLoading, error: flatsError } = useTenantFlat();
 
   const [rent, setRent] = useState<RentRow | null>(null);
+  const [payments, setPayments] = useState<RentPaymentRow[]>([]);
   const [notices, setNotices] = useState<NoticePreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,6 +75,7 @@ export default function TenantDashboard() {
       if (!session) return;
       if (!selectedFlat) {
         setRent(null);
+        setPayments([]);
         setNotices([]);
         setError(null);
         setLoading(false);
@@ -66,15 +86,31 @@ export default function TenantDashboard() {
       else setLoading(true);
       setError(null);
 
-      const [{ data: rentRow, error: rentError }, { data: noticeRows, error: noticeError }] = await Promise.all([
+      const [
+        { data: rentRow, error: rentError },
+        { data: paymentRows, error: paymentError },
+        { data: noticeRows, error: noticeError },
+      ] = await Promise.all([
         supabase
           .from("rent_records")
-          .select("billing_month, total_payable, total_paid, remaining_due, payment_status, due_date")
+          .select(
+            "id, billing_month, total_payable, total_paid, remaining_due, payment_status, due_date",
+          )
           .eq("tenant_id", session.user.id)
           .eq("flat_id", selectedFlat.id)
           .order("billing_month", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        // Needed to tell a rent record with a pending/awaiting-correction
+        // submission apart from one that's genuinely just unpaid — see
+        // deriveTenantRentStatus in @/lib/tenant/rent-status. Same table and
+        // scoping (tenant_id + flat_id) mobile/app/(tenant)/bills.tsx already
+        // queries; this just selects the two columns the Home card needs.
+        supabase
+          .from("rent_payments")
+          .select("rent_record_id, verification_status")
+          .eq("tenant_id", session.user.id)
+          .eq("flat_id", selectedFlat.id),
         supabase
           .from("building_notices")
           .select("id, title, content, priority, published_at")
@@ -82,13 +118,14 @@ export default function TenantDashboard() {
           .limit(3),
       ]);
 
-      const loadError = rentError ?? noticeError;
+      const loadError = rentError ?? paymentError ?? noticeError;
       if (loadError) {
         // Never shown raw: report that something went wrong without
         // leaking the underlying Supabase/PostgREST message text.
         setError("Unable to load your dashboard right now. Pull down to try again.");
       } else {
         setRent(rentRow ?? null);
+        setPayments(paymentRows ?? []);
         setNotices(noticeRows ?? []);
       }
       setLoading(false);
@@ -102,7 +139,11 @@ export default function TenantDashboard() {
     load();
   }, [load]);
 
-  const isPaid = rent?.payment_status === "paid";
+  const status = rent ? deriveTenantRentStatus(rent, payments) : null;
+  const statusColors = status ? rentStatusColors(status.tone, colors) : null;
+  const hasPendingSubmission =
+    rent != null &&
+    payments.some((p) => p.rent_record_id === rent.id && p.verification_status === "pending");
 
   return (
     <ScrollView
@@ -183,18 +224,27 @@ export default function TenantDashboard() {
                   <View
                     style={[
                       styles.statusBadge,
-                      isPaid
-                        ? { backgroundColor: colors.successBg, borderColor: colors.success }
-                        : { backgroundColor: colors.dangerBg, borderColor: colors.danger },
+                      {
+                        backgroundColor: statusColors?.bg ?? colors.dangerBg,
+                        borderColor: statusColors?.border ?? colors.danger,
+                      },
                     ]}
                   >
-                    <Text style={[styles.statusText, { color: isPaid ? colors.success : colors.danger }]}>
-                      {rent.payment_status.toUpperCase()}
+                    <Text style={[styles.statusText, { color: statusColors?.text ?? colors.danger }]}>
+                      {(status?.label ?? "").toUpperCase()}
                     </Text>
                   </View>
                 </View>
               </View>
-              {!isPaid ? (
+              {status?.tone === "success" ? (
+                <View style={[styles.paidMessage, { backgroundColor: colors.successBg, borderColor: colors.success }]}>
+                  <Text style={[styles.paidMessageText, { color: colors.success }]}>Rent paid for this period</Text>
+                </View>
+              ) : hasPendingSubmission ? (
+                <Text style={[styles.pendingText, { color: colors.warning }]}>
+                  Submission pending verification
+                </Text>
+              ) : (
                 <TouchableOpacity
                   style={[styles.payButton, { backgroundColor: colors.primary }]}
                   onPress={() => router.push("/(tenant)/bills")}
@@ -202,10 +252,6 @@ export default function TenantDashboard() {
                   <CreditCard color="#ffffff" size={20} />
                   <Text style={styles.payButtonText}>Pay Rent Now</Text>
                 </TouchableOpacity>
-              ) : (
-                <View style={[styles.paidMessage, { backgroundColor: colors.successBg, borderColor: colors.success }]}>
-                  <Text style={[styles.paidMessageText, { color: colors.success }]}>Rent paid for this period</Text>
-                </View>
               )}
             </>
           ) : (
@@ -332,6 +378,7 @@ const styles = StyleSheet.create({
   payButtonText: { color: "#ffffff", fontWeight: "700", fontSize: 16 },
   paidMessage: { borderRadius: 12, paddingVertical: 14, alignItems: "center", borderWidth: 1 },
   paidMessageText: { fontWeight: "700", fontSize: 14 },
+  pendingText: { marginTop: 4, textAlign: "center", fontSize: 13, fontWeight: "700" },
 
   sectionTitle: { fontSize: 14, fontWeight: "700", paddingHorizontal: 24, marginTop: 12, marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 },
 

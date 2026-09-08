@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-naviga
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -79,11 +80,17 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthGate />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
+    // Required for react-native-safe-area-context's useSafeAreaInsets() —
+    // used by TenantFlatSelector's modal to respect the device's real top
+    // and bottom insets — which throws without a SafeAreaProvider ancestor.
+    // Purely additive: no route, header or navigation behavior changes.
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AuthGate />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

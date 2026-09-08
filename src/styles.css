@@ -159,16 +159,110 @@
   box-shadow: var(--shadow-card);
 }
 
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
 @media print {
+  /* Chrome: desktop header/nav and the mobile bottom nav never belong in the
+     PDF, nor does anything screens mark print:hidden (filters, buttons,
+     on-screen-only helper text). Scoped to the report page via :has() so
+     this never touches the separate receipt print flow below. */
   body:has(#aptpilot-report) .print\:hidden,
-  body:has(#aptpilot-report) header.sticky {
+  body:has(#aptpilot-report) header.sticky,
+  body:has(#aptpilot-report) nav[aria-label="Primary"] {
     display: none !important;
+  }
+
+  /* Buttons, native selects/inputs and checkbox filters inside the report
+     itself (Export CSV, the Outstanding-report filter bar, etc.) are
+     on-screen-only controls, never part of the printed report. */
+  #aptpilot-report button,
+  #aptpilot-report select,
+  #aptpilot-report input,
+  #aptpilot-report label:has(input) {
+    display: none !important;
+  }
+
+  /* Drop the app shell's fixed viewport height, max width and scroll/offset
+     chrome so the report prints as a continuous document at full page
+     width instead of a clipped, centered column. */
+  body:has(#aptpilot-report) .min-h-screen {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  body:has(#aptpilot-report) main {
+    max-width: none !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:has(#aptpilot-report) .sticky {
+    position: static !important;
   }
 
   body:has(#aptpilot-report) #aptpilot-report {
     border: 0;
     box-shadow: none;
     padding: 0;
+    max-width: none;
+    width: 100%;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  body:has(#aptpilot-report) #aptpilot-report h2 {
+    font-size: 13px;
+  }
+
+  /* Let any scrolling/clipped container inside the report lay out at its
+     natural height on the page instead of clipping or scrolling, and let
+     tables use the full printable width instead of their on-screen
+     min-width. */
+  #aptpilot-report .overflow-x-auto,
+  #aptpilot-report .overflow-y-auto,
+  #aptpilot-report .overflow-auto {
+    overflow: visible !important;
+  }
+
+  #aptpilot-report table {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Don't split a stat card, section panel or table row across a page
+     break — a whole section that cannot fit on the remaining page moves to
+     the next page instead of being sliced in half. */
+  #aptpilot-report .panel,
+  #aptpilot-report tr,
+  #aptpilot-report .grid > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ...except the table element itself: a long table keeps flowing across
+     pages, repeating its header row on each one — the row-level rule above
+     still keeps each individual row intact. */
+  #aptpilot-report table {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  #aptpilot-report thead {
+    display: table-header-group;
+  }
+
+  /* Keep a heading attached to the content that follows it. */
+  #aptpilot-report h1,
+  #aptpilot-report h2,
+  #aptpilot-report h3 {
+    break-after: avoid;
+    page-break-after: avoid;
   }
 
   body:has(#aptpilot-receipt) > *:not(:has(#aptpilot-receipt)) {

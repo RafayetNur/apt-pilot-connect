@@ -325,18 +325,20 @@ export function ReportsPage({ role }: { role: AppRole }) {
       </section>
 
       {reportType === "statement" ? (
-        <ReportPanel
-          title="How these numbers are calculated"
-          description="Billing performance uses billing_month; cash movement uses the payment verification date. They are deliberately reported separately."
-        >
-          <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-            <li>Total billed = base rent + individual charges + shared allocations + approved debit adjustments − approved credit adjustments.</li>
-            <li>Verified paid = amount actually applied to that month&apos;s rent records.</li>
-            <li>Collection rate = verified paid ÷ total billed × 100 (0% when nothing is billed).</li>
-            <li>Approved expenses = approved, non-cancelled expenses posted to that accounting month.</li>
-            <li>Net cash result = verified cash applied in the period − approved expenses for the period.</li>
-          </ul>
-        </ReportPanel>
+        <div className="print:hidden">
+          <ReportPanel
+            title="How these numbers are calculated"
+            description="Billing performance uses billing_month; cash movement uses the payment verification date. They are deliberately reported separately."
+          >
+            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>Total billed = base rent + individual charges + shared allocations + approved debit adjustments − approved credit adjustments.</li>
+              <li>Verified paid = amount actually applied to that month&apos;s rent records.</li>
+              <li>Collection rate = verified paid ÷ total billed × 100 (0% when nothing is billed).</li>
+              <li>Approved expenses = approved, non-cancelled expenses posted to that accounting month.</li>
+              <li>Net cash result = verified cash applied in the period − approved expenses for the period.</li>
+            </ul>
+          </ReportPanel>
+        </div>
       ) : null}
 
       <p className="text-xs text-muted-foreground print:hidden">

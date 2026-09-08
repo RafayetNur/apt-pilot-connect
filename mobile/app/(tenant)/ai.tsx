@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "expo-router";
+import { useHeaderHeight } from "expo-router/react-navigation";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -45,6 +47,11 @@ export default function TenantAptBot() {
   const router = useRouter();
   const colors = useThemeColors();
   const { session, profile } = useAuth();
+  // Height of the native tab-navigator header rendered above this screen
+  // (react-native-screens resets each screen's own layout coordinates to 0
+  // at its top, so KeyboardAvoidingView can't "see" that header on its own —
+  // this is the official react-navigation fix for keyboardVerticalOffset).
+  const headerHeight = useHeaderHeight();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -68,6 +75,17 @@ export default function TenantAptBot() {
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [messages, sending]);
+
+  // Keep the newest message in view once the keyboard finishes opening too
+  // (its height isn't reflected in the ScrollView's content size yet at the
+  // moment the message-list effect above fires).
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const subscription = Keyboard.addListener(showEvent, () => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    });
+    return () => subscription.remove();
+  }, []);
 
   function markFailed(userMsgId: string, errorText: string) {
     if (!mountedRef.current) return;
@@ -169,10 +187,16 @@ export default function TenantAptBot() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
-  style={styles.keyboardView}
-  behavior={Platform.OS === "ios" ? "padding" : "height"}
-  keyboardVerticalOffset={0}
->
+        style={styles.keyboardView}
+        // iOS has no OS-level window resize, so KeyboardAvoidingView must pad
+        // itself — offset by the native header height (see the comment by
+        // useHeaderHeight() above). Android already resizes the window via
+        // app.json's `android.softwareKeyboardLayoutMode: "resize"`, so no
+        // behavior/offset here lets that handle it without double-adjusting
+        // (same pattern as login.tsx and the bills.tsx payment sheet).
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
+      >
         <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <ArrowLeft color={colors.text} size={24} />
@@ -194,6 +218,7 @@ export default function TenantAptBot() {
           contentContainerStyle={styles.chatContent}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
+          onScrollBeginDrag={() => Keyboard.dismiss()}
         >
           {messages.map((m) => (
             <View key={m.id} style={[styles.messageWrapper, m.sender === "user" ? styles.messageRight : styles.messageLeft]}>

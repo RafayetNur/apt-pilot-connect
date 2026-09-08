@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 
 import { PriorityBadge, StatusBadge } from "@/components/maintenance/parts";
 import { RequestDetailPanel } from "@/components/maintenance/request-detail-panel";
@@ -18,6 +19,7 @@ import {
 import { useAuth, type AppRole } from "@/hooks/useAuth";
 import { buildingsQueryOptions } from "@/lib/buildings";
 import { flatsQueryOptions } from "@/lib/flats";
+import { cn } from "@/lib/utils";
 import {
   assignableUsersQueryOptions,
   emptyMaintenanceFilters,
@@ -33,8 +35,60 @@ import {
   type MaintenanceCategory,
   type MaintenanceFilters,
   type MaintenancePriority,
+  type MaintenanceRow,
   type MaintenanceStatus,
 } from "@/lib/maintenance";
+
+/** One row of the master list — the whole card is the "open" control. */
+function RequestListCard({
+  request,
+  selected,
+  onSelect,
+}: {
+  request: MaintenanceRow;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={selected ? "true" : undefined}
+      className={cn(
+        "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+        selected ? "border-primary bg-primary/10" : "border-border/60 bg-card hover:bg-muted",
+      )}
+    >
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <p className="truncate font-medium">{request.title}</p>
+        <p className="truncate font-mono text-xs text-muted-foreground">
+          {request.request_number} · {maintenanceCategoryLabel[request.category]}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {request.building_name} ·{" "}
+          {request.is_common_area
+            ? "Common area"
+            : request.flat_number
+              ? `Flat ${request.flat_number}`
+              : "—"}
+        </p>
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <StatusBadge status={request.status} />
+          <PriorityBadge priority={request.priority} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Reported {formatDateTime(request.created_at)}
+        </p>
+        {request.assignee_name ? (
+          <p className="truncate text-xs text-muted-foreground">
+            Assigned to {request.assignee_name}
+          </p>
+        ) : null}
+      </div>
+      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    </button>
+  );
+}
 
 export function MaintenanceManagementPage({ role }: { role: AppRole }) {
   const { user } = useAuth();
@@ -285,79 +339,24 @@ export function MaintenanceManagementPage({ role }: { role: AppRole }) {
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="panel overflow-x-auto p-0">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-surface text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-3 py-3">Request</th>
-                <th className="px-3 py-3">Location</th>
-                <th className="px-3 py-3">Priority</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Assigned</th>
-                <th className="px-3 py-3">Reported</th>
-                <th className="px-3 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {requestsQuery.isLoading ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
-                    Loading requests…
-                  </td>
-                </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
-                    No maintenance requests match these filters.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={
-                      row.id === selectedId
-                        ? "border-t border-border/50 bg-muted"
-                        : "border-t border-border/50"
-                    }
-                  >
-                    <td className="px-3 py-3">
-                      <p className="font-medium">{row.title}</p>
-                      <p className="font-mono text-xs text-muted-foreground">
-                        {row.request_number} · {maintenanceCategoryLabel[row.category]}
-                      </p>
-                    </td>
-                    <td className="px-3 py-3">
-                      {row.building_name}
-                      <span className="block text-xs text-muted-foreground">
-                        {row.is_common_area
-                          ? "Common area"
-                          : row.flat_number
-                            ? `Flat ${row.flat_number}`
-                            : "—"}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <PriorityBadge priority={row.priority} />
-                    </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={row.status} />
-                    </td>
-                    <td className="px-3 py-3">{row.assignee_name ?? "—"}</td>
-                    <td className="px-3 py-3 whitespace-nowrap text-xs text-muted-foreground">
-                      {formatDateTime(row.created_at)}
-                    </td>
-                    <td className="px-3 py-3">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedId(row.id)}>
-                        Open
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="grid gap-4 lg:grid-cols-[2fr_3fr]">
+        <section className="panel space-y-2 p-3">
+          {requestsQuery.isLoading ? (
+            <p className="px-1 py-6 text-center text-sm text-muted-foreground">Loading requests…</p>
+          ) : rows.length === 0 ? (
+            <p className="px-1 py-6 text-center text-sm text-muted-foreground">
+              No maintenance requests match these filters.
+            </p>
+          ) : (
+            rows.map((row) => (
+              <RequestListCard
+                key={row.id}
+                request={row}
+                selected={row.id === selectedId}
+                onSelect={() => setSelectedId(row.id)}
+              />
+            ))
+          )}
         </section>
 
         <section className="panel p-4">
